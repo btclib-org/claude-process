@@ -647,8 +647,9 @@ never conflicts on them — and can stack a superseded entry beside its
 replacement, place yours below an entry that landed meanwhile, or eat the
 blank line above a `###`. `git rebase` exits `0`, and `git diff --numstat`,
 `git range-diff`, `git merge-tree --write-tree` and comparing the entry's
-text all pass. `check-changelog` names the eaten blank line, on a run
-before the markdownlint fixer, and misses the other two. Only
+text all pass. `check-changelog`, on a run before the markdownlint
+fixer, names the eaten blank line. It names a superseded entry only where
+a heading or a `(closes #N)` repeats, and never a misplaced one. Only
 reconstruction finds all three:
 
 1. **Before rebasing**, save the base and your tip in your scratch
