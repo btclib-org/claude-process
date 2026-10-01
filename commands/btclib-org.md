@@ -590,18 +590,19 @@ the orchestrator in the pull request.
 
   `gate_take` writes its shell's PID into the lock, and `gate_release`
   removes only a lock holding that PID. A lock whose holder's process is
-  gone is stale, and `gate_take` removes it itself. No session removes a
+  gone is stale, and `gate_take` removes it itself, by renaming the owner
+  file first, which only one waiter wins. No session removes a
   lock any other way: a failed `mkdir` or an old lock says nothing
-  about whose it is. A lock with no owner file — a hand `mkdir`, or one
-  from the old recipe — is never reclaimed: the human removes it, after
-  checking that no gate runs. The script is POSIX `sh`. The threshold is a
-  1-minute load under twice the core count, read under `LC_ALL=C`
-  because some locales print a decimal comma. Past 20 minutes of load
-  the gates run anyway, and the report gives the load. Where the lock is
-  still held after 30 minutes, `gate_take` fails and prints the holder,
-  and the worker reports it to the orchestrator. A load generator is
-  killed by the PID you recorded, and `ps` shows it gone before the lock
-  is released.
+  about whose it is. A lock with no owner file — a hand `mkdir`, one
+  from the old recipe, or one a waiter killed mid-reclaim left with only
+  a `stale.<pid>` in it — is never reclaimed: the human removes it with
+  `rm -r`, after checking that no gate runs. The script is POSIX `sh`. The
+  threshold is a 1-minute load under twice the core count, read under `LC_ALL=C`
+  because some locales print a decimal comma. Past 20 minutes of load the gates
+  run anyway, and the report gives the load. Where the lock is still held after
+  30 minutes, `gate_take` fails and prints the holder, and the worker reports it
+  to the orchestrator. A load generator is killed by the PID you recorded, and
+  `ps` shows it gone before the lock is released.
 
 ### Committing and rebasing
 
