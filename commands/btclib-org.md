@@ -200,6 +200,10 @@ These bind the writer, the reviewer and the orchestrator alike.
   one-line document (notebook, JSON, bundle) answers at most `1`, and its
   base64 payloads match anything: parse structured documents. A phrase
   count never says a file is free of a restatement — read the file.
+- **A rehearsal's input is compared with the real file it models**,
+  same shape, read from the source, before its outcome is reported: a
+  stand-in that differs in shape passes or fails for a reason the real
+  file does not share.
 - **A tool's zero covers only what it read.** A skipped file prints what
   a clean one prints. Ask the tool its input set (pre-commit `files:` and
   `exclude:`, `lychee --dump-inputs`, ruff on notebooks without language
@@ -606,10 +610,12 @@ the orchestrator in the pull request.
 
 ### Committing and rebasing
 
-- **Commit and push as soon as work exists**, and before any long step.
-  Amend as the work converges, under the grant below once a commit is
-  pushed; push after every amend, and check `git ls-remote origin
-  <branch>` against `HEAD`.
+- **Push the first commit as soon as work exists**, before any long
+  step; it needs no gate. After that, push a commit or an amend only
+  once a gate run on that very commit exited 0, never after a failed
+  one. Amend as the work converges, under the grant below once a commit
+  is pushed, and check `git ls-remote origin <branch>` against `HEAD`
+  after every push.
 - **A force-push with lease, to your own branch only**:
 
   ```shell
@@ -621,7 +627,7 @@ the orchestrator in the pull request.
   is already pushed, and this push after it, need the human's grant
   (*Landing*), which your brief carries. Without it, do not amend a pushed
   commit: stop and report. Where the classifier refuses the push under the
-  grant, push the amended commit without force to
+  grant, push the amended, gated commit without force to
   `<branch>-r2` and report both names; the orchestrator opens the pull
   request from it and closes the old one. This is the one route around a
   refusal the process sanctions. The old branch is deleted once its
@@ -788,7 +794,7 @@ The orchestrator's. **Before opening, and again before landing:**
   merge.
 - **"This branch has conflicts" on GitHub is real** even where the local
   rebase was silent: the forge's merge does not apply `merge=union`.
-  Rebase, push, and reconstruct the union files.
+  Rebase, reconstruct the union files, run the gates, and push.
 - **Default landing: watch the checks and the bot's review**, answer what
   it reasonably raises, and iterate to an explicit ACK naming the current
   `headRefOid`. A `cancelled` run is not a `failure`.
@@ -875,8 +881,8 @@ The orchestrator's. **Before opening, and again before landing:**
   applies the driver and is not this check; `gh pr view --json mergeable`
   is a cached value.
 - **A rebase before landing.** A base-only rebase, with the merge above
-  clean, is run by the orchestrator in the standing worktree, gates
-  included. A rebase that touches the pull request's own code is the
+  clean, is run by the orchestrator in the standing worktree: rebase,
+  gates, then push. A rebase that touches the pull request's own code is the
   writer's, and goes back to the reviewer. The push dismisses an
   approval already given, so a merge that needs one needs it again.
 - **Check what landed, once it has.** `--auto` returns before the

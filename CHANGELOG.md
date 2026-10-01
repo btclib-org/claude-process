@@ -43,3 +43,14 @@ which only one waiter wins, and checks the PID in what it moved (closes #10).
 
 *What is not configured* says section 10 does not name this tree for
 `codeql`, and shows the languages default setup would scan (closes #15).
+
+### A push follows a gate run that exited 0
+
+*Committing and rebasing* pushes a commit or an amend only after a gate
+run on it exited 0; the first push of new work needs none (closes #12).
+
+### A rehearsal's input is compared with the real file
+
+*How you establish a fact* has a rehearsal's input compared with the
+real file it models, same shape, before its outcome is reported
+(closes #13).
