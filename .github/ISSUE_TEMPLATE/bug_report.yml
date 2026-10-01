@@ -1,0 +1,55 @@
+---
+name: Bug report
+description: The process says something wrong, or a session following it goes wrong
+labels: [bug]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        This repository holds the text of the `/btclib-org` command and of
+        the `writer` and `reviewer` agents. A report here is a sentence
+        that is false, a command that fails as written, or two sections
+        that disagree.
+
+
+        Never paste a token or a credential. Redact them before pasting a
+        session's output.
+
+  - type: input
+    id: section
+    attributes:
+      label: Which section
+      description: >
+        The file and the heading, so the sentence can be found by the
+        words the document holds.
+      placeholder: "commands/btclib-org.md, The gates"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What the text says or makes a session do, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce it
+      description: >
+        The command that fails, or the situation in which the sentence is
+        false, from a state somebody else can reach.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: >
+        The repository the session was working in, and the version of
+        Claude Code.

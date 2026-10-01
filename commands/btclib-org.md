@@ -228,7 +228,7 @@ These bind the writer, the reviewer and the orchestrator alike.
   <sha>`.
 - **`git log -S` restricted to a path dates the rename, not the
   writing.** Search the whole tree on the branch you mean (`git log -S
-  '<string>' main -- .`), not `--all`, which includes unlanded branches;
+  <word> main -- .`), not `--all`, which includes unlanded branches;
   check ancestry with `git merge-base --is-ancestor`.
 - **A red gate is not yours until the baseline says so.** Run the same
   gate on `origin/main` in a separate worktree, several times, and report
@@ -409,39 +409,39 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
   order, and the contributor is told on their pull request what moved
   and how to resolve it. Completing it:
 
-  - **Add, never rewrite.** Their commits stay byte for byte. `main`
-    comes in by a signed merge, not a rebase, with the union files
-    reconstructed across it (*Union files after a rebase*). The fixes
-    are a signed commit of ours on top.
-  - **Push to their fork as a fast-forward only**: `git push <fork url>
-    HEAD:refs/heads/<their branch>`, never with any `--force`. Before
-    every push, `git ls-remote <fork url> refs/heads/<their branch>`
-    must still answer the sha you built on; where it moved, they are
-    working, and you stop and ask.
-  - **The same review, then the squash of their pull request**, pinned
-    to the cleared head and landed as *Landing* says. That keeps their
-    authorship; a branch of ours cherry-picking them would leave their
-    pull request closed rather than merged, and uncredited. Keep their
-    title with the citation *Citations and closing keywords* asks for;
-    write the message:
-    what the change does, correcting anything false in their commits,
-    ending with a `Co-authored-by:` line for whoever finished it.
+    - **Add, never rewrite.** Their commits stay byte for byte. `main`
+      comes in by a signed merge, not a rebase, with the union files
+      reconstructed across it (*Union files after a rebase*). The fixes
+      are a signed commit of ours on top.
+    - **Push to their fork as a fast-forward only**: `git push <fork url>
+      HEAD:refs/heads/<their branch>`, never with any `--force`. Before
+      every push, `git ls-remote <fork url> refs/heads/<their branch>`
+      must still answer the sha you built on; where it moved, they are
+      working, and you stop and ask.
+    - **The same review, then the squash of their pull request**, pinned
+      to the cleared head and landed as *Landing* says. That keeps their
+      authorship; a branch of ours cherry-picking them would leave their
+      pull request closed rather than merged, and uncredited. Keep their
+      title with the citation *Citations and closing keywords* asks for;
+      write the message:
+      what the change does, correcting anything false in their commits,
+      ending with a `Co-authored-by:` line for whoever finished it.
 
-    ```shell
-    gh pr merge <n> --squash --auto --match-head-commit <cleared head> \
-      --repo <owner>/<repo> \
-      --subject "<their title> (closes #<issue>) (#<n>)" \
-      --body-file <message>
-    ```
+      ```shell
+      gh pr merge <n> --squash --auto --match-head-commit <cleared head> \
+        --repo <owner>/<repo> \
+        --subject "<their title> (closes #<issue>) (#<n>)" \
+        --body-file <message>
+      ```
 
-    The maintainer passes `--admin` in place of `--auto` (*Landing*).
-    Then check what landed as *Landing* says, and that
-    `gh api repos/<owner>/<repo>/commits/<sha> --jq .author.login` is
-    theirs.
+      The maintainer passes `--admin` in place of `--auto` (*Landing*).
+      Then check what landed as *Landing* says, and that
+      `gh api repos/<owner>/<repo>/commits/<sha> --jq .author.login` is
+      theirs.
 
-  - **Thank them in a comment of its own**: what their change does, what
-    was added and why, in terms they can learn from, and the open issues
-    they might take next.
+    - **Thank them in a comment of its own**: what their change does, what
+      was added and why, in terms they can learn from, and the open issues
+      they might take next.
 
 - **Where the bot's review does not run** — a fork's pull request, and
   any other where `gh pr checks` shows no review — the default landing
@@ -657,21 +657,21 @@ never yours misplaced by the rebase. Only reconstruction finds all three:
    <scratch>/base-<branch>.md`, `git -C <wt> show <tip>:CHANGELOG.md >
    <scratch>/pre-<branch>.md`;
    `diff` them to name your block and its anchor.
-2. **Rebase, then run `pre-commit run --all-files`.** A bare run after a
+1. **Rebase, then run `pre-commit run --all-files`.** A bare run after a
    rebase checks nothing, nothing being staged. Read what
    `check-changelog` names before anything repairs it; never run the
    fixer by hand first.
-3. **Reconstruct**: the new base's blob with your block spliced at its
+1. **Reconstruct**: the new base's blob with your block spliced at its
    anchor (entries go at the end of the open section), and compare it
-   byte for byte with `git -C <wt> show <rebased tip>:CHANGELOG.md | cmp
-   - <scratch>/expected-<branch>.md`. Count your entry's heading too.
-4. **Repair to the reconstruction.** Where the file opens with
+   byte for byte with `git -C <wt> show <rebased tip>:CHANGELOG.md | cmp -
+   <scratch>/expected-<branch>.md`. Count your entry's heading too.
+1. **Repair to the reconstruction.** Where the file opens with
    `<!-- markdownlint-disable MD022 MD032 -->` or the hook runs without
    `--fix`, restore the blank line by hand; otherwise the
    `markdownlint-cli2` hook restores it, run through the tree's own
    `pre-commit` invocation.
-5. **Record the broken tip's sha in your report**; create no ref for it.
-6. **Re-read the section around your entry**, for prose the merge made
+1. **Record the broken tip's sha in your report**; create no ref for it.
+1. **Re-read the section around your entry**, for prose the merge made
    false ("the entry above" now naming a stranger).
 
 **A merge of `main` is the same case.** Completing an outside
@@ -789,16 +789,16 @@ The orchestrator's. **Before opening, and again before landing:**
 - **Where the human is the maintainer, ask which landing applies**,
   together with the repository question, before any other activity.
   Anyone else lands by the default.
-  - **Default**: CI green and the bot's explicit ACK, then squash.
-  - **Speedy**, only where the human is the maintainer and grants it:
-    the local `CLEARED` is enough, the bot's ACK is waived, and the
-    merge uses the admin bypass. CI green is not waited for either,
-    provided the local gates passed on the head that lands and the pull
-    request touches nothing only CI can verify — a workflow, the build or
-    wheel matrix, a platform- or linkage-specific path, the release or
-    publishing machinery, whatever the repository's `CONTRIBUTING.md`
-    names as decided by CI alone. Where it does touch one, speedy still
-    waits for the checks that verify it, and the ACK stays waived.
+    - **Default**: CI green and the bot's explicit ACK, then squash.
+    - **Speedy**, only where the human is the maintainer and grants it:
+      the local `CLEARED` is enough, the bot's ACK is waived, and the
+      merge uses the admin bypass. CI green is not waited for either,
+      provided the local gates passed on the head that lands and the pull
+      request touches nothing only CI can verify — a workflow, the build or
+      wheel matrix, a platform- or linkage-specific path, the release or
+      publishing machinery, whatever the repository's `CONTRIBUTING.md`
+      names as decided by CI alone. Where it does touch one, speedy still
+      waits for the checks that verify it, and the ACK stays waived.
 
   A speedy grant covers the session — every branch and every piece of
   collateral landed before it ends — unless the maintainer bounds it more
@@ -890,7 +890,7 @@ The orchestrator's. **Before opening, and again before landing:**
   so in the report and the commit.
 - **Everything else is a new issue, filed by whoever noticed it, when
   they notice it**, in the repository hosting that code. Search first
-  (`gh issue list --state open --search "<two words>"`). Measure first;
+  (`gh issue list --state open --search "<word> <word>"`). Measure first;
   where that would mean leaving the work at hand, put the deciding
   command in the body and say it was not run.
 - **Evidence you lean on is evidence you own.** A claim your change turns

@@ -1,0 +1,74 @@
+---
+name: links
+
+# lychee over every markdown file this repository tracks. The README and
+# the process text send a reader to the organization's standard, to the
+# forge and to Claude Code, and a destination that has moved is a session
+# following an instruction to nowhere.
+#
+# A workflow of its own rather than a job beside the lint one, because
+# the two answer on different cadences and a job cannot. A link rots
+# without anybody touching the tree, so asking per commit reports the
+# internet's weather on somebody's prose branch, and a third party
+# returning 502 or throttling a runner would turn a red merge into a
+# thing to re-run rather than a thing to fix. Weekly, on demand, and red
+# in the Actions tab is where this belongs -- which also keeps it out of
+# main's required checks, where it must stay out: that rule lives outside
+# the repository and names its checks as literal strings.
+
+on:
+  schedule:
+    # The time is section 10's grid of btclib-org/.github and not this
+    # file's to restate.
+    # Only the default branch schedules workflows, so on any other branch
+    # this is reachable through the dispatch below alone
+    - cron: "56 4 * * 6"
+  # the escape hatch, and the way to check a branch before merging a
+  # change that adds links: nothing else runs this on a pull request that
+  # only edits prose, deliberately, per the header above
+  workflow_dispatch:
+  # so a change to this file is checked by the thing it configures.
+  # This runs more often than the paths list suggests: the filter is
+  # evaluated against the pull request's whole diff against its base, not
+  # against the push that triggered the run, so once a pull request
+  # touches this file every later push to that branch runs it too
+  pull_request:
+    # ready_for_review so a pull request marked ready gets the run the
+    # draft condition in reusable-links.yml withheld while it was a
+    # draft: the default types do not include it. closed too, so a
+    # merge or a close lands in this pull request's own concurrency
+    # group -- the job still declines the real work on it, and the
+    # conditional below decides whether that landing cancels the run
+    # in flight or queues behind it
+    types: [opened, reopened, synchronize, ready_for_review, closed]
+    paths:
+      - .github/workflows/links.yml
+
+# least privilege for the GITHUB_TOKEN. lychee is handed it for
+# github.com links only, where an unauthenticated runner is rate limited
+# hard enough to look like rot, and reading is all that takes.
+# Deliberately not issues: write. An automatic "link rot" issue is the
+# usual next step, to save a maintainer from reading a failure
+# notification they already get
+permissions:
+  contents: read
+
+concurrency:
+  # named literally rather than through github.workflow, and keyed on the
+  # pull request's number for the reason lint.yml carries. A scheduled or
+  # dispatched run has no number and falls back to github.ref, which is
+  # refs/heads/main for both, so the weekly run and a dispatch of it
+  # supersede each other -- wanted, since they ask the same question of
+  # the same tree
+  group: links-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ !(github.event.action == 'closed' && github.event.pull_request.merged) }}
+
+jobs:
+  # the job itself is btclib-org/.github's, called at @main so a fix there
+  # reaches this tree in one landing (section 10 of its README.md); what
+  # stays here is the trigger, the schedule and which files are this
+  # tree's documentation
+  links:
+    uses: btclib-org/.github/.github/workflows/reusable-links.yml@main
+    with:
+      targets: '"**/*.md" ".github/**/*.md" ".claude/**/*.md"'

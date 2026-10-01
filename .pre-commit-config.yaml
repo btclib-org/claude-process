@@ -1,0 +1,261 @@
+---
+# the lint gate of this repository. What it ships is prose -- the process
+# command, the two agents and the files around them -- so the hooks below
+# are the ones with a subject here: the markdown, the yaml of the
+# workflows and of the issue forms, and the text every file is made of.
+#
+# What is absent is absent for a measured reason rather than an
+# oversight. `git ls-files '*.py' '*.toml' '*.json' '*.sh'` names
+# nothing, so there is no ruff, mypy, taplo or json hook to read a file
+# that does not exist, and there is no project and no `uv.lock`, so
+# `uv-lock` has nothing to keep in step. A hook is added here the day the
+# tree grows a file of its own that the hook reads.
+#
+# Skip a hook with SKIP=<id>.
+ci:
+  # a bot committing to a branch is at odds with a setup where no
+  # workflow token can write: a failing hook is fixed by its author
+  autofix_prs: false
+  autoupdate_commit_msg: "Update the pinned pre-commit hook revisions"
+  autoupdate_schedule: weekly
+
+repos:
+  # this file checking itself, and the only two hooks with no environment
+  # to install: a pattern that has stopped matching is a rule that has
+  # quietly stopped running
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+  # and checking the two moves "autoupdate" must not make: a rev naming
+  # only a major follows every future release of it, and a prerelease is
+  # not a release. pre-commit says the first half itself, on stderr, on a
+  # run that then exits zero -- which is the difference between a warning
+  # and a gate. A commit SHA stays acceptable: forty hex characters do not
+  # end in a prerelease marker
+  - repo: local
+    hooks:
+      - id: pinned-rev
+        name: every pre-commit rev names a released version
+        language: pygrep
+        entry: '^ *rev: "?v?([0-9]+|[0-9][0-9.]*(a|b|rc|dev)[0-9]+)"?$'
+        files: ^\.pre-commit-config\.yaml$
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-case-conflict
+      - id: fix-byte-order-marker
+      - id: check-merge-conflict
+      - id: check-vcs-permalinks
+      - id: detect-private-key
+      - id: check-yaml
+      - id: check-added-large-files
+      # there are none, and a submodule is the one dependency that would
+      # be pinned by nothing here
+      - id: forbid-submodules
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        name: codespell (in place fixes)
+        args: [--write-changes]
+  # crate-ci/typos re-tags a moving `v1` alias onto the same commit
+  # as each release, and `git describe --tags` breaks the tie between
+  # two tags on one commit by creation date, which names the alias.
+  # `autoupdate` proposes that alias on every run and `pinned-rev` above
+  # refuses it on every run, so the pin stays stuck rather than moving.
+  # `autoupdate` walks every `repo:` entry except `local` and `meta`, so
+  # a local hook is the one shape it cannot reach; `additional_dependencies`
+  # below carries the version pin in its place, and `language`, `entry`,
+  # `args` and `types` are upstream's own typos hook definition, copied
+  # in rather than fetched
+  - repo: local
+    hooks:
+      - id: typos
+        name: typos
+        language: python
+        additional_dependencies: [typos==1.50.1]
+        entry: typos
+        args: [--write-changes, --force-exclude]
+        types: [text]
+        stages: [pre-commit, pre-merge-commit, pre-push, manual]
+  # the credentials of other systems, which is the half of secret
+  # scanning GitHub's free plan does not cover: partner and provider
+  # tokens are scanned server-side, the generic patterns (PEM keys,
+  # connection strings, authentication headers) belong to Secret
+  # Protection, and the API accepts that setting with a 200 and leaves it
+  # disabled. detect-private-key above covers the PEM case.
+  # Not gitleaks: all of its hook ids invoke it with --staged, so under
+  # "pre-commit run --all-files" it scans an empty staged set and passes
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets (credentials of other systems)
+        # against a committed baseline rather than an exclusion: a
+        # finding recorded there is one somebody has read, where an
+        # excluded file is unwatched from then on
+        args: [--baseline, .secrets.baseline]
+  # check-changelog runs ahead of markdownlint-cli2 below: that hook's
+  # `--fix` repairs the very seam its blank-line check exists to name.
+  # The rev is a commit sha, which detect-secrets' hex-entropy plugin
+  # reports: the pragma survives autoupdate, which keeps a trailing
+  # comment, where a baseline entry would match only the one sha
+  - repo: https://github.com/btclib-org/.github
+    rev: 1c7abdbcde9817e7877edb1b3baa29a1ec264403 # pragma: allowlist secret
+    hooks:
+      - id: check-changelog
+        args: [--grandfathered, "0"]
+  # MD013 at 80 columns, tables included, and the shared configuration is
+  # the one every repository of the organization carries: prose moves
+  # between them, and a paragraph that lints in one has to lint here
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.3
+    hooks:
+      - id: markdownlint-cli2
+        name: markdownlint-cli2 (in place fixes)
+        args: [--fix]
+  # how a link destination is spelled, which markdownlint has no rule
+  # for. Section 4 of the organization's standard is the rule, why the
+  # prefix and not the extension, and what this cannot see; there is no
+  # shared hook repository to write it in once, so it is the same hook in
+  # each repository, `pinned-rev` above being that arrangement already
+  - repo: local
+    hooks:
+      - id: local-link-prefix
+        name: a local markdown link destination begins with ./
+        language: pygrep
+        # one line, and no literal space in it -- "\x20" is the space the
+        # reference branch allows -- so yamllint reads the value as a
+        # single unbreakable word and its 100-column rule exempts it. A
+        # block scalar rather than a quoted one for the same reason a
+        # folded scalar was rejected: folding joins lines with a space,
+        # which would land inside the regex
+        entry: |-
+          (?<![`!\[])(?:!?\[(?:[^]]|\]\([^)]*\))*\]\(|^\x20{0,3}\[[^]]+\]:\s*)(?!\./|#|[A-Za-z][A-Za-z0-9+.-]*:)[^)\s]
+        types: [markdown]
+      # a line that ends inside a word, at that word's own hyphen.
+      # Section 4 of the organization's standard is the rule: what such a line
+      # renders as, why nothing else here catches it, what this pattern cannot
+      # see, and what the measurement was before it was proposed. The types are
+      # where a build renders prose from -- markdown, and what docutils reads,
+      # an rst page and a Python docstring -- so a comment sharing a Python file
+      # with a docstring is refused alongside it, one line at a time being all
+      # pygrep reads
+      - id: no-hyphen-at-end-of-line
+        name: a word is not wrapped at its own hyphen
+        language: pygrep
+        entry: "[A-Za-z0-9]-$"
+        types_or: [markdown, python, rst]
+      # a placeholder that is a whole argument, in quotes. Section 9 of the
+      # organization's standard is the rule and what the quoting costs a paste;
+      # section 4 is where this hook is, which quotes it exempts, and the three
+      # things this pattern cannot see. The discrimination is read off the line
+      # and not off the fence around it, because a fence-aware pattern has to
+      # consume everything before the match and pygrep then reports the file's
+      # first line and prints the whole prefix. A shell assignment takes no
+      # space around its `=`, so a line carrying one is another language's
+      # value; and a quote inside a quote of the other kind is a nested
+      # program's -- both read off one line, which is also where the three blind
+      # spots come from. Same `\x20` as above, and the same reason.
+      # `CHANGELOG.md` and `RELEASE_NOTES.md` are out of reach because section 9
+      # makes them append-only: a refused shape in an entry that has landed has
+      # no repair, and there would be no green state to reach. `exclude:`
+      # selects files and pygrep reads whole ones, so an exclusion keyed on the
+      # older entries alone cannot be written; and check-useless-excludes asks
+      # the pattern to match some file the hook selects rather than each name in
+      # it, which is what lets a tree with no release notes carry the same line
+      - id: unquoted-placeholder
+        name: a placeholder standing as a whole argument is unquoted
+        language: pygrep
+        entry: |-
+          ^(?![\x20\t]*[A-Za-z_][A-Za-z0-9_.-]*[\x20\t]+=[\x20\t])(?:(?:[^"'\n]|'[^'\n]*')*"<[^<>"'`\n]*>"|(?:[^"'\n]|"[^"\n]*")*'<[^<>"'`\n]*>')
+        types: [markdown]
+        exclude: ^(CHANGELOG|RELEASE_NOTES)\.md$
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.9.9
+    hooks:
+      - id: prettier
+        name: prettier (yaml and jsonc, in place fixes)
+        # named by path rather than by type: `jsonc` is not a tag identify
+        # knows, so a types_or entry for it fails the config outright
+        files: ^(.*\.ya?ml|\.markdownlint\.jsonc)$
+  # check-only: yamllint has no fix mode, and its own README names none
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+  # .github/dependabot.yml is validated by nothing else here: check-yaml
+  # above asks whether it is yaml, and actionlint below reads workflows
+  # and not this. A typo in a package-ecosystem or a directory is not an
+  # error to GitHub -- it silently updates nothing, and the evidence is a
+  # pull request that never arrives, which on a repository whose only
+  # ecosystem is the action pins means every pin frozen with nothing
+  # saying so.
+  # check-github-workflows is not added beside it: actionlint already
+  # reads every workflow and goes further than the schema does, into
+  # expressions, contexts and runner labels
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.38.2
+    hooks:
+      - id: check-dependabot
+      # .github/ISSUE_TEMPLATE/ is read the same way and by nothing else
+      # here either: a form whose `type:` is misspelt is still yaml, and
+      # the reader who meets it is a person on the New issue page rather
+      # than a run. Each brings its own files: and types: -- config.yml
+      # under that spelling for the first, the directory's yaml that is
+      # neither config.yml nor config.yaml for the second, a markdown
+      # template for neither -- so check-hooks-apply above is what says
+      # this tree still holds one of each
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
+  # the workflows carry expressions and logic no schema reads: an unknown
+  # key, a typo in a context reference, an action input that does not
+  # exist, a job depending on a job that is not there are all things a
+  # run discovers by failing.
+  # The Python packaging of actionlint rather than the upstream hook,
+  # whose only non-docker id is language: golang, i.e. a go toolchain on
+  # every machine that commits and on pre-commit.ci
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: v1.7.12.25
+    hooks:
+      - id: actionlint
+        name: actionlint (github workflows)
+        # actionlint delegates the body of a run: step to shellcheck if
+        # it finds one on the PATH, and without it validates the yaml
+        # around a shell script rather than the script. Declared rather
+        # than left to the machine, so that a commit and CI check the same
+        # thing: the runner image happens to carry shellcheck, and a
+        # machine that commits here may not. Pinned, unlike a rev, because
+        # nothing bumps this dependency: pre-commit.ci moves rev, and this
+        # tree configures no dependabot `pre-commit` ecosystem entry to
+        # move an additional dependency, so a shellcheck release adding a
+        # check cannot turn a pull request red for having changed nothing
+        additional_dependencies:
+          - shellcheck-py==0.11.0.1
+  # actionlint asks whether a workflow is correct, zizmor whether it is
+  # safe: a token persisted where a later step can read it, an expression
+  # interpolated into a shell script, a trigger that runs a fork's code
+  # with write access. claude-review.yml holds a credential, which is the
+  # one an author is least able to see by reading. The auditor persona
+  # runs on every commit, and a finding is a comment or a fix this tree
+  # owes, not advice to weigh separately from the gate.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.30.1
+    hooks:
+      - id: zizmor
+        # offline is what it does by default, said out loud: it warns
+        # about the implicit choice on every run, and the choice is the
+        # right one. Two audits can query GitHub for the actions a
+        # workflow pins -- impostor-commit and known-vulnerable-actions
+        # -- which would make the hook want a token and report
+        # differently on a machine that has none. Those two therefore
+        # stay unrun, here and in CI.
+        # --no-progress is repeated rather than added: args replaces what
+        # the hook declares, and that flag is the whole of what it
+        # declares, so passing --offline alone would drop it
+        args: [--offline, --no-progress, --persona=auditor]

@@ -1,0 +1,35 @@
+---
+name: Feature request
+description: Ask the process to cover something it does not
+labels: [enhancement]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        What this tree decides is how a session takes an issue to a merged
+        pull request. A rule of the organization's standard, which the
+        process only follows, is asked for in
+        [btclib-org/.github](https://github.com/btclib-org/.github/issues).
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is missing
+      description: What a session cannot do today, or does wrongly.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it belongs in the process
+      description: What happened that a written rule would have prevented.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Another way to get the same result, and what it costs.

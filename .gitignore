@@ -1,0 +1,5 @@
+# what macOS writes into a directory it has been looked at in
+.DS_Store
+
+# the machine-local half of .claude/, which is tracked beside it
+.claude/settings.local.json
