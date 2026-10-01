@@ -9,6 +9,15 @@
 # then for the lock (at most ~30 minutes). It writes the holder's PID into
 # the lock, so that only the holder releases it. A lock whose holder's
 # process is gone is stale, and gate_take removes it.
+#
+# Reclaiming renames the owner file, which only one waiter wins (mv is
+# atomic; the others find no file). The winner reads the PID in what it
+# moved: only if that is the dead PID it judged stale does it remove the
+# lock. Otherwise its read was out of date and it moved a live holder's
+# file, which it puts back at once. While the lock has no owner file nobody
+# reclaims it, and gate_release reads again for up to 5 seconds. A waiter
+# killed while it holds the owner file renamed to stale.<pid> leaves a lock
+# with no owner, which the human removes.
 
 gate_take() {
   [ -d "$1" ] || { echo "gate_take: no directory $1"; return 1; }
@@ -30,10 +39,17 @@ gate_take() {
     fi
     _gl_pid=""
     [ -r "$_gl_lock/owner" ] && read -r _gl_pid _ < "$_gl_lock/owner"
-    if [ -n "$_gl_pid" ] && ! ps -p "$_gl_pid" >/dev/null 2>&1; then
-      echo "gate.lock of pid $_gl_pid is stale, its process gone: removed"
-      rm -f "$_gl_lock/owner"
-      rmdir "$_gl_lock" 2>/dev/null
+    if [ -n "$_gl_pid" ] && ! ps -p "$_gl_pid" >/dev/null 2>&1 &&
+      mv "$_gl_lock/owner" "$_gl_lock/stale.$$" 2>/dev/null; then
+      _gl_now=""
+      read -r _gl_now _ < "$_gl_lock/stale.$$"
+      if [ "$_gl_now" = "$_gl_pid" ]; then
+        echo "gate.lock of pid $_gl_pid is stale, its process gone: removed"
+        rm -f "$_gl_lock/stale.$$"
+        rmdir "$_gl_lock" 2>/dev/null
+      else
+        mv "$_gl_lock/stale.$$" "$_gl_lock/owner"
+      fi
       continue
     fi
     _gl_i=$((_gl_i + 1)); sleep 30
@@ -44,14 +60,19 @@ gate_take() {
 
 gate_release() {
   _gl_lock="$1/gate.lock"
-  _gl_pid=""
-  [ -r "$_gl_lock/owner" ] && read -r _gl_pid _ < "$_gl_lock/owner"
-  if [ "$_gl_pid" = "$$" ]; then
-    rm -f "$_gl_lock/owner"
-    rmdir "$_gl_lock"
-    echo "gate.lock released by $$"
-  else
-    echo "gate.lock is not ours (holder ${_gl_pid:-unknown}, we are $$): left alone"
-    return 1
-  fi
+  _gl_i=0
+  while [ "$_gl_i" -lt 5 ]; do
+    _gl_pid=""
+    [ -r "$_gl_lock/owner" ] && read -r _gl_pid _ < "$_gl_lock/owner"
+    if [ "$_gl_pid" = "$$" ]; then
+      rm -f "$_gl_lock/owner"
+      rmdir "$_gl_lock" 2>/dev/null &&
+        { echo "gate.lock released by $$"; return 0; }
+    elif [ -n "$_gl_pid" ]; then
+      break
+    fi
+    _gl_i=$((_gl_i + 1)); sleep 1
+  done
+  echo "gate.lock is not ours (holder ${_gl_pid:-unknown}, we are $$): left alone"
+  return 1
 }

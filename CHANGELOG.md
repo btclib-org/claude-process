@@ -33,3 +33,8 @@ follow not pausing (closes #9).
 *Union files after a rebase* saves, reconstructs and compares every
 union file the branch touches, `RELEASE_NOTES.md` included, which
 `check-changelog` does not read (closes #3).
+
+### Two waiters no longer take one stale gate lock
+
+`gate_take` reclaims a dead holder's lock by renaming its owner file,
+which only one waiter wins, and checks the PID in what it moved (closes #10).
