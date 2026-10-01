@@ -17,7 +17,9 @@ The process the btclib-org maintainers follow with
   a pull request to `main`;
 - `agents/writer.md` — the agent that writes a change in its own
   worktree;
-- `agents/reviewer.md` — the agent that reviews it at fresh context.
+- `agents/reviewer.md` — the agent that reviews it at fresh context;
+- `scripts/gate-lock.sh` — the gate lock every worker takes before its
+  heavy gates.
 
 The command is the single source of the process. The agents are
 generic: they read the sections of it that their brief names.
@@ -33,18 +35,19 @@ generic: they read the sections of it that their brief names.
 
 ## Setup
 
-Clone the repository and link its process files into `~/.claude/`:
+Clone the repository and link its files into `~/.claude/`:
 
 ```shell
 git clone https://github.com/btclib-org/claude-process ~/Git/claude-process
-mkdir -p ~/.claude/commands ~/.claude/agents
+mkdir -p ~/.claude/commands ~/.claude/agents ~/.claude/scripts
 ln -s ~/Git/claude-process/commands/btclib-org.md ~/.claude/commands/btclib-org.md
 ln -s ~/Git/claude-process/agents/writer.md ~/.claude/agents/writer.md
 ln -s ~/Git/claude-process/agents/reviewer.md ~/.claude/agents/reviewer.md
+ln -s ~/Git/claude-process/scripts/gate-lock.sh ~/.claude/scripts/gate-lock.sh
 ```
 
-`ln -s` refuses to overwrite an existing file: move any `writer.md` or
-`reviewer.md` you already have out of the way first.
+`ln -s` refuses to overwrite an existing file: move any `writer.md`,
+`reviewer.md` or `gate-lock.sh` you already have out of the way first.
 
 Check it in a new session: `/btclib-org` is listed among the commands,
 and `/agents` lists `writer` and `reviewer`.

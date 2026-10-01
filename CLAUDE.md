@@ -70,12 +70,12 @@ git worktree remove --force <scratchpad>/wt-<tracker>-<issue>-<repo>-<role>
 
 - **The primary checkout is what every session reads.** On a machine set
   up as `README.md` says, `~/.claude/commands/btclib-org.md`,
-  `~/.claude/agents/writer.md` and `~/.claude/agents/reviewer.md` are
-  symlinks into it, so a file edited or a branch switched to there
-  changes the text the next session reads. That is why the section above
-  holds here as it does, and why the fast-forward alone moves that
-  checkout. The links answer:
+  `~/.claude/agents/writer.md`, `~/.claude/agents/reviewer.md` and
+  `~/.claude/scripts/gate-lock.sh` are symlinks into it, so a file
+  edited or a branch switched to there changes the text the next
+  session reads. That is why the section above holds here as it does,
+  and why the fast-forward alone moves that checkout. The links answer:
 
   ```shell
-  ls -l ~/.claude/commands/btclib-org.md ~/.claude/agents
+  ls -l ~/.claude/commands/btclib-org.md ~/.claude/agents ~/.claude/scripts
   ```
