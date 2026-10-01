@@ -60,3 +60,9 @@ real file it models, same shape, before its outcome is reported
 - **`lint.yml` carries `btclib-org/.github`'s `Sign-off` job, which refuses a
   commit not signed off by its author** (issue btclib-org/.github#1467):
   `CONTRIBUTING.md`'s shared half says how to sign off.
+
+### The primary-checkout section uses one form for the checkout
+
+- **The section writes the checkout as `"${checkout:?}"` throughout, says
+  what `<scratchpad>` is and names the pull** (issue
+  btclib-org/.github#1500).
