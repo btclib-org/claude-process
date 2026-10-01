@@ -366,12 +366,12 @@ precedence over one of the same name set on the organization.
 
   ```shell
   gh api repos/btclib-org/claude-process/code-scanning/default-setup \
-    --jq .state
-  # not-configured
+    --jq '{state, languages}'
+  # {"languages":["actions"],"state":"not-configured"}
   ```
 
-  Section 10 of the standard gives `codeql` to the Python trees only.
-  What CodeQL would analyse here is the workflows (`actions`), which
+  Section 10 of the standard names the trees that run `codeql`, and this
+  is not one of them. Default setup would scan `actions`, the workflows
   `actionlint` and `zizmor` read in the gate.
 - **No `SECURITY.md`, `RELEASING.md` or `RELEASE_NOTES.md`.** Those are
   the rows section 2 of the standard marks for a repository that
