@@ -2,10 +2,11 @@
 # the lint gate of this repository. What it ships is prose -- the process
 # command, the two agents and the files around them -- so the hooks below
 # are the ones with a subject here: the markdown, the yaml of the
-# workflows and of the issue forms, and the text every file is made of.
+# workflows and of the issue forms, the one shell script, and the text
+# every file is made of.
 #
 # What is absent is absent for a measured reason rather than an
-# oversight. `git ls-files '*.py' '*.toml' '*.json' '*.sh'` names
+# oversight. `git ls-files '*.py' '*.toml' '*.json'` names
 # nothing, so there is no ruff, mypy, taplo or json hook to read a file
 # that does not exist, and there is no project and no `uv.lock`, so
 # `uv-lock` has nothing to keep in step. A hook is added here the day the
@@ -40,6 +41,17 @@ repos:
         language: pygrep
         entry: '^ *rev: "?v?([0-9]+|[0-9][0-9.]*(a|b|rc|dev)[0-9]+)"?$'
         files: ^\.pre-commit-config\.yaml$
+  # the shell scripts in the tree, which is a question for
+  # `git ls-files '*.sh'` rather than a list written here. Pinned to the
+  # shellcheck-py version used below as actionlint's additional dependency,
+  # so one shellcheck runs across the tree: the rev is a git tag, which
+  # upstream re-cuts with a -N suffix for a packaging change, and the pin
+  # is the PyPI version, which such a re-cut leaves alone, so the two name
+  # one release without being one string
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -47,6 +59,7 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args: [--fix=lf]
+      - id: check-shebang-scripts-are-executable
       - id: check-case-conflict
       - id: fix-byte-order-marker
       - id: check-merge-conflict
@@ -227,14 +240,17 @@ repos:
         name: actionlint (github workflows)
         # actionlint delegates the body of a run: step to shellcheck if
         # it finds one on the PATH, and without it validates the yaml
-        # around a shell script rather than the script. Declared rather
-        # than left to the machine, so that a commit and CI check the same
-        # thing: the runner image happens to carry shellcheck, and a
-        # machine that commits here may not. Pinned, unlike a rev, because
-        # nothing bumps this dependency: pre-commit.ci moves rev, and this
-        # tree configures no dependabot `pre-commit` ecosystem entry to
-        # move an additional dependency, so a shellcheck release adding a
-        # check cannot turn a pull request red for having changed nothing
+        # around a shell script rather than the script. That is a different
+        # subject from the shellcheck hook above: this one reads the lines a
+        # workflow inlines, where that one reads the scripts themselves.
+        # Declared rather than left to the machine, so that a commit and
+        # CI check the same thing: the runner image happens to carry
+        # shellcheck, and a machine that commits here may not. Pinned,
+        # unlike a rev, because nothing bumps this dependency:
+        # pre-commit.ci moves rev, and this tree configures no dependabot
+        # `pre-commit` ecosystem entry to move an additional dependency,
+        # so a shellcheck release adding a check cannot turn a pull
+        # request red for having changed nothing
         additional_dependencies:
           - shellcheck-py==0.11.0.1
   # actionlint asks whether a workflow is correct, zizmor whether it is

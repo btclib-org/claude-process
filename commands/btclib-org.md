@@ -575,35 +575,33 @@ the orchestrator in the pull request.
 - **The gate lock.** One worker gates at a time: the suite, the hooks,
   the docs build and any load generator. Wait for the load, then take
   the lock — so that nobody holds it while only waiting — and release it
-  the moment the gates finish:
+  the moment the gates finish. The lock is taken and released only
+  through `~/.claude/scripts/gate-lock.sh`, sourced in the same
+  background shell call as the gates (*Long jobs run in the background*),
+  never by a hand-written `mkdir` or `rmdir`:
 
   ```shell
-  n=$(getconf _NPROCESSORS_ONLN)
-  i=0
-  while [ "$i" -lt 40 ]; do   # at most ~20 minutes
-    if [ -r /proc/loadavg ]; then l=$(cut -d' ' -f1 /proc/loadavg)
-    else l=$(LC_ALL=C sysctl -n vm.loadavg | cut -d' ' -f2); fi
-    [ "${l%.*}" -lt $((2 * n)) ] && break
-    i=$((i + 1)); sleep 30
-  done
-  got=0; i=0
-  while [ "$i" -lt 60 ]; do   # at most ~30 minutes
-    mkdir <scratchpad>/gate.lock 2>/dev/null && { got=1; break; }
-    i=$((i + 1)); sleep 30
-  done
-  [ "$got" = 1 ] || { echo "gate.lock still held after ~30 min"; exit 1; }
-  # … gates, recording the load at each run …
-  rmdir <scratchpad>/gate.lock   # only by the worker whose mkdir succeeded
+  . ~/.claude/scripts/gate-lock.sh
+  gate_take <scratchpad> <worktree> && {
+    # … gates, recording the load at each run …
+    gate_release <scratchpad>
+  }
   ```
 
-  The threshold is a 1-minute load under twice the core count. Under
-  some locales `sysctl` prints a decimal comma, which `[ -lt ]` rejects,
-  so the wait would always run its full 20 minutes; `LC_ALL=C` prevents
-  it. The snippet is POSIX `sh`. Past the
-  20 minutes of load, run anyway and report the load. Where the lock is
-  still held after 30 minutes, report it to the orchestrator rather than
-  removing it. A load generator is killed by the PID you
-  recorded, and `ps` shows it gone before the lock is released.
+  `gate_take` writes its shell's PID into the lock, and `gate_release`
+  removes only a lock holding that PID. A lock whose holder's process is
+  gone is stale, and `gate_take` removes it itself. No session removes a
+  lock any other way: a failed `mkdir` or an old lock says nothing
+  about whose it is. A lock with no owner file — a hand `mkdir`, or one
+  from the old recipe — is never reclaimed: the human removes it, after
+  checking that no gate runs. The script is POSIX `sh`. The threshold is a
+  1-minute load under twice the core count, read under `LC_ALL=C`
+  because some locales print a decimal comma. Past 20 minutes of load
+  the gates run anyway, and the report gives the load. Where the lock is
+  still held after 30 minutes, `gate_take` fails and prints the holder,
+  and the worker reports it to the orchestrator. A load generator is
+  killed by the PID you recorded, and `ps` shows it gone before the lock
+  is released.
 
 ### Committing and rebasing
 
@@ -1028,8 +1026,8 @@ not landed, and its cut-back is one of the item's alternatives.
 - **The night ends** when nothing left can advance without an answer,
   at the ceiling, or when the human turns it off. Ended any way but
   the last, nothing is left running: no worker mid-turn, no
-  background job. A gate lock is released only where its holder was one
-  of your own workers, now stopped; any other is reported. Worktrees of
+  background job. A lock left by a worker you stopped is stale, and
+  the next `gate_take` removes it. Nobody removes one by hand. Worktrees of
   branches waiting on an answer stay standing.
 
 **The morning report** is the message that ends the night; a copy in

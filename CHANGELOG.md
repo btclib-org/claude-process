@@ -15,3 +15,9 @@ settings kept outside the tree (issue #2).
 
 `Lint` and `Dependency review` are required checks on `main`, with
 `strict` on, and the files that describe it say so (closes #2).
+
+### The gate lock records its holder
+
+`scripts/gate-lock.sh` takes the gate lock with the holder's PID in it,
+releases only a lock holding that PID, and removes a lock whose holder
+is gone. *The gates* uses it alone (closes #5).
