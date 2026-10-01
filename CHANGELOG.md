@@ -21,3 +21,15 @@ settings kept outside the tree (issue #2).
 `scripts/gate-lock.sh` takes the gate lock with the holder's PID in it,
 releases only a lock holding that PID, and removes a lock whose holder
 is gone. *The gates* uses it alone (closes #5).
+
+### A speedy landing is followed by a read of `main`'s CI
+
+*Landing*'s speedy bullet has the orchestrator read `main`'s CI after
+each speedy landing and put an agent on a red at once, the landings that
+follow not pausing (closes #9).
+
+### The union steps cover `RELEASE_NOTES.md` as well
+
+*Union files after a rebase* saves, reconstructs and compares every
+union file the branch touches, `RELEASE_NOTES.md` included, which
+`check-changelog` does not read (closes #3).
