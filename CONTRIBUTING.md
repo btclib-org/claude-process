@@ -318,8 +318,9 @@ sentence claims, which the pull request's body records.
 pre-commit run --all-files`, which is the same command this section
 gives you: one declaration of what the hooks are, so a hook added to
 `.pre-commit-config.yaml` needs no edit to a workflow. Its second job
-is `Dependency review`. `REPOSITORY.md`'s *Required checks on main*
-records the rule that makes both required, and whether it is set.
+is `Dependency review`. Both are required checks on `main`, and
+`REPOSITORY.md`'s *Required checks on main* records the protection that
+makes them so.
 
 `links.yml` and `claude-review.yml` only report, and must go on doing
 so. The first is weekly and reads every link in the markdown, where a

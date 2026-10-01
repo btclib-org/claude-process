@@ -10,11 +10,11 @@ name: lint
 # can produce about the checkout, and CONTRIBUTING.md's last section says
 # what they leave uncovered.
 #
-# A job's name becomes a required context, and that is a second step
-# rather than part of this one: a required context nothing produces
-# blocks every merge with nothing in the tree to explain why, so the
-# workflow lands first and the protection REPOSITORY.md's "Required
-# checks on main" records follows it once a run is green.
+# A job's name is a required context on main, bound to the Actions app,
+# and REPOSITORY.md's "Required checks on main" records it. Renaming a
+# job leaves a required context nothing produces, which blocks every
+# merge but an --admin one with nothing in the tree to explain why, so a
+# rename is a change to the protection as well.
 
 on:
   push:

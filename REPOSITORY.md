@@ -47,26 +47,54 @@ gh api repos/btclib-org/claude-process \
 
 ```shell
 gh api repos/btclib-org/claude-process/branches/main/protection \
-  --jq '.required_status_checks | {strict, checks: [.checks[].context]}'
+  --jq '.required_status_checks | {strict, checks}'
+# {"checks":[{"app_id":15368,"context":"Lint"},
+#            {"app_id":15368,"context":"Dependency review"}],
+#  "strict":true}
 ```
 
-**Classic protection is not set yet, and the call above answers `404
-Branch not protected`.** The target is what `.github`, `portanode` and `btclib-org.github.io`
-carry: `strict` on, and `Lint` and `Dependency review` as the required checks,
-bound to `15368`, the Actions app, so nothing else can report a context.
+**`lint.yml` runs on every pull request, and a red `Lint` or `Dependency
+review` job stops a merge by anyone but the maintainer.** `strict` is on,
+so anyone else's pull request must also be up to date with `main`. Both
+contexts are bound to `15368`, the Actions app, so nothing else can
+report one.
 
 | Check | Produced by |
 | --- | --- |
 | `Lint` | `lint.yml` |
 | `Dependency review` | `lint.yml`'s second job |
 
-A context cannot be bound before a workflow has produced it, so the
-protection is created once `lint.yml` is on `main` and has run. The
-`PUT` sets every field it is given and clears the rest, so it carries the
-whole object; the object at the foot of the section of this name in
-`btclib-org/.github`'s own `REPOSITORY.md` is the one to send, field for
-field, and is pointed at rather than copied. This file is updated with
-the answer in the pull request that follows.
+**The requirement lives in classic branch protection, not in a ruleset.**
+No ruleset on `main` carries a `required_status_checks` rule:
+
+```shell
+gh api repos/btclib-org/claude-process/rules/branches/main \
+  --jq '[.[] | {type, ruleset_id}]'
+```
+
+The protection is the same object `.github`, `portanode` and
+`btclib-org.github.io` carry. Its other fields repeat the rulesets, except
+two that are off: `enforce_admins` and classic's own `required_signatures`.
+[Section 11][s11-branch] gives the reason for both.
+
+```shell
+gh api repos/btclib-org/claude-process/branches/main/protection \
+  --jq '{reviews: .required_pull_request_reviews
+           | {n: .required_approving_review_count,
+              dismiss: .dismiss_stale_reviews},
+         admins: .enforce_admins.enabled,
+         linear: .required_linear_history.enabled,
+         threads: .required_conversation_resolution.enabled,
+         force: .allow_force_pushes.enabled,
+         delete: .allow_deletions.enabled,
+         signatures: .required_signatures.enabled}'
+# {"admins":false,"delete":false,"dismiss":true,"force":false,
+#  "linear":true,"n":1,"signatures":false,"threads":true}
+```
+
+The `PUT` sets every field it is given and clears the rest, so it carries
+the whole object; the one at the foot of the section of this name in
+`btclib-org/.github`'s own `REPOSITORY.md` is the one to send.
 
 **`links.yml` is not a required check and must not become one.** It asks
 whether somebody else's server answered, which is a question a merge
@@ -163,6 +191,20 @@ Issues are on: this repository's own tracker is where a defect in the
 process text is filed. The wiki and the projects board are off. The
 standard states no rule about either, so no answer to them is a decision
 here.
+
+## Pages, which this repository does not use
+
+**There is no site here, and the endpoint that would describe one
+answers with its absence**, so what is read is the status line alone:
+
+```shell
+gh api -i repos/btclib-org/claude-process/pages 2>/dev/null | head -1
+# HTTP/2.0 404 Not Found
+```
+
+The same call against `btclib-org/btclib-org.github.io`, the tree that
+serves `btclib.org`, answers `HTTP/2.0 200 OK`, which is what makes the
+`404` an absence rather than a permission.
 
 ## Topics
 
@@ -355,3 +397,4 @@ empty answer records no decision.
 of the `--jq` objects here.
 
 [s11-tokens]: https://github.com/btclib-org/.github/blob/main/README.md#tokens-publishing-scanning
+[s11-branch]: https://github.com/btclib-org/.github/blob/main/README.md#branch-protection-and-rulesets
