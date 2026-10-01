@@ -640,20 +640,29 @@ the orchestrator in the pull request.
 
 ### Union files after a rebase
 
-`CHANGELOG.md` and `RELEASE_NOTES.md` are `merge=union`, so a rebase
-never conflicts on them — and can stack a superseded entry beside its
-replacement, place yours below an entry that landed meanwhile, or eat the
-blank line above a `###`. `git rebase` exits `0`, and `git diff --numstat`,
-`git range-diff`, `git merge-tree --write-tree` and comparing the entry's
-text all pass. `check-changelog` reads only `CHANGELOG.md`. There, on a
-run before the markdownlint fixer, it names the eaten blank line. It names
-a superseded entry only where a heading or a `(closes #N)` repeats, and
-never yours misplaced by the rebase. Only reconstruction finds all three:
+`CHANGELOG.md` and `RELEASE_NOTES.md` are `merge=union`, so a rebase never
+conflicts on them — and can stack a superseded entry beside its
+replacement, place yours below an entry that landed meanwhile, eat the
+blank line above a `###`, or keep once a line both sides added
+identically. `git rebase` exits `0`, and `git diff --numstat`, `git
+range-diff`, `git merge-tree --write-tree` and comparing the entry's text
+all pass. `check-changelog` reads only `CHANGELOG.md`. There, on a run
+before the markdownlint fixer, it names the eaten blank line. It names a
+superseded entry only where a heading or a `(closes #N)` repeats, and
+never yours misplaced by the rebase. Only reconstruction finds all of
+them. In `RELEASE_NOTES.md` no hook names any of them: `check-changelog`
+does not read it, and markdownlint only fixes it. Its open section is the
+first `## v…` heading, marked as work in progress, and an entry is a
+bullet at the end of its list. Where its bullets carry no blank line
+between them, as in btclib-secp256k1, splice your bullet without one. Do
+each step for every union file the branch touches
+(`git -C <wt> diff --name-only <merge-base> <tip> --
+CHANGELOG.md RELEASE_NOTES.md`), `<file>` below naming each in turn:
 
 1. **Before rebasing**, save the base and your tip in your scratch
-   directory: `git -C <wt> show <merge-base>:CHANGELOG.md >
-   <scratch>/base-<branch>.md`, `git -C <wt> show <tip>:CHANGELOG.md >
-   <scratch>/pre-<branch>.md`;
+   directory: `git -C <wt> show <merge-base>:<file> >
+   <scratch>/base-<branch>-<file>`, `git -C <wt> show <tip>:<file> >
+   <scratch>/pre-<branch>-<file>`;
    `diff` them to name your block and its anchor.
 1. **Rebase, then run `pre-commit run --all-files`.** A bare run after a
    rebase checks nothing, nothing being staged. Read what
@@ -661,13 +670,15 @@ never yours misplaced by the rebase. Only reconstruction finds all three:
    fixer by hand first.
 1. **Reconstruct**: the new base's blob with your block spliced at its
    anchor (entries go at the end of the open section), and compare it
-   byte for byte with `git -C <wt> show <rebased tip>:CHANGELOG.md | cmp -
-   <scratch>/expected-<branch>.md`. Count your entry's heading too.
+   byte for byte with `git -C <wt> show <rebased tip>:<file> | cmp -
+   <scratch>/expected-<branch>-<file>`. Count your entry's heading too.
 1. **Repair to the reconstruction.** Where the file opens with
    `<!-- markdownlint-disable MD022 MD032 -->` or the hook runs without
    `--fix`, restore the blank line by hand; otherwise the
    `markdownlint-cli2` hook restores it, run through the tree's own
    `pre-commit` invocation.
+   Where the difference is anything else — a line the union kept once —
+   copy the reconstruction in.
 1. **Record the broken tip's sha in your report**; create no ref for it.
 1. **Re-read the section around your entry**, for prose the merge made
    false ("the entry above" now naming a stranger).
@@ -738,7 +749,7 @@ The orchestrator's. **Before opening, and again before landing:**
   branch's.
 - **Rebase onto `origin/main`**, run the gates again, and read the union
   files (*Union files after a rebase*). A rebase touching only
-  `CHANGELOG.md` re-runs only the lint gate: `pre-commit run
+  union files re-runs only the lint gate: `pre-commit run
   --all-files`, through the tree's own invocation — never the fixer
   alone, which mends the seam before `check-changelog` can name it.
 
@@ -748,20 +759,22 @@ The orchestrator's. **Before opening, and again before landing:**
   reviewer, unless the only difference is the union driver's. For a
   one-commit branch that is proved by comparing every added and removed
   line — bullets and blank lines included, headers dropped — outside the
-  union file, with explicit shas, each revision a separate argument:
+  union files, with explicit shas, each revision a separate argument:
 
   ```shell
   hdr='^(diff --git |index |@@ |--- (a/|/dev/null)|\+\+\+ (b/|/dev/null))'
   before=$(git -C <wt> diff '<cleared sha>^' '<cleared sha>' \
-             -- . ':!CHANGELOG.md' | grep -vE "$hdr" | grep -E '^[+-]')
+             -- . ':!CHANGELOG.md' ':!RELEASE_NOTES.md' \
+             | grep -vE "$hdr" | grep -E '^[+-]')
   after=$(git -C <wt> diff '<new sha>^' '<new sha>' \
-            -- . ':!CHANGELOG.md' | grep -vE "$hdr" | grep -E '^[+-]')
+            -- . ':!CHANGELOG.md' ':!RELEASE_NOTES.md' \
+            | grep -vE "$hdr" | grep -E '^[+-]')
   printf '%s\n' "$before" | shasum
   printf '%s\n' "$after"  | shasum
   printf '%s\n' "$before" "$after" | grep -c .   # not zero
   ```
 
-  Equal hashes over a non-empty stream, **and** your entry's own block
+  Equal hashes over a non-empty stream, **and** your entries' own blocks
   byte-identical at both shas, and the clearance stands. Say in the pull
   request which case it was.
 - **Title and body.** The title carries the citation; the body carries
@@ -774,7 +787,7 @@ The orchestrator's. **Before opening, and again before landing:**
   merge.
 - **"This branch has conflicts" on GitHub is real** even where the local
   rebase was silent: the forge's merge does not apply `merge=union`.
-  Rebase, push, and reconstruct the union file.
+  Rebase, push, and reconstruct the union files.
 - **Default landing: watch the checks and the bot's review**, answer what
   it reasonably raises, and iterate to an explicit ACK naming the current
   `headRefOid`. A `cancelled` run is not a `failure`.
@@ -797,6 +810,10 @@ The orchestrator's. **Before opening, and again before landing:**
       publishing machinery, whatever the repository's `CONTRIBUTING.md`
       names as decided by CI alone. Where it does touch one, speedy still
       waits for the checks that verify it, and the ACK stays waived.
+      Because speedy does not wait for CI, the orchestrator reads `main`'s
+      CI after each speedy landing. Where it is red, an agent is put to
+      find out why at once: it files the cause as an issue and fixes it,
+      and the landings that follow do not pause meanwhile.
 
   A speedy grant covers the session — every branch and every piece of
   collateral landed before it ends — unless the maintainer bounds it more
