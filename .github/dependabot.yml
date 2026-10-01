@@ -1,0 +1,35 @@
+---
+# one ecosystem, because one is what this tree configures. There is no
+# manifest and no lock file -- `git ls-files 'pyproject.toml' 'uv.lock'`
+# is empty -- so the actions the workflows pin are the whole of what
+# dependabot is pointed at.
+#
+# The pre-commit hook revisions are the other thing this repository pins
+# and are not below: the maintainer decided to keep pre-commit.ci for
+# them (btclib-org/.github#1391). The `ci:` block of
+# .pre-commit-config.yaml has its weekly autoupdate rewriting `rev:`, so
+# a second bot on the same pin would only compete with it.
+#
+# Grouped, so an update week is one pull request rather than one per
+# action. No target-branch: without one dependabot opens against the
+# default branch, which is the only branch a change lands on.
+#
+# The seven-day cooldown is what the weekly interval is meant to trade
+# against: a compromised release is usually yanked within days.
+version: 2
+updates:
+  # every action in .github/workflows is pinned to a commit SHA, and
+  # nothing but this moves one: without it a pin is frozen for good, and
+  # a fix -- or an advisory -- upstream never reaches this repository
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      # Thursday, the day section 10 of btclib-org/.github's README.md
+      # gives dependabot across the organization
+      day: thursday
+    groups:
+      actions:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7

@@ -1,0 +1,148 @@
+---
+name: lint
+
+# what this workflow runs is .pre-commit-config.yaml itself, never a
+# second list of the same tools: a commit and CI then enforce one thing,
+# and a hook added to that file needs no edit here.
+#
+# It is the whole of what a merge here can be gated on. There is no suite
+# and no build in this tree, so the hooks are the only answer a workflow
+# can produce about the checkout, and CONTRIBUTING.md's last section says
+# what they leave uncovered.
+#
+# A job's name becomes a required context, and that is a second step
+# rather than part of this one: a required context nothing produces
+# blocks every merge with nothing in the tree to explain why, so the
+# workflow lands first and the protection REPOSITORY.md's "Required
+# checks on main" records follows it once a run is green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # closed too, though the jobs below decline the real work on it: a
+    # merge or a close is neither a push nor a synchronize, so a run this
+    # pull request's own concurrency group is still holding survives
+    # either unless the closed event lands in that same group
+    types: [opened, reopened, synchronize, ready_for_review, closed]
+  # the gates included: a branch whose pull request is not open yet has
+  # no other way to ask
+  workflow_dispatch:
+
+# least privilege for the GITHUB_TOKEN. Nothing here writes anything --
+# the hooks that fix in place fix a checkout that is thrown away, the
+# `ci:` block refusing an autofix commit for the same reason -- so no job
+# elevates it
+permissions:
+  contents: read
+
+concurrency:
+  # named literally, never through github.workflow: in a called workflow
+  # that expression is the *caller's* name.
+  #
+  # Keyed on the pull request's number rather than on github.head_ref:
+  # two forks whose head branches carry the same name share one head_ref
+  # group and cancel each other, and this repository is public. A run
+  # with no pull request -- a push to main, a dispatch -- has no number
+  # and falls back to github.ref, which gives it a group of its own
+  group: lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    # this name is a required check's context, a context being keyed by
+    # name alone. Renaming it cannot be done in a pull request once the
+    # rule names it: the branch stops producing the old name while the
+    # rule still waits for it, so the rule moves first and the pull
+    # request follows
+    name: Lint
+    # a draft pull request is work its author is not asking anyone to
+    # read yet and spends no runner. A closed one spends none either --
+    # the trigger above takes the closed event only to supersede a run
+    # this pull request's own group is still holding
+    if: ${{ !github.event.pull_request.draft && github.event.action != 'closed' }}
+    runs-on: ubuntu-latest
+    # a cold cache builds a node environment for markdownlint and
+    # prettier and a python one for most of the rest before a hook runs
+    # at all; a job past this is hung rather than working
+    timeout-minutes: 20
+    steps:
+      # every action pinned to a commit SHA with the tag in the comment:
+      # a tag, let alone a branch, is a name its owner can move
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # the hooks read the tree and nothing pushes it back
+          persist-credentials: false
+
+      # uv is the only prerequisite here as everywhere, and this is the
+      # step that supplies it
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      # the cache key needs the runner image, not only the OS: a
+      # pre-commit environment built on one image is not always usable on
+      # the next one, and a stale hit fails in the hook rather than here
+      - name: Identify the runner image
+        id: image
+        run: echo "os=${ImageOS:-unknown}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the pre-commit environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          # the hook config alone: every environment pre-commit builds is
+          # named by a rev this file pins, and there is no .python-version
+          # to hash beside it
+          key: >-
+            pre-commit-${{ runner.os }}-${{ steps.image.outputs.os }}-${{
+            hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-${{ steps.image.outputs.os }}-
+
+      # uvx, the command CONTRIBUTING.md's last section gives an author
+      # to run before pushing: running the same one is the point.
+      # --show-diff-on-failure changes no hook's answer: it prints what
+      # an in-place fixer changed, so a red job says what to apply rather
+      # than only that something is unclean
+      - name: Run every hook
+        run: uvx pre-commit run --all-files --show-diff-on-failure
+
+  dependency-review:
+    # btclib-org/.github's reusable-lint.yml job, written out because this
+    # file keeps its own lint job; section 11 of btclib-org/.github's
+    # README.md states the rule. A job of its own rather than a step of the
+    # one above: it reads the forge's dependency graph and not the checkout,
+    # so it takes no checkout and no hook environment. It is a required
+    # check, and its context is this name.
+    name: Dependency review
+    # the action compares a pull request's base and head, which only a
+    # pull_request event carries: on a push or a dispatch it has no pair
+    # and fails. A draft and a closed pull request decline as the job
+    # above does
+    if: >-
+      ${{ github.event_name == 'pull_request'
+      && !github.event.pull_request.draft
+      && github.event.action != 'closed' }}
+    runs-on: ubuntu-latest
+    # the action makes a few API calls and installs nothing, so a job past
+    # this is waiting on the forge
+    timeout-minutes: 10
+    # the compare endpoint needs contents: read, and the action posts
+    # nothing
+    permissions:
+      contents: read
+    steps:
+      # no checkout: the action reads the graph through the API and the
+      # config file through the input below
+      - name: Review the dependencies this pull request changes
+        # pinned to a commit SHA, the tag in the comment
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # the organization's one file, at main, so that a change to the
+          # threshold reaches every tree in one landing
+          config-file: btclib-org/.github/.github/dependency-review.yml@main
+          # a remote config file is read without credentials unless this
+          # carries one, and GitHub limits an unauthenticated request by
+          # the address it comes from, which a runner shares
+          external-repo-token: ${{ github.token }}

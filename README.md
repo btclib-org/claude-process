@@ -1,5 +1,15 @@
 # claude-process
 
+<!-- One badge per property of the tree, in the order section 2 of
+btclib-org/.github's README.md fixes. Nothing here is a Python package
+and there is no `release.yml`, so the first group is empty; the second
+holds the gates, pre-commit.ci and then `lint`, and then the sentinels,
+which section 10's record gives this tree as `links` alone. Every
+workflow badge carries `?branch=main`, and its link the same filter. -->
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/btclib-org/claude-process/main.svg)](https://results.pre-commit.ci/latest/github/btclib-org/claude-process/main)
+[![lint](https://github.com/btclib-org/claude-process/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/btclib-org/claude-process/actions/workflows/lint.yml?query=branch%3Amain)
+[![links](https://github.com/btclib-org/claude-process/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/btclib-org/claude-process/actions/workflows/links.yml?query=branch%3Amain)
+
 The process the btclib-org maintainers follow with
 [Claude Code](https://claude.com/claude-code):
 
@@ -9,7 +19,7 @@ The process the btclib-org maintainers follow with
   worktree;
 - `agents/reviewer.md` — the agent that reviews it at fresh context.
 
-The command is the single source of the process. The two agents are
+The command is the single source of the process. The agents are
 generic: they read the sections of it that their brief names.
 
 ## Prerequisites
@@ -23,7 +33,7 @@ generic: they read the sections of it that their brief names.
 
 ## Setup
 
-Clone the repository and link the three files into `~/.claude/`:
+Clone the repository and link its process files into `~/.claude/`:
 
 ```shell
 git clone https://github.com/btclib-org/claude-process ~/Git/claude-process
@@ -59,3 +69,4 @@ git -C ~/Git/claude-process pull --ff-only
 The links then point at the new text. Do not edit the clone the links
 point at: change the process through a pull request from a worktree,
 reviewed by another person, like any other btclib-org repository.
+[CONTRIBUTING.md](./CONTRIBUTING.md) says how.

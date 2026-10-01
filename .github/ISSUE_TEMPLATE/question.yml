@@ -1,0 +1,22 @@
+---
+name: Question
+description: Ask how the process works, or why it is written that way
+labels: [question]
+
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Discussions are not enabled here, so a question is an issue: this
+        form is what keeps one from having to be filed as a bug.
+        `README.md` says what the tree holds and how to set it up, and it
+        comes first.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: >
+        What you are trying to do, and what you have already read or run.
+    validations:
+      required: true
