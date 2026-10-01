@@ -54,3 +54,9 @@ run on it exited 0; the first push of new work needs none (closes #12).
 *How you establish a fact* has a rehearsal's input compared with the
 real file it models, same shape, before its outcome is reported
 (closes #13).
+
+### A `Signed-off-by:` trailer on every commit of a pull request
+
+- **`lint.yml` carries `btclib-org/.github`'s `Sign-off` job, which refuses a
+  commit not signed off by its author** (issue btclib-org/.github#1467):
+  `CONTRIBUTING.md`'s shared half says how to sign off.
