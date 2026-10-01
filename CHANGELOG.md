@@ -38,3 +38,8 @@ union file the branch touches, `RELEASE_NOTES.md` included, which
 
 `gate_take` reclaims a dead holder's lock by renaming its owner file,
 which only one waiter wins, and checks the PID in what it moved (closes #10).
+
+### REPOSITORY.md says this tree does not run codeql
+
+*What is not configured* says section 10 does not name this tree for
+`codeql`, and shows the languages default setup would scan (closes #15).
