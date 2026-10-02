@@ -66,3 +66,9 @@ real file it models, same shape, before its outcome is reported
 - **The section writes the checkout as `"${checkout:?}"` throughout, says
   what `<scratchpad>` is and names the pull** (issue
   btclib-org/.github#1500).
+
+### `CONTRIBUTING.md` says what stands in for the ack while the bot review is off
+
+- **The shared half says a local review of a named sha stands in for the
+  ack while `claude-review.yml` is off** (issue
+  btclib-org/.github#1527).
