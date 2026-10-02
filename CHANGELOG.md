@@ -72,3 +72,9 @@ real file it models, same shape, before its outcome is reported
 - **The shared half says a local review of a named sha stands in for the
   ack while `claude-review.yml` is off** (issue
   btclib-org/.github#1527).
+
+### The README names the clone's path once
+
+*Setup* and *Updating* name the clone's path in `CLAUDE_PROCESS`, say
+that any absolute path works, and say that a clone moved later is
+linked again (closes #21).
