@@ -49,20 +49,22 @@ gh api repos/btclib-org/claude-process \
 gh api repos/btclib-org/claude-process/branches/main/protection \
   --jq '.required_status_checks | {strict, checks}'
 # {"checks":[{"app_id":15368,"context":"Lint"},
-#            {"app_id":15368,"context":"Dependency review"}],
+#            {"app_id":15368,"context":"Dependency review"},
+#            {"app_id":15368,"context":"Sign-off"}],
 #  "strict":true}
 ```
 
-**`lint.yml` runs on every pull request, and a red `Lint` or `Dependency
-review` job stops a merge by anyone but the maintainer.** `strict` is on,
-so anyone else's pull request must also be up to date with `main`. Both
-contexts are bound to `15368`, the Actions app, so nothing else can
-report one.
+**`lint.yml` runs on every pull request, and a red `Lint`, `Dependency
+review` or `Sign-off` job stops a merge by anyone but the maintainer.**
+`strict` is on, so anyone else's pull request must also be up to date with
+`main`. All three contexts are bound to `15368`, the Actions app, so
+nothing else can report one.
 
 | Check | Produced by |
 | --- | --- |
 | `Lint` | `lint.yml` |
 | `Dependency review` | `lint.yml`'s second job |
+| `Sign-off` | `lint.yml`'s third job |
 
 **The requirement lives in classic branch protection, not in a ruleset.**
 No ruleset on `main` carries a `required_status_checks` rule:
