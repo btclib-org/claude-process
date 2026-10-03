@@ -101,3 +101,9 @@ real file it models, same shape, before its outcome is reported
 - **No session takes, closes, relabels or edits an issue labelled `good
   first issue`, and no branch closes or bundles one, unless the human
   expressly authorizes it.**
+
+### `CONTRIBUTING.md` says the maintainer lands through the bypass
+
+- **The shared half says the ack of record is a bot's, so the maintainer
+  lands their own pull requests through the bypass** (issue
+  btclib-org/.github#452).
