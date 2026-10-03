@@ -125,3 +125,9 @@ real file it models, same shape, before its outcome is reported
 *Setup* and *Updating* name the clone's path in `CLAUDE_PROCESS`, say
 that any absolute path works, and say that a clone moved later is
 linked again (closes #21).
+
+### The bypass is for emergencies
+
+Every pull request lands by auto-merge, approved by an owner other than
+its author; speedy waives the bot's ACK, `--admin` is for an emergency
+only, and the stacked-base fast-forward is gone (issue btclib-org/.github#1362).

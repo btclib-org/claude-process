@@ -116,8 +116,7 @@ These bind the writer, the reviewer and the orchestrator alike.
   its reviewer holding one at once. `btclib-org/.github` ISS 255 worked
   in `btclib` by a writer is `wt-github-255-btclib-writer`.
 - **Never the primary checkout, never `git stash`, never a push to
-  `main`** — except the stacked-base fast-forward *Landing* reserves to
-  the maintainer. `refs/stash` is shared across worktrees and sessions: commit
+  `main`.** `refs/stash` is shared across worktrees and sessions: commit
   to your own branch instead.
 - **The primary checkout is not written — except the fast-forward that
   brings it forward (*Shell, checkouts and prose*) — and an accident in it
@@ -459,7 +458,8 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
         --body-file <message>
       ```
 
-      The maintainer passes `--admin` in place of `--auto` (*Landing*).
+      Only in an emergency does the maintainer pass `--admin` in place
+      of `--auto` (*Landing*).
       Then check what landed as *Landing* says, and that
       `gh api repos/<owner>/<repo>/commits/<sha> --jq .author.login` is
       theirs.
@@ -471,8 +471,8 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
 - **Where the bot's review does not run** — a fork's pull request, and
   any other where `gh pr checks` shows no review — the default landing
   has no ACK to wait for: CI green and the local `CLEARED` land it only
-  with an approving review from a person other than the human. Under a
-  speedy grant it lands like any other, without that review.
+  with the approval of an owner other than the human. Under a speedy
+  grant it lands like any other.
 - **The open pull request check is re-run between rounds** on a long
   campaign: a pull request from outside can arrive at any time.
 
@@ -852,23 +852,30 @@ The orchestrator's. **Before opening, and again before landing:**
 
 ## Landing
 
+- **Every pull request, the maintainer's included, lands with an
+  approving review from an owner other than its author**, through
+  auto-merge. btclib-org/.github's `GOVERNANCE.md` names the owners. The
+  orchestrator requests the review from each owner but the author when it
+  opens the pull request: `gh pr edit <n> --add-reviewer <login>,<login>`.
 - **Where the human is the maintainer, ask which landing applies**,
   together with the repository question, before any other activity.
-  Anyone else lands by the default.
-    - **Default**: CI green and the bot's explicit ACK, then squash.
+  Anyone else lands by the default. Both queue the squash below.
+    - **Default**: once the bot's explicit ACK names the head and the
+      head's CI is green.
     - **Speedy**, only where the human is the maintainer and grants it:
-      the local `CLEARED` is enough, the bot's ACK is waived, and the
-      merge uses the admin bypass. CI green is not waited for either,
-      provided the local gates passed on the head that lands and the pull
-      request touches nothing only CI can verify — a workflow, the build or
-      wheel matrix, a platform- or linkage-specific path, the release or
+      once the local `CLEARED` names the head, waiting neither for the
+      bot's ACK nor for the checks that are not required, provided the
+      local gates passed on the head that lands and the pull request
+      touches nothing only CI can verify — a workflow, the build or wheel
+      matrix, a platform- or linkage-specific path, the release or
       publishing machinery, whatever the repository's `CONTRIBUTING.md`
       names as decided by CI alone. Where it does touch one, speedy still
       waits for the checks that verify it, and the ACK stays waived.
-      Because speedy does not wait for CI, the orchestrator reads `main`'s
-      CI after each speedy landing. Where it is red, an agent is put to
-      find out why at once: it files the cause as an issue and fixes it,
-      and the landings that follow do not pause meanwhile.
+      Because speedy does not wait for all of CI, the
+      orchestrator reads `main`'s CI after each speedy landing. Where it
+      is red, an agent is put to find out why at once: it files the cause
+      as an issue and fixes it, and the landings that follow do not pause
+      meanwhile.
 
   A speedy grant covers the session — every branch and every piece of
   collateral landed before it ends — unless the maintainer bounds it more
@@ -888,49 +895,36 @@ The orchestrator's. **Before opening, and again before landing:**
   required status checks of the classic branch protection. The bot's
   ACK is a comment, not an approval. One commit per pull request lands,
   by squash.
-- **`--admin` is the maintainer's alone.** The maintainer bypasses the
-  review rule, and `enforce_admins` is off, so `--admin` also skips the
-  checks. Other admins can technically pass `--admin` too: they do not.
-  An admin merge still needs every commit signed off: the trailer is the
-  author's attestation, which `--admin` does not waive.
-  For anyone but the maintainer, a pull request lands with an approving
-  review from another person and green CI, through auto-merge.
-- **Squash, with the head pinned.** Anyone but the maintainer:
+- **`--admin` is the maintainer's alone, for an emergency**, and a
+  session passes it only when the human says the case is one. The
+  maintainer bypasses the review rule, and `enforce_admins` is off, so
+  `--admin` also skips the checks. Other admins can technically pass
+  `--admin` too: they do not. An admin merge still needs every commit
+  signed off: the trailer is the author's attestation, which `--admin`
+  does not waive.
+- **Squash, with the head pinned**, by auto-merge:
 
   ```shell
   gh pr merge <n> --repo <owner>/<repo> --squash --auto \
     --match-head-commit <the head that lands>
   ```
 
-  The maintainer, in either landing mode, passes `--admin` in place of
-  `--auto`. The pin is not optional. Its value is the head as pushed
-  after the final rebase, not the sha a verdict named.
+  In an emergency the maintainer passes `--admin` in place of `--auto`.
+  The pin is not optional. Its value is the head as pushed after the
+  final rebase, not the sha a verdict named. A queued pull request that
+  falls `BEHIND` `main` (`gh pr view <n> --json mergeStateStatus`) is
+  rebased as *A rebase before landing* says, and the merge queued again,
+  pinned to the new head.
 - **A finding that lives only in the commit message is fixed in the
   squash**, with no new round: `--body-file <message>` lands the cleared
   head unchanged under a corrected message. `--subject` replaces the
   whole subject, so it carries the citation and `(#<n>)` itself. The
   message keeps every `Signed-off-by:` and `Co-authored-by:` line of the
-  commits it squashes. A fast-forwarded stacked base has no squash: its
-  message is fixed by an amend, which goes back to the reviewer.
-- **The one exception to the squash, the maintainer's only: a one-commit
-  pull request that is the base of a stacked one** is fast-forwarded, so
-  that its sha survives and the child, retargeted onto `main`, keeps
-  exactly its own commits:
-
-  ```shell
-  git -C <wt> fetch origin
-  git -C <wt> rebase origin/main
-  git -C <wt> rev-list --count origin/main..<sha>          # 1
-  git -C <wt> merge-base --is-ancestor origin/main <sha>   # exit 0
-  git -C <wt> push origin <sha>:refs/heads/main
-  ```
-
-  `<sha>` is the rebased head, pushed to the pull request's branch first,
-  so that the landing mode's checks or pin apply to the tree that lands.
-  The push to `main` needs a bypass whose `bypass_mode` is `always`; at
-  `pull_request` it is refused for everyone. Where it is refused, squash
-  the base and rebase the child onto `main`.
-
+  commits it squashes.
+- **A stacked pull request lands like any other**: once its base has
+  landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
+  opened as soon as it is written* says, approved, and merged by
+  auto-merge.
 - **Ask the merge the forge will compute, locally:**
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits
@@ -941,7 +935,7 @@ The orchestrator's. **Before opening, and again before landing:**
   clean, is run by the orchestrator in the standing worktree: rebase,
   gates, then push. A rebase that touches the pull request's own code is the
   writer's, and goes back to the reviewer. The push dismisses an
-  approval already given, so a merge that needs one needs it again.
+  approval already given, so the merge waits for a new one.
 - **Check what landed, once it has.** `--auto` returns before the
   merge: repeat `gh pr view <n> --repo <owner>/<repo> --json
   state,mergeCommit,autoMergeRequest --jq '.state, .mergeCommit.oid,

@@ -83,10 +83,10 @@ and `/agents` lists `writer` and `reviewer`.
 /btclib-org <issue or pull request number>
 ```
 
-The session asks which repository the work is for. Only the
-repository's maintainer is asked about a faster landing; everyone else
-lands a pull request with an approving review from another person and
-green CI, through auto-merge.
+The session asks which repository the work is for. Every pull request
+lands approved by an owner other than its author. By default it also
+waits for green CI and the bot's ACK. Only the repository's maintainer
+is asked about a faster landing, which does not wait for the bot's ACK.
 
 ## Updating
 
