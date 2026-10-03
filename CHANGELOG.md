@@ -89,3 +89,9 @@ real file it models, same shape, before its outcome is reported
 
 - **A pull request whose commits lack the `Signed-off-by:` trailer cannot
   merge** (issue btclib-org/.github#1550): `Sign-off` is a required check.
+
+### The process asks for the `Signed-off-by:` trailer
+
+- **Every commit is signed off by its author**, checked by the writer and
+  by the reviewer (issue btclib-org/.github#1550): `main` requires the
+  `Sign-off` check.

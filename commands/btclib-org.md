@@ -419,7 +419,12 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
     - **Add, never rewrite.** Their commits stay byte for byte. `main`
       comes in by a signed merge, not a rebase, with the union files
       reconstructed across it (*Union files after a rebase*). The fixes
-      are a signed commit of ours on top.
+      are a signed commit of ours on top, signed off by us.
+    - **Their sign-off is theirs to add.** A commit of theirs without
+      the trailer is not ours to fix: their commits stay byte for byte,
+      and a sign-off we add for them is not their attestation. Ask them,
+      before we push anything to their branch, to run the command the
+      `Sign-off` check's failure prints and force-push.
     - **Push to their fork as a fast-forward only**: `git push <fork url>
       HEAD:refs/heads/<their branch>`, never with any `--force`. Before
       every push, `git ls-remote <fork url> refs/heads/<their branch>`
@@ -432,7 +437,10 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
       title with the citation *Citations and closing keywords* asks for;
       write the message:
       what the change does, correcting anything false in their commits,
-      ending with a `Co-authored-by:` line for whoever finished it.
+      ending with every `Signed-off-by:` line of the commits it squashes
+      and a `Co-authored-by:` line for whoever finished it. The
+      `Sign-off` job reads the pull request's commits, not the squash, so
+      the message is what carries their trailers onto `main`.
 
       ```shell
       gh pr merge <n> --squash --auto --match-head-commit <cleared head> \
@@ -467,6 +475,8 @@ The writer's section; the reviewer judges its result.
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
       `HEAD`
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
+- [ ] every commit of `<base>..` is signed off by its author, the
+      `Sign-off` script exiting `0` (*Signed and signed off*)
 - [ ] every gate the tree names ran on this tip, committed, with exit
       code `0`, under the gate lock, with the load recorded at the run
 - [ ] `git status --porcelain` is empty in the worktree, checked after
@@ -638,9 +648,31 @@ the orchestrator in the pull request.
 - **One git write per Bash call, nothing chained to it.** A commit, an
   amend, a rebase or a push chained with `cp`, `rm`, a gate or another
   git write is refused as a whole. Run each in its own call.
-- **Signed.** After a rebase, cherry-pick or amend, check the whole
-  range: `git log --format='%h %G? %GS' <base>..`. Any valid signer is
-  fine; `N` is the defect.
+- **Signed and signed off.** Commit with `-s`: `main` requires the
+  `Sign-off` check, which refuses a commit without a `Signed-off-by:`
+  trailer naming its author's address. After a rebase, cherry-pick or
+  amend, check the whole range. In
+  `git log --format='%h %G? %GS' <base>..` any valid signer is fine and
+  `N` is the defect. The `Sign-off` job's script exits `0`:
+
+  ```shell
+  gh api -H 'Accept: application/vnd.github.raw' \
+    repos/btclib-org/.github/contents/.github/scripts/check_sign_off.py |
+    env -C <wt> uv run --no-project --python 3.15 - <base>..
+  ```
+
+  Its control is the tree's second commit, which carries no trailer: the
+  same command over its range exits `1`, where a failed fetch pipes an
+  empty script, which exits `0`.
+
+  ```shell
+  c=$(git -C <wt> rev-list --reverse HEAD | sed -n 2p)
+  ```
+
+  Its range is `"${c:?}~1..${c:?}"`. An amend
+  with `--no-edit` and a rebase keep the trailer. A commit that lacks it
+  gets it from `git rebase --signoff <base>`, or at the tip from
+  `git commit --amend --no-edit -s`.
 - **A clean rebase is not a correct one.** Re-run the gates, and look for
   what `main` added around what you remove.
 - **A failed hook can make `git commit --amend` a no-op** that looks
@@ -728,6 +760,9 @@ fresh context, never the author on itself.
   record, you run them yourself, as *The gates* says, lock included, and
   say so. A rebase or amend since the run voids it. A branch that fails
   differently on every run is not cleared, whatever the last run says.
+- **A branch with a commit its author did not sign off is not
+  cleared**, measured as *Signed and signed off* says: a merge with
+  `--admin` does not wait for the `Sign-off` check.
 - **Look for the finding in the fix itself**, not only in what it
   replaced. A compound condition can be covered operand by operand and
   never in the combination that matters.
@@ -846,6 +881,8 @@ The orchestrator's. **Before opening, and again before landing:**
 - **`--admin` is the maintainer's alone.** The maintainer bypasses the
   review rule, and `enforce_admins` is off, so `--admin` also skips the
   checks. Other admins can technically pass `--admin` too: they do not.
+  An admin merge still needs every commit signed off: the trailer is the
+  author's attestation, which `--admin` does not waive.
   For anyone but the maintainer, a pull request lands with an approving
   review from another person and green CI, through auto-merge.
 - **Squash, with the head pinned.** Anyone but the maintainer:
