@@ -260,6 +260,18 @@ gh api repos/btclib-org/claude-process/actions/permissions \
 `sha_pinning_required` is set at the organization level: [section 11 of
 the standard has the reasons for both fields][s11-tokens].
 
+## Sign-off on web commits
+
+```shell
+gh api repos/btclib-org/claude-process --jq .web_commit_signoff_required
+# true
+gh api orgs/btclib-org --jq .web_commit_signoff_required
+# true
+```
+
+Set at the organization level, [for the reason section 11
+gives][s11-sigs].
+
 ## Secret scanning and Dependabot
 
 ```shell
@@ -392,9 +404,9 @@ keys, autolinks and custom property values each answer empty here, and an
 empty answer records no decision.
 
 **A field the standard states no rule about.** `allow_forking`,
-`allow_update_branch`, `has_discussions`, `has_downloads` and
-`web_commit_signoff_required` are in the repository document and in none
-of the `--jq` objects here.
+`allow_update_branch`, `has_discussions` and `has_downloads` are in the
+repository document and in none of the `--jq` objects here.
 
 [s11-tokens]: https://github.com/btclib-org/.github/blob/main/README.md#tokens-publishing-scanning
 [s11-branch]: https://github.com/btclib-org/.github/blob/main/README.md#branch-protection-and-rulesets
+[s11-sigs]: https://github.com/btclib-org/.github/blob/main/README.md#signatures

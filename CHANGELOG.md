@@ -78,3 +78,9 @@ real file it models, same shape, before its outcome is reported
 - **No session takes an issue labelled `good first issue`, and small
   self-contained collateral that nothing waits on is filed with that
   label** (closes #23).
+
+### `REPOSITORY.md` reads back the web sign-off setting
+
+- **`REPOSITORY.md` reads `web_commit_signoff_required` back** (issue
+  btclib-org/.github#1540): section 11 of the standard states the
+  organization setting.
