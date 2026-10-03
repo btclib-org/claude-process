@@ -126,8 +126,14 @@ real file it models, same shape, before its outcome is reported
 that any absolute path works, and say that a clone moved later is
 linked again (closes #21).
 
-### The bypass is for emergencies
+### The bypass is for emergencies, and no stacked base is fast-forwarded
 
-Every pull request lands by auto-merge, approved by somebody other than
-its author; speedy waives the bot's ACK, `--admin` is for an emergency
-only, and the stacked-base fast-forward is gone (issue btclib-org/.github#1362).
+`CONTRIBUTING.md` and `REVIEWING.md` say every pull request, the maintainer's
+included, lands with an approving review from somebody other than its author;
+the bypass is for emergencies (issue btclib-org/.github#1362).
+
+### Earlier entries on how a pull request lands
+
+Entries above that have the maintainer landing without another person's
+approval describe the rule before issue btclib-org/.github#1362 (issue
+btclib-org/.github#1569).
