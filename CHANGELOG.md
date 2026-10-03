@@ -119,3 +119,9 @@ real file it models, same shape, before its outcome is reported
 - **`--body-file` and `--subject` land the cleared head under a corrected
   message, with no new round**, keeping every `Signed-off-by:` and
   `Co-authored-by:` line.
+
+### The README names the clone's path once
+
+*Setup* and *Updating* name the clone's path in `CLAUDE_PROCESS`, say
+that any absolute path works, and say that a clone moved later is
+linked again (closes #21).

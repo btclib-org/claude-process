@@ -35,16 +35,41 @@ generic: they read the sections of it that their brief names.
 
 ## Setup
 
-Clone the repository and link its files into `~/.claude/`:
+Clone the repository and link its files into `~/.claude/`. The clone
+can sit at any absolute path, set once here; `~/Git/claude-process` is
+only an example:
 
 ```shell
-git clone https://github.com/btclib-org/claude-process ~/Git/claude-process
-mkdir -p ~/.claude/commands ~/.claude/agents ~/.claude/scripts
-ln -s ~/Git/claude-process/commands/btclib-org.md ~/.claude/commands/btclib-org.md
-ln -s ~/Git/claude-process/agents/writer.md ~/.claude/agents/writer.md
-ln -s ~/Git/claude-process/agents/reviewer.md ~/.claude/agents/reviewer.md
-ln -s ~/Git/claude-process/scripts/gate-lock.sh ~/.claude/scripts/gate-lock.sh
+CLAUDE_PROCESS=~/Git/claude-process
 ```
+
+```shell
+git clone https://github.com/btclib-org/claude-process "${CLAUDE_PROCESS:?}"
+```
+
+```shell
+mkdir -p ~/.claude/commands ~/.claude/agents ~/.claude/scripts
+```
+
+```shell
+ln -s "${CLAUDE_PROCESS:?}/commands/btclib-org.md" ~/.claude/commands/btclib-org.md
+```
+
+```shell
+ln -s "${CLAUDE_PROCESS:?}/agents/writer.md" ~/.claude/agents/writer.md
+```
+
+```shell
+ln -s "${CLAUDE_PROCESS:?}/agents/reviewer.md" ~/.claude/agents/reviewer.md
+```
+
+```shell
+ln -s "${CLAUDE_PROCESS:?}/scripts/gate-lock.sh" ~/.claude/scripts/gate-lock.sh
+```
+
+Each link holds the clone's path as it was when the link was made: a
+clone moved later leaves the links pointing at nothing; remove them and
+make them again from the new path.
 
 `ln -s` refuses to overwrite an existing file: move any `writer.md`,
 `reviewer.md` or `gate-lock.sh` you already have out of the way first.
@@ -65,8 +90,14 @@ green CI, through auto-merge.
 
 ## Updating
 
+Set the clone's path as in *Setup*, then pull:
+
 ```shell
-git -C ~/Git/claude-process pull --ff-only
+CLAUDE_PROCESS=~/Git/claude-process
+```
+
+```shell
+git -C "${CLAUDE_PROCESS:?}" pull --ff-only
 ```
 
 The links then point at the new text. Do not edit the clone the links
