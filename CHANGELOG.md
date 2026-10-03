@@ -128,6 +128,6 @@ linked again (closes #21).
 
 ### The bypass is for emergencies
 
-Every pull request lands by auto-merge, approved by an owner other than
+Every pull request lands by auto-merge, approved by somebody other than
 its author; speedy waives the bot's ACK, `--admin` is for an emergency
 only, and the stacked-base fast-forward is gone (issue btclib-org/.github#1362).

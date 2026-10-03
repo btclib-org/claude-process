@@ -84,7 +84,7 @@ and `/agents` lists `writer` and `reviewer`.
 ```
 
 The session asks which repository the work is for. Every pull request
-lands approved by an owner other than its author. By default it also
+lands approved by somebody other than its author. By default it also
 waits for green CI and the bot's ACK. Only the repository's maintainer
 is asked about a faster landing, which does not wait for the bot's ACK.
 

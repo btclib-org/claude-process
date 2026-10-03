@@ -471,7 +471,7 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
 - **Where the bot's review does not run** — a fork's pull request, and
   any other where `gh pr checks` shows no review — the default landing
   has no ACK to wait for: CI green and the local `CLEARED` land it only
-  with the approval of an owner other than the human. Under a speedy
+  with the approval of somebody other than the human. Under a speedy
   grant it lands like any other.
 - **The open pull request check is re-run between rounds** on a long
   campaign: a pull request from outside can arrive at any time.
@@ -853,7 +853,7 @@ The orchestrator's. **Before opening, and again before landing:**
 ## Landing
 
 - **Every pull request, the maintainer's included, lands with an
-  approving review from an owner other than its author**, through
+  approving review from somebody other than its author**, through
   auto-merge. btclib-org/.github's `GOVERNANCE.md` names the owners. The
   orchestrator requests the review from each owner but the author when it
   opens the pull request: `gh pr edit <n> --add-reviewer <login>,<login>`.
