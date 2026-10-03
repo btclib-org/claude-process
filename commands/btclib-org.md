@@ -185,6 +185,18 @@ These bind the writer, the reviewer and the orchestrator alike.
   the message before `git commit --amend --no-edit`, and correct it
   there too: squashed, it lands on `main` and is never rewritten.
 
+### Issues left to newcomers
+
+- **An issue labelled `good first issue` is left to outside
+  contributors.** No session takes, closes, relabels or edits it, and no
+  branch carries a closing keyword for it or bundles it, unless the human
+  expressly authorizes that act on that issue. This overrides every other
+  rule here that closes, labels or bundles such an issue. It does not bind
+  filing a new issue with that label, which *Collateral* asks for. A worker
+  relies on an authorization only where its brief quotes it. A number
+  among the arguments, or inside a range, is not an authorization: the
+  orchestrator skips it and tells the human.
+
 ### How you establish a fact
 
 - **A zero is not a measurement until the pattern is proved.** Prove it
@@ -301,7 +313,8 @@ send a cleared branch back: answer `CLEARED <sha>` with the finding
 underneath, to be fixed with the next amend. That does not make a false
 clause acceptable — it is still named and fixed — and the commit
 message, the one of these that cannot be rewritten after a squash, is
-corrected whenever the branch is amended anyway.
+corrected in an amend where the branch is amended anyway, and otherwise
+in the squash (*Landing*).
 
 ## Several issues, several pull requests
 
@@ -416,7 +429,12 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
     - **Add, never rewrite.** Their commits stay byte for byte. `main`
       comes in by a signed merge, not a rebase, with the union files
       reconstructed across it (*Union files after a rebase*). The fixes
-      are a signed commit of ours on top.
+      are a signed commit of ours on top, signed off by us.
+    - **Their sign-off is theirs to add.** A commit of theirs without
+      the trailer is not ours to fix: their commits stay byte for byte,
+      and a sign-off we add for them is not their attestation. Ask them,
+      before we push anything to their branch, to run the command the
+      `Sign-off` check's failure prints and force-push.
     - **Push to their fork as a fast-forward only**: `git push <fork url>
       HEAD:refs/heads/<their branch>`, never with any `--force`. Before
       every push, `git ls-remote <fork url> refs/heads/<their branch>`
@@ -429,7 +447,10 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
       title with the citation *Citations and closing keywords* asks for;
       write the message:
       what the change does, correcting anything false in their commits,
-      ending with a `Co-authored-by:` line for whoever finished it.
+      ending with every `Signed-off-by:` line of the commits it squashes
+      and a `Co-authored-by:` line for whoever finished it. The
+      `Sign-off` job reads the pull request's commits, not the squash, so
+      the message is what carries their trailers onto `main`.
 
       ```shell
       gh pr merge <n> --squash --auto --match-head-commit <cleared head> \
@@ -464,6 +485,8 @@ The writer's section; the reviewer judges its result.
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
       `HEAD`
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
+- [ ] every commit of `<base>..` is signed off by its author, the
+      `Sign-off` script exiting `0` (*Signed and signed off*)
 - [ ] every gate the tree names ran on this tip, committed, with exit
       code `0`, under the gate lock, with the load recorded at the run
 - [ ] `git status --porcelain` is empty in the worktree, checked after
@@ -635,9 +658,31 @@ the orchestrator in the pull request.
 - **One git write per Bash call, nothing chained to it.** A commit, an
   amend, a rebase or a push chained with `cp`, `rm`, a gate or another
   git write is refused as a whole. Run each in its own call.
-- **Signed.** After a rebase, cherry-pick or amend, check the whole
-  range: `git log --format='%h %G? %GS' <base>..`. Any valid signer is
-  fine; `N` is the defect.
+- **Signed and signed off.** Commit with `-s`: `main` requires the
+  `Sign-off` check, which refuses a commit without a `Signed-off-by:`
+  trailer naming its author's address. After a rebase, cherry-pick or
+  amend, check the whole range. In
+  `git log --format='%h %G? %GS' <base>..` any valid signer is fine and
+  `N` is the defect. The `Sign-off` job's script exits `0`:
+
+  ```shell
+  gh api -H 'Accept: application/vnd.github.raw' \
+    repos/btclib-org/.github/contents/.github/scripts/check_sign_off.py |
+    env -C <wt> uv run --no-project --python 3.15 - <base>..
+  ```
+
+  Its control is the tree's second commit, which carries no trailer: the
+  same command over its range exits `1`, where a failed fetch pipes an
+  empty script, which exits `0`.
+
+  ```shell
+  c=$(git -C <wt> rev-list --reverse HEAD | sed -n 2p)
+  ```
+
+  Its range is `"${c:?}~1..${c:?}"`. An amend
+  with `--no-edit` and a rebase keep the trailer. A commit that lacks it
+  gets it from `git rebase --signoff <base>`, or at the tip from
+  `git commit --amend --no-edit -s`.
 - **A clean rebase is not a correct one.** Re-run the gates, and look for
   what `main` added around what you remove.
 - **A failed hook can make `git commit --amend` a no-op** that looks
@@ -725,6 +770,9 @@ fresh context, never the author on itself.
   record, you run them yourself, as *The gates* says, lock included, and
   say so. A rebase or amend since the run voids it. A branch that fails
   differently on every run is not cleared, whatever the last run says.
+- **A branch with a commit its author did not sign off is not
+  cleared**, measured as *Signed and signed off* says: a merge with
+  `--admin` does not wait for the `Sign-off` check.
 - **Look for the finding in the fix itself**, not only in what it
   replaced. A compound condition can be covered operand by operand and
   never in the combination that matters.
@@ -843,6 +891,8 @@ The orchestrator's. **Before opening, and again before landing:**
 - **`--admin` is the maintainer's alone.** The maintainer bypasses the
   review rule, and `enforce_admins` is off, so `--admin` also skips the
   checks. Other admins can technically pass `--admin` too: they do not.
+  An admin merge still needs every commit signed off: the trailer is the
+  author's attestation, which `--admin` does not waive.
   For anyone but the maintainer, a pull request lands with an approving
   review from another person and green CI, through auto-merge.
 - **Squash, with the head pinned.** Anyone but the maintainer:
@@ -855,6 +905,13 @@ The orchestrator's. **Before opening, and again before landing:**
   The maintainer, in either landing mode, passes `--admin` in place of
   `--auto`. The pin is not optional. Its value is the head as pushed
   after the final rebase, not the sha a verdict named.
+- **A finding that lives only in the commit message is fixed in the
+  squash**, with no new round: `--body-file <message>` lands the cleared
+  head unchanged under a corrected message. `--subject` replaces the
+  whole subject, so it carries the citation and `(#<n>)` itself. The
+  message keeps every `Signed-off-by:` and `Co-authored-by:` line of the
+  commits it squashes. A fast-forwarded stacked base has no squash: its
+  message is fixed by an amend, which goes back to the reviewer.
 - **The one exception to the squash, the maintainer's only: a one-commit
   pull request that is the base of a stacked one** is fast-forwarded, so
   that its sha survives and the child, retargeted onto `main`, keeps
@@ -894,6 +951,12 @@ The orchestrator's. **Before opening, and again before landing:**
   repos/<owner>/<repo>/commits/<sha> --jq .commit.verification` is
   `verified: true`, and each issue the pull request declared closed is
   closed. What follows waits for this.
+- **A landing in `btclib-org/claude-process` brings its primary checkout
+  forward at once**, by the fast-forward *Shell, checkouts and prose*
+  allows. `~/.claude/commands/btclib-org.md` and
+  `~/.claude/agents/{writer,reviewer}.md` are symlinks into it, so until
+  then every session reads the old process. Then read a landed line
+  back through the symlink of the file it changed.
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (*Collateral*), before anything new
   starts.
@@ -914,7 +977,10 @@ The orchestrator's. **Before opening, and again before landing:**
   they notice it**, in the repository hosting that code. Search first
   (`gh issue list --state open --search "<word> <word>"`). Measure first;
   where that would mean leaving the work at hand, put the deciding
-  command in the body and say it was not run.
+  command in the body and say it was not run. A small, self-contained
+  one that no red gate, security or packaging defect waits on is filed
+  with the `good first issue` label, a *Done when* and the file to look
+  at.
 - **Evidence you lean on is evidence you own.** A claim your change turns
   into the ground of a new sentence is re-derived, whoever wrote it.
 - **Where your diff falsifies a sentence elsewhere, fixing it is part of
@@ -931,9 +997,9 @@ The orchestrator's. **Before opening, and again before landing:**
   writer/reviewer pair; what was filed outside any, to a new pair. Each
   is landed through the whole process or closed with the measurement
   that refutes it. The only exceptions are an issue in another
-  repository, one the maintainer suspended, and one a `BACKLOG` row or
-  an `EXPECTED_DRIFT` entry already points at; each is named in the
-  report with its reason.
+  repository, one the maintainer suspended, one a `BACKLOG` row or
+  an `EXPECTED_DRIFT` entry already points at, and one labelled `good
+  first issue`; each is named in the report with its reason.
 - **The campaign is not done while an issue it opened is open** outside
   those exceptions. One that waits on the human is a question, or
   at night a deferred item, never a silent leftover.

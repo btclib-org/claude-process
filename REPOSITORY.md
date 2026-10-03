@@ -49,20 +49,22 @@ gh api repos/btclib-org/claude-process \
 gh api repos/btclib-org/claude-process/branches/main/protection \
   --jq '.required_status_checks | {strict, checks}'
 # {"checks":[{"app_id":15368,"context":"Lint"},
-#            {"app_id":15368,"context":"Dependency review"}],
+#            {"app_id":15368,"context":"Dependency review"},
+#            {"app_id":15368,"context":"Sign-off"}],
 #  "strict":true}
 ```
 
-**`lint.yml` runs on every pull request, and a red `Lint` or `Dependency
-review` job stops a merge by anyone but the maintainer.** `strict` is on,
-so anyone else's pull request must also be up to date with `main`. Both
-contexts are bound to `15368`, the Actions app, so nothing else can
-report one.
+**`lint.yml` runs on every pull request, and a red `Lint`, `Dependency
+review` or `Sign-off` job stops a merge by anyone but the maintainer.**
+`strict` is on, so anyone else's pull request must also be up to date with
+`main`. All three contexts are bound to `15368`, the Actions app, so
+nothing else can report one.
 
 | Check | Produced by |
 | --- | --- |
 | `Lint` | `lint.yml` |
 | `Dependency review` | `lint.yml`'s second job |
+| `Sign-off` | `lint.yml`'s third job |
 
 **The requirement lives in classic branch protection, not in a ruleset.**
 No ruleset on `main` carries a `required_status_checks` rule:
@@ -260,6 +262,18 @@ gh api repos/btclib-org/claude-process/actions/permissions \
 `sha_pinning_required` is set at the organization level: [section 11 of
 the standard has the reasons for both fields][s11-tokens].
 
+## Sign-off on web commits
+
+```shell
+gh api repos/btclib-org/claude-process --jq .web_commit_signoff_required
+# true
+gh api orgs/btclib-org --jq .web_commit_signoff_required
+# true
+```
+
+Set at the organization level, [for the reason section 11
+gives][s11-sigs].
+
 ## Secret scanning and Dependabot
 
 ```shell
@@ -392,9 +406,9 @@ keys, autolinks and custom property values each answer empty here, and an
 empty answer records no decision.
 
 **A field the standard states no rule about.** `allow_forking`,
-`allow_update_branch`, `has_discussions`, `has_downloads` and
-`web_commit_signoff_required` are in the repository document and in none
-of the `--jq` objects here.
+`allow_update_branch`, `has_discussions` and `has_downloads` are in the
+repository document and in none of the `--jq` objects here.
 
 [s11-tokens]: https://github.com/btclib-org/.github/blob/main/README.md#tokens-publishing-scanning
 [s11-branch]: https://github.com/btclib-org/.github/blob/main/README.md#branch-protection-and-rulesets
+[s11-sigs]: https://github.com/btclib-org/.github/blob/main/README.md#signatures

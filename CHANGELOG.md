@@ -73,6 +73,53 @@ real file it models, same shape, before its outcome is reported
   ack while `claude-review.yml` is off** (issue
   btclib-org/.github#1527).
 
+### Sessions leave `good first issue` to outside contributors
+
+- **No session takes an issue labelled `good first issue`, and small
+  self-contained collateral that nothing waits on is filed with that
+  label** (closes #23).
+
+### `REPOSITORY.md` reads back the web sign-off setting
+
+- **`REPOSITORY.md` reads `web_commit_signoff_required` back** (issue
+  btclib-org/.github#1540): section 11 of the standard states the
+  organization setting.
+
+### The `Sign-off` check is required
+
+- **A pull request whose commits lack the `Signed-off-by:` trailer cannot
+  merge** (issue btclib-org/.github#1550): `Sign-off` is a required check.
+
+### The process asks for the `Signed-off-by:` trailer
+
+- **Every commit is signed off by its author**, checked by the writer and
+  by the reviewer (issue btclib-org/.github#1550): `main` requires the
+  `Sign-off` check.
+
+### Every role leaves `good first issue` alone unless the human authorizes it
+
+- **No session takes, closes, relabels or edits an issue labelled `good
+  first issue`, and no branch closes or bundles one, unless the human
+  expressly authorizes it.**
+
+### `CONTRIBUTING.md` says the maintainer lands through the bypass
+
+- **The shared half says the ack of record is a bot's, so the maintainer
+  lands their own pull requests through the bypass** (issue
+  btclib-org/.github#452).
+
+### A landing in this repository brings its primary checkout forward
+
+- **The orchestrator fast-forwards the primary checkout after a landing
+  here and reads the landed text back through the symlinks in `~/.claude`**,
+  which point into it.
+
+### A finding only in the commit message is fixed in the squash
+
+- **`--body-file` and `--subject` land the cleared head under a corrected
+  message, with no new round**, keeping every `Signed-off-by:` and
+  `Co-authored-by:` line.
+
 ### The README names the clone's path once
 
 *Setup* and *Updating* name the clone's path in `CLAUDE_PROCESS`, say
