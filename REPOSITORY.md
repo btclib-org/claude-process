@@ -355,24 +355,16 @@ being published.
 
 ## Variables
 
-**A switch this repository does not set.** The jobs `claude-review.yml`
-calls are guarded by `vars.CLAUDE_REVIEW_ENABLED`, and neither variable
-store holds it:
+**A switch this repository does not set.** `claude-review.yml` calls
+`btclib-org/.github`'s `reusable-claude-review.yml`, whose jobs guard on
+`vars.CLAUDE_REVIEW_ENABLED`; a variable set here would take precedence
+over one of the same name on the organization, so the repository's own
+store is read too:
 
 ```shell
-gh api repos/btclib-org/claude-process/actions/variables \
-  --jq '.total_count'
-# 0
-gh api orgs/btclib-org/actions/variables --jq '.total_count'
+gh api repos/btclib-org/claude-process/actions/variables --jq .total_count
 # 0
 ```
-
-The two organization secret stores the section above reads answer `all`,
-which is what makes these zeros an absence rather than an endpoint that
-answers empty for everyone. Section 11 reads an empty store as
-`vars.CLAUDE_REVIEW_ENABLED`'s off state, an undefined `vars.X` being the
-empty string. Both stores are read because a variable set here would take
-precedence over one of the same name set on the organization.
 
 ## What is not configured, and why
 
