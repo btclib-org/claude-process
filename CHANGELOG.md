@@ -72,3 +72,9 @@ real file it models, same shape, before its outcome is reported
 - **The shared half says a local review of a named sha stands in for the
   ack while `claude-review.yml` is off** (issue
   btclib-org/.github#1527).
+
+### Sessions leave `good first issue` to outside contributors
+
+- **No session takes an issue labelled `good first issue`, and small
+  self-contained collateral that nothing waits on is filed with that
+  label** (closes #23).

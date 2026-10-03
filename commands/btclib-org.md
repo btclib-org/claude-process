@@ -318,6 +318,9 @@ corrected whenever the branch is amended anyway.
   a comment saying why the issue waits. A hold kept only in the
   session's context does not exist, and another session will take the
   issue.
+- **An issue labelled `good first issue` is never taken**: it is left to
+  outside contributors. The orchestrator skips it even inside the range
+  of numbers it was given, and says so to the human.
 - **Where somebody else already has a pull request open for an issue**,
   the campaign opens no competing branch: that pull request is worked as
   *Pull requests named as input* says.
@@ -914,7 +917,10 @@ The orchestrator's. **Before opening, and again before landing:**
   they notice it**, in the repository hosting that code. Search first
   (`gh issue list --state open --search "<word> <word>"`). Measure first;
   where that would mean leaving the work at hand, put the deciding
-  command in the body and say it was not run.
+  command in the body and say it was not run. A small, self-contained
+  one that no red gate, security or packaging defect waits on is filed
+  with the `good first issue` label, a *Done when* and the file to look
+  at.
 - **Evidence you lean on is evidence you own.** A claim your change turns
   into the ground of a new sentence is re-derived, whoever wrote it.
 - **Where your diff falsifies a sentence elsewhere, fixing it is part of
@@ -931,9 +937,9 @@ The orchestrator's. **Before opening, and again before landing:**
   writer/reviewer pair; what was filed outside any, to a new pair. Each
   is landed through the whole process or closed with the measurement
   that refutes it. The only exceptions are an issue in another
-  repository, one the maintainer suspended, and one a `BACKLOG` row or
-  an `EXPECTED_DRIFT` entry already points at; each is named in the
-  report with its reason.
+  repository, one the maintainer suspended, one a `BACKLOG` row or
+  an `EXPECTED_DRIFT` entry already points at, and one labelled `good
+  first issue`; each is named in the report with its reason.
 - **The campaign is not done while an issue it opened is open** outside
   those exceptions. One that waits on the human is a question, or
   at night a deferred item, never a silent leftover.
