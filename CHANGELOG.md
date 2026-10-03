@@ -107,3 +107,15 @@ real file it models, same shape, before its outcome is reported
 - **The shared half says the ack of record is a bot's, so the maintainer
   lands their own pull requests through the bypass** (issue
   btclib-org/.github#452).
+
+### A landing in this repository brings its primary checkout forward
+
+- **The orchestrator fast-forwards the primary checkout after a landing
+  here and reads the landed text back through the symlinks in `~/.claude`**,
+  which point into it.
+
+### A finding only in the commit message is fixed in the squash
+
+- **`--body-file` and `--subject` land the cleared head under a corrected
+  message, with no new round**, keeping every `Signed-off-by:` and
+  `Co-authored-by:` line.

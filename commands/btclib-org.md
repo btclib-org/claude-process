@@ -313,7 +313,8 @@ send a cleared branch back: answer `CLEARED <sha>` with the finding
 underneath, to be fixed with the next amend. That does not make a false
 clause acceptable — it is still named and fixed — and the commit
 message, the one of these that cannot be rewritten after a squash, is
-corrected whenever the branch is amended anyway.
+corrected in an amend where the branch is amended anyway, and otherwise
+in the squash (*Landing*).
 
 ## Several issues, several pull requests
 
@@ -904,6 +905,13 @@ The orchestrator's. **Before opening, and again before landing:**
   The maintainer, in either landing mode, passes `--admin` in place of
   `--auto`. The pin is not optional. Its value is the head as pushed
   after the final rebase, not the sha a verdict named.
+- **A finding that lives only in the commit message is fixed in the
+  squash**, with no new round: `--body-file <message>` lands the cleared
+  head unchanged under a corrected message. `--subject` replaces the
+  whole subject, so it carries the citation and `(#<n>)` itself. The
+  message keeps every `Signed-off-by:` and `Co-authored-by:` line of the
+  commits it squashes. A fast-forwarded stacked base has no squash: its
+  message is fixed by an amend, which goes back to the reviewer.
 - **The one exception to the squash, the maintainer's only: a one-commit
   pull request that is the base of a stacked one** is fast-forwarded, so
   that its sha survives and the child, retargeted onto `main`, keeps
@@ -943,6 +951,12 @@ The orchestrator's. **Before opening, and again before landing:**
   repos/<owner>/<repo>/commits/<sha> --jq .commit.verification` is
   `verified: true`, and each issue the pull request declared closed is
   closed. What follows waits for this.
+- **A landing in `btclib-org/claude-process` brings its primary checkout
+  forward at once**, by the fast-forward *Shell, checkouts and prose*
+  allows. `~/.claude/commands/btclib-org.md` and
+  `~/.claude/agents/{writer,reviewer}.md` are symlinks into it, so until
+  then every session reads the old process. Then read a landed line
+  back through the symlink of the file it changed.
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (*Collateral*), before anything new
   starts.
