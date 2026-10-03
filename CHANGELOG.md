@@ -125,3 +125,15 @@ real file it models, same shape, before its outcome is reported
 *Setup* and *Updating* name the clone's path in `CLAUDE_PROCESS`, say
 that any absolute path works, and say that a clone moved later is
 linked again (closes #21).
+
+### The bypass is for emergencies, and no stacked base is fast-forwarded
+
+`CONTRIBUTING.md` and `REVIEWING.md` say every pull request, the maintainer's
+included, lands with an approving review from somebody other than its author;
+the bypass is for emergencies (issue btclib-org/.github#1362).
+
+### Earlier entries on how a pull request lands
+
+Entries above that have the maintainer landing without another person's
+approval describe the rule before issue btclib-org/.github#1362 (issue
+btclib-org/.github#1569).
