@@ -185,6 +185,18 @@ These bind the writer, the reviewer and the orchestrator alike.
   the message before `git commit --amend --no-edit`, and correct it
   there too: squashed, it lands on `main` and is never rewritten.
 
+### Issues left to newcomers
+
+- **An issue labelled `good first issue` is left to outside
+  contributors.** No session takes, closes, relabels or edits it, and no
+  branch carries a closing keyword for it or bundles it, unless the human
+  expressly authorizes that act on that issue. This overrides every other
+  rule here that closes, labels or bundles such an issue. It does not bind
+  filing a new issue with that label, which *Collateral* asks for. A worker
+  relies on an authorization only where its brief quotes it. A number
+  among the arguments, or inside a range, is not an authorization: the
+  orchestrator skips it and tells the human.
+
 ### How you establish a fact
 
 - **A zero is not a measurement until the pattern is proved.** Prove it
@@ -318,9 +330,6 @@ corrected whenever the branch is amended anyway.
   a comment saying why the issue waits. A hold kept only in the
   session's context does not exist, and another session will take the
   issue.
-- **An issue labelled `good first issue` is never taken**: it is left to
-  outside contributors. The orchestrator skips it even inside the range
-  of numbers it was given, and says so to the human.
 - **Where somebody else already has a pull request open for an issue**,
   the campaign opens no competing branch: that pull request is worked as
   *Pull requests named as input* says.

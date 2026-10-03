@@ -95,3 +95,9 @@ real file it models, same shape, before its outcome is reported
 - **Every commit is signed off by its author**, checked by the writer and
   by the reviewer (issue btclib-org/.github#1550): `main` requires the
   `Sign-off` check.
+
+### Every role leaves `good first issue` alone unless the human authorizes it
+
+- **No session takes, closes, relabels or edits an issue labelled `good
+  first issue`, and no branch closes or bundles one, unless the human
+  expressly authorizes it.**
