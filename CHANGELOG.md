@@ -177,3 +177,9 @@ required checks too, and `REVIEWING.md`'s "hold the merge" excepts it
 
 `gate_take` and `gate_release` print their usage and return 1 when
 the scratchpad argument is empty or not a directory (closes #34).
+
+### `check-changelog` refuses an entry added to an older release
+
+A `###` heading under a release older than the newest, absent at the merge
+base with `origin/main`, is refused. With no such base the hook compares
+nothing and says so (issue btclib-org/.github#1614).
