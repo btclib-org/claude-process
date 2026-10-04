@@ -155,3 +155,9 @@ pause the human decided `on-hold` (issue btclib-org/.github#1584).
 *Union files after a rebase* runs `rebuild_union_files.py` after every
 rebase or merge, whether the tree's `.gitattributes` keeps `merge=union`
 or not (issue btclib-org/.github#1582).
+
+### The forms set a type, and the history files lose `merge=union`
+
+The issue forms set `type:` and no kind label (issue
+btclib-org/.github#1584). `.gitattributes` is gone, so a rebase stops
+on a conflict in `CHANGELOG.md` (issue btclib-org/.github#1582).

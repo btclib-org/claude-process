@@ -1,7 +1,7 @@
 ---
 name: Question
 description: Ask how the process works, or why it is written that way
-labels: [question]
+type: Task
 
 body:
   - type: markdown

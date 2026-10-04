@@ -1,7 +1,7 @@
 ---
 name: Feature request
 description: Ask the process to cover something it does not
-labels: [enhancement]
+type: Feature
 
 body:
   - type: markdown
