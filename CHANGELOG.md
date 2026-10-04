@@ -143,3 +143,15 @@ btclib-org/.github#1569).
 It states only what is this repository's own, that its variable store
 holds no `CLAUDE_REVIEW_ENABLED`; the switch is the organization's
 (closes #29).
+
+### A hold takes the label for what it waits on
+
+*Several issues, several pull requests* labels a question put to the
+maintainer `decision`, a wait on an event or a person `blocked`, and a
+pause the human decided `on-hold` (issue btclib-org/.github#1584).
+
+### Union files are rebuilt by btclib-org/.github's script
+
+*Union files after a rebase* runs `rebuild_union_files.py` after every
+rebase or merge, whether the tree's `.gitattributes` keeps `merge=union`
+or not (issue btclib-org/.github#1582).
