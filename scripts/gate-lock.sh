@@ -5,6 +5,14 @@
 #   . ~/.claude/scripts/gate-lock.sh
 #   gate_take <scratchpad> <worktree> && { <gates>; gate_release <scratchpad>; }
 #
+# Without a directory, both print their usage and return 1. To check, from
+# the repository root in a fresh sh:
+#
+#   . scripts/gate-lock.sh
+#   gate_take; echo $?
+#   gate_release; echo $?
+#   d=$(mktemp -d); gate_take "$d" && gate_release "$d"; rmdir "$d"
+#
 # gate_take waits for the load (at most ~20 minutes, then runs anyway),
 # then for the lock (at most ~30 minutes). It writes the holder's PID into
 # the lock, so that only the holder releases it. A lock whose holder's
@@ -20,7 +28,10 @@
 # with no owner, which the human removes.
 
 gate_take() {
-  [ -d "$1" ] || { echo "gate_take: no directory $1"; return 1; }
+  [ -d "$1" ] || {
+    echo "usage: gate_take <scratchpad> [<worktree>]; no directory '$1'"
+    return 1
+  }
   _gl_lock="$1/gate.lock"
   _gl_n=$(getconf _NPROCESSORS_ONLN)
   _gl_i=0
@@ -59,6 +70,10 @@ gate_take() {
 }
 
 gate_release() {
+  [ -d "$1" ] || {
+    echo "usage: gate_release <scratchpad>; no directory '$1'"
+    return 1
+  }
   _gl_lock="$1/gate.lock"
   _gl_i=0
   while [ "$_gl_i" -lt 5 ]; do

@@ -172,3 +172,8 @@ file: rebuild by hand only then (closes #37).
 `CONTRIBUTING.md`'s emergency paragraph says `--admin` skips the
 required checks too, and `REVIEWING.md`'s "hold the merge" excepts it
 (issue btclib-org/.github#1597).
+
+### The gate lock functions refuse a missing directory
+
+`gate_take` and `gate_release` print their usage and return 1 when
+the scratchpad argument is empty or not a directory (closes #34).
