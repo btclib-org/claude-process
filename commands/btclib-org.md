@@ -326,10 +326,12 @@ in the squash (*Landing*).
   to take the source byte for byte rather than apply the delta you
   measured, which can come up short.
 - **A hold is recorded on the issue**, in the same turn it is told to
-  the human: the `decision` label where the repository has one, and
-  a comment saying why the issue waits. A hold kept only in the
-  session's context does not exist, and another session will take the
-  issue.
+  the human: a comment saying why the issue waits, and its label where
+  the repository has it. A question put to the maintainer takes
+  `decision`; a wait on an event or a person the comment names takes
+  `blocked`; a pause the human decided takes `on-hold`. A hold kept only
+  in the session's context does not exist, and another session will take
+  the issue.
 - **Where somebody else already has a pull request open for an issue**,
   the campaign opens no competing branch: that pull request is worked as
   *Pull requests named as input* says.
@@ -427,7 +429,7 @@ gh pr view <n> --repo <owner>/<repo> --json author,state,isCrossRepository,\
 
     - **Add, never rewrite.** Their commits stay byte for byte. `main`
       comes in by a signed merge, not a rebase, with the union files
-      reconstructed across it (*Union files after a rebase*). The fixes
+      rebuilt across it (*Union files after a rebase*). The fixes
       are a signed commit of ours on top, signed off by us.
     - **Their sign-off is theirs to add.** A commit of theirs without
       the trailer is not ours to fix: their commits stay byte for byte,
@@ -692,58 +694,39 @@ the orchestrator in the pull request.
 
 ### Union files after a rebase
 
-`CHANGELOG.md` and `RELEASE_NOTES.md` are `merge=union`, so a rebase never
-conflicts on them — and can stack a superseded entry beside its
-replacement, place yours below an entry that landed meanwhile, eat the
-blank line above a `###`, or keep once a line both sides added
-identically. `git rebase` exits `0`, and `git diff --numstat`, `git
-range-diff`, `git merge-tree --write-tree` and comparing the entry's text
-all pass. `check-changelog` reads only `CHANGELOG.md`. There, on a run
-before the markdownlint fixer, it names the eaten blank line. It names a
-superseded entry only where a heading or a `(closes #N)` repeats, and
-never yours misplaced by the rebase. Only reconstruction finds all of
-them. In `RELEASE_NOTES.md` no hook names any of them: `check-changelog`
-does not read it, and markdownlint only fixes it. Its open section is the
-first `## v…` heading, marked as work in progress, and an entry is a
-bullet at the end of its list. Where its bullets carry no blank line
-between them, as in btclib-secp256k1, splice your bullet without one. Do
-each step for every union file the branch touches
-(`git -C <wt> diff --name-only <merge-base> <tip> --
-CHANGELOG.md RELEASE_NOTES.md`), `<file>` below naming each in turn:
+Every branch adds its entry to `CHANGELOG.md` and `RELEASE_NOTES.md` at
+the same place, so a rebase or a merge over a landing that wrote one
+can damage them: a line both entries share is written once, or an entry
+lands beside the one it replaces. Where the tree's `.gitattributes`
+gives them `merge=union`, git exits `0` with the damage in it; where it
+does not, git stops on a conflict, and deleting the markers leaves the
+same damage. Either way, rebuild them.
 
-1. **Before rebasing**, save the base and your tip in your scratch
-   directory: `git -C <wt> show <merge-base>:<file> >
-   <scratch>/base-<branch>-<file>`, `git -C <wt> show <tip>:<file> >
-   <scratch>/pre-<branch>-<file>`;
-   `diff` them to name your block and its anchor.
-1. **Rebase, then run `pre-commit run --all-files`.** A bare run after a
-   rebase checks nothing, nothing being staged. Read what
-   `check-changelog` names before anything repairs it; never run the
-   fixer by hand first.
-1. **Reconstruct**: the new base's blob with your block spliced at its
-   anchor (entries go at the end of the open section), and compare it
-   byte for byte with `git -C <wt> show <rebased tip>:<file> | cmp -
-   <scratch>/expected-<branch>-<file>`. Count your entry's heading too.
-1. **Repair to the reconstruction.** Where the file opens with
-   `<!-- markdownlint-disable MD022 MD032 -->` or the hook runs without
-   `--fix`, restore the blank line by hand; otherwise the
-   `markdownlint-cli2` hook restores it, run through the tree's own
-   `pre-commit` invocation.
-   Where the difference is anything else — a line the union kept once —
-   copy the reconstruction in.
-1. **Record the broken tip's sha in your report**; create no ref for it.
-1. **Re-read the section around your entry**, for prose the merge made
-   false ("the entry above" now naming a stranger).
+Save the old base and the old tip before you start (`git -C <wt>
+merge-base HEAD origin/main`, `git -C <wt> rev-parse HEAD`). Then, with
+the rebase or merge stopped or finished, run btclib-org/.github's script
+from a checkout of it brought forward, bound to your worktree:
 
-**A merge of `main` is the same case.** Completing an outside
-contribution brings `main` in by merge, and the union driver misplaces
-entries there just as it does in a rebase. Follow the same steps, with
-"merge" for "rebase" and the merge base for the base. Put the repair in
-the merge commit or in a signed commit on top, and say which in the
-report.
+```shell
+env -C <wt> uv run --no-project --python 3.15 \
+  <.github checkout>/.github/scripts/rebuild_union_files.py \
+  <old base> <old tip>
+```
 
-Prove any tampered control actually changes the file before trusting
-it.
+The new base is `MERGE_HEAD` during a merge, otherwise the merge base
+with `origin/main`; `--base <sha>` names another. In `btclib-org/.github`
+itself the path is `.github/scripts/rebuild_union_files.py`.
+
+- **`0`**: every file already agrees.
+- **`1`**: it wrote a file. `git add` it, then `git rebase --continue` or
+  `git merge --continue`; where the rebase had finished, amend, and
+  where the merge had, commit on top.
+- **`2`**: it refused a file and printed why; another may still have
+  been written. Rebuild the refused one by hand: the new base's copy
+  with your block added at the end of its open section.
+
+Then run the gates, and re-read the section around your entry for prose
+the rebase made false ("the entry above" now naming a stranger).
 
 ## Local review (before GitHub)
 
@@ -790,7 +773,7 @@ The orchestrator's. **Before opening, and again before landing:**
 
 - [ ] the local reviewer's `CLEARED` names the branch's content
 - [ ] rebased onto `origin/main`; where it moved, gates re-run and union
-      files reconstructed
+      files rebuilt
 - [ ] the subject that lands carries the right citation (*Citations and
       closing keywords*)
 - [ ] the body carries one closing keyword per line, and the sweep finds
@@ -802,16 +785,15 @@ The orchestrator's. **Before opening, and again before landing:**
 - **A change to `claude-review.yml` is its own pull request.** The
   action refuses to run where its workflow differs from the default
   branch's.
-- **Rebase onto `origin/main`**, run the gates again, and read the union
-  files (*Union files after a rebase*). A rebase touching only
+- **Rebase onto `origin/main`**, rebuild the union files (*Union files
+  after a rebase*), and run the gates again. A rebase touching only
   union files re-runs only the lint gate: `pre-commit run
-  --all-files`, through the tree's own invocation — never the fixer
-  alone, which mends the seam before `check-changelog` can name it.
+  --all-files`, through the tree's own invocation.
 
 - **A rebase voids the gates, not necessarily the `CLEARED`.** Where
   `git range-diff <old base>..<old tip> origin/main..<new tip>` marks
   every commit `=`, the clearance stands. A `!` goes back to the
-  reviewer, unless the only difference is the union driver's. For a
+  reviewer, unless the only difference is in the union files. For a
   one-commit branch that is proved by comparing every added and removed
   line — bullets and blank lines included, headers dropped — outside the
   union files, with explicit shas, each revision a separate argument:
@@ -840,9 +822,9 @@ The orchestrator's. **Before opening, and again before landing:**
   '.closingIssuesReferences | length'`. The field lags creation by
   seconds to minutes; ask again, and confirm each issue's state after the
   merge.
-- **"This branch has conflicts" on GitHub is real** even where the local
-  rebase was silent: the forge's merge does not apply `merge=union`.
-  Rebase, reconstruct the union files, run the gates, and push.
+- **"This branch has conflicts" on GitHub is real** even where a local
+  rebase exits `0`: the forge does not apply a tree's `merge=union`.
+  Rebase, rebuild the union files, run the gates, and push.
 - **Default landing: watch the checks and the bot's review**, answer what
   it reasonably raises, and iterate to an explicit ACK naming the current
   `headRefOid`. A `cancelled` run is not a `failure`.
@@ -929,8 +911,8 @@ The orchestrator's. **Before opening, and again before landing:**
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits
   `1` where GitHub will refuse. Plain `git merge-tree --write-tree`
-  applies the driver and is not this check; `gh pr view --json mergeable`
-  is a cached value.
+  applies a tree's union driver and is not this check; `gh pr view
+  --json mergeable` is a cached value.
 - **A rebase before landing.** A base-only rebase, with the merge above
   clean, is run by the orchestrator in the standing worktree: rebase,
   gates, then push. A rebase that touches the pull request's own code is the
