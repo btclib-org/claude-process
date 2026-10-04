@@ -696,11 +696,10 @@ the orchestrator in the pull request.
 
 Every branch adds its entry to `CHANGELOG.md` and `RELEASE_NOTES.md` at
 the same place, so a rebase or a merge over a landing that wrote one
-can damage them: a line both entries share is written once, or an entry
-lands beside the one it replaces. Where the tree's `.gitattributes`
-gives them `merge=union`, git exits `0` with the damage in it; where it
-does not, git stops on a conflict, and deleting the markers leaves the
-same damage. Either way, rebuild them.
+can damage them: git stops on a conflict, and deleting the markers
+loses a line both entries share or leaves an entry beside the one it
+replaces. A tree that still sets `merge=union` gets the same damage
+with no conflict, and git exits `0`. Either way, rebuild them.
 
 Save the old base and the old tip before you start (`git -C <wt>
 merge-base HEAD origin/main`, `git -C <wt> rev-parse HEAD`). Then, with
@@ -909,10 +908,9 @@ The orchestrator's. **Before opening, and again before landing:**
   auto-merge.
 - **Ask the merge the forge will compute, locally:**
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
-  <branch>` exits
-  `1` where GitHub will refuse. Plain `git merge-tree --write-tree`
-  applies a tree's union driver and is not this check; `gh pr view
-  --json mergeable` is a cached value.
+  <branch>` exits `1` where GitHub will refuse; the flag matters only
+  where a tree still sets `merge=union`. `gh pr view --json mergeable`
+  is a cached value.
 - **A rebase before landing.** A base-only rebase, with the merge above
   clean, is run by the orchestrator in the standing worktree: rebase,
   gates, then push. A rebase that touches the pull request's own code is the

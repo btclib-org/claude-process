@@ -1,7 +1,7 @@
 ---
 name: Bug report
 description: The process says something wrong, or a session following it goes wrong
-labels: [bug]
+type: Bug
 
 body:
   - type: markdown
