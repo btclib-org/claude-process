@@ -166,3 +166,9 @@ on a conflict in `CHANGELOG.md` (issue btclib-org/.github#1582).
 
 *Union files after a rebase* splits `2` by whether the message names a
 file: rebuild by hand only then (closes #37).
+
+### `--admin` waits for no required check
+
+`CONTRIBUTING.md`'s emergency paragraph says `--admin` skips the
+required checks too, and `REVIEWING.md`'s "hold the merge" excepts it
+(issue btclib-org/.github#1597).
