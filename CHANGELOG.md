@@ -161,3 +161,8 @@ or not (issue btclib-org/.github#1582).
 The issue forms set `type:` and no kind label (issue
 btclib-org/.github#1584). `.gitattributes` is gone, so a rebase stops
 on a conflict in `CHANGELOG.md` (issue btclib-org/.github#1582).
+
+### Exit `2` of the union script does not always mean a refused file
+
+*Union files after a rebase* splits `2` by whether the message names a
+file: rebuild by hand only then (closes #37).

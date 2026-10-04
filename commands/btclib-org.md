@@ -720,9 +720,13 @@ itself the path is `.github/scripts/rebuild_union_files.py`.
 - **`1`**: it wrote a file. `git add` it, then `git rebase --continue` or
   `git merge --continue`; where the rebase had finished, amend, and
   where the merge had, commit on top.
-- **`2`**: it refused a file and printed why; another may still have
-  been written. Rebuild the refused one by hand: the new base's copy
-  with your block added at the end of its open section.
+- **`2`, the message names a file** (`::error::<file>: refused, <why>`):
+  it refused that file; another may still have been written. Rebuild
+  the refused one by hand: the new base's copy with your block added at
+  the end of its open section.
+- **`2`, the message names no file**: a revision did not name a commit
+  or git failed, and nothing was read or written. Fix what it printed
+  and run the script again.
 
 Then run the gates, and re-read the section around your entry for prose
 the rebase made false ("the entry above" now naming a stranger).
