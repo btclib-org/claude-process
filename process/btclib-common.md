@@ -674,6 +674,11 @@ Rebase, run the gates, and push.
   into the ground of a new sentence is re-derived, whoever wrote it.
 - **Where your diff falsifies a sentence elsewhere, fixing it is part of
   the diff.**
+- **A repository setting and its record in `REPOSITORY.md` change
+  together.** The setting is changed first, on the human's yes, and the
+  pull request records what the API then answers. Its body gives the
+  command that reads the setting back, and the local reviewer runs it:
+  the bot's review cannot call the API.
 - **A measurement that refutes an issue closes it**, with the commands
   and figures in the closing comment.
 - **Read back the number before reporting it**: `gh issue view <n>`. In
