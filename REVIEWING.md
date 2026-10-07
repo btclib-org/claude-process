@@ -108,7 +108,7 @@ In priority order, stopping at what this diff can be wrong about:
   the pointer promises, at the same generality. The diff's own prose
   about the tree takes the same treatment.
 - **Is what it adds tested and documented the way this repository tests
-  and documents things?** Its `CHANGELOG.md` entry included.
+  and documents things?**
 - **Is it simpler than it needs to be?** As a non-blocking finding, and
   never as a rewrite.
 
@@ -234,7 +234,7 @@ the author's own reading did not already decide.
 The cases to run are not the reviewer's to invent:
 
 - **The shapes the diff's own prose claims to cover** — the example in
-  the hook's comment, in the `CHANGELOG.md` entry, in the pull request
+  the hook's comment, in the pull request
   body. A motivating case the pattern does not in fact handle is the
   finding, and the diff named that case itself.
 - **The shapes the tree actually holds.** `git grep` for the construct
@@ -336,16 +336,8 @@ one, is where the rule lives.
   code is and why it is so, in the present tense; what it was is
   `git log`'s and the changelog's. The finding asks for the history to
   go, not to be shortened.
-- If the branch was rebased: does `CHANGELOG.md` still say what the
-  branch meant it to say, and the release notes with it where the
-  repository has them? Section 9 says how a rebase conflict there is
-  resolved, and at git's default conflict style deleting the markers
-  loses a line both sides share.
-- Does the branch's own `CHANGELOG.md` entry sit **last in the open
-  section**? Section 9 puts it there and `check-changelog` reads no
-  position within the open section, so a green gate says nothing about
-  it; `CONTRIBUTING.md` has the command that prints the section's
-  headings in order.
+- Does the branch add an entry to `CHANGELOG.md` or `RELEASE_NOTES.md`?
+  It adds none, a release's own pull request excepted (section 9).
 - A new or changed workflow: section 10 of the standard, and
   `REPOSITORY.md` before any rule or setting is touched. A renamed job
   is a required check renamed out of existence.

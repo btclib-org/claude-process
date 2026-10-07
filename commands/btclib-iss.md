@@ -67,8 +67,8 @@ The orchestrator's. **Before opening, and the last item once it is
 open:**
 
 - [ ] the local reviewer's `CLEARED` names the branch's content
-- [ ] rebased onto `origin/main`; where it moved, gates re-run and union
-      files rebuilt (the shared *A rebase and the clearance*)
+- [ ] rebased onto `origin/main`; where it moved, gates re-run (the
+      shared *A rebase and the clearance*)
 - [ ] the subject that lands carries the right citation (the shared
       *Citations and closing keywords*)
 - [ ] the body carries one closing keyword per line, and the sweep finds
@@ -80,9 +80,7 @@ open:**
 - **A change to `claude-review.yml` is its own pull request.** The
   action refuses to run where its workflow differs from the default
   branch's.
-- **Rebase onto `origin/main`**, rebuild the union files, and run the
-  gates again. A rebase touching only union files re-runs only the lint
-  gate: `pre-commit run --all-files`, through the tree's own invocation.
+- **Rebase onto `origin/main`** and run the gates again.
 - **Title and body.** The title carries the citation; the body carries
   the keyword, one per line, and states the reserved decision first
   where there is one. It also says which gates ran on the head, with
