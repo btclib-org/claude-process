@@ -194,3 +194,9 @@ holds what both share. Neither has a speedy landing (closes #44).
 
 Neither command passes `--admin`. Fixes after a pull request opens are
 new commits. A machine set up before needs `README.md`'s *Updating* (issue #44).
+
+### `/btclib-pr` waits on every check; a setting moves with its record
+
+It waits until no check is pending, statuses included, and arms a
+`claude-review.yml` change without the bot's ACK. A setting changes
+first, and its record follows.

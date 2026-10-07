@@ -196,9 +196,23 @@ moved, they are working: stop and ask.
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits `1` where GitHub will refuse; `gh pr view --json
   mergeable` is a cached value.
-- **Wait for the checks on the head just pushed**, in the background
-  with a timeout: `gh pr checks <n> --repo <owner>/<repo> --watch`. A
-  `cancelled` run is not a `failure`.
+- **Wait for the checks on the head just pushed**, in the background,
+  by asking until none is pending: `gh pr checks --watch` can return
+  while runs are still queued. The list covers check runs and commit
+  statuses, pre-commit.ci's among them. It must not be empty: right
+  after a push nothing has reported yet. The loop gives up after 30
+  minutes; say so where it does.
+
+  ```shell
+  for i in $(seq 60); do
+    [ "$(gh pr checks <n> --repo <owner>/<repo> --json bucket \
+      --jq 'length > 0 and all(.[]; .bucket != "pending")')" = true ] &&
+      break
+    sleep 30
+  done
+  ```
+
+  A `cancelled` run is not a `failure`.
 - **A red check is read before anything is done about it**:
   `gh run view <run id> --repo <owner>/<repo> --log-failed`. Then:
     - **caused by the pull request**: fixed as an accepted item, under
@@ -269,6 +283,11 @@ bot's ACK both name the head:
   --add-reviewer <login>`);
 - arm the landing, so that their approval lands it (*Landing*);
 - report whom it waits on.
+
+A pull request that changes `claude-review.yml` gets no review from the
+bot: the action refuses to run where its workflow differs from the
+default branch's, and its check fails. There the landing is armed
+without the bot's ACK, every other check green.
 
 ## Outside contributors
 
