@@ -1,8 +1,9 @@
 # Changelog
 
-Every change a user of this repository would notice. Nothing here is
-released — a clone is what ships — so every entry stays under
-`## Unreleased`.
+The history of this repository is `git log` of `main`. Nothing here is
+released — this repository ships by being read — so no entry is added. The
+entries below were written before that, grouped by subject rather than
+by version, and stay as they are.
 
 ## Unreleased
 

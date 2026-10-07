@@ -93,11 +93,8 @@ before the rule stays where it is.
 file's other half. Read before opening a pull request, it is what the
 pull request will be answered against.
 
-A pull request adds no entry to `CHANGELOG.md` or `RELEASE_NOTES.md`:
-the changelog is written at release time (btclib-org/.github#1622). An
-entry per pull request conflicts with every other open pull request at
-each landing; the release pull request writes the changelog once, with
-the whole release in view.
+A pull request adds no entry to `CHANGELOG.md` or `RELEASE_NOTES.md`, a
+release's own pull request excepted ([section 9][s9], [section 12][s12]).
 
 ### One subject, opened as soon as it is written
 
@@ -253,6 +250,7 @@ settings and why they are what they are.
 [s-what]: https://github.com/btclib-org/.github#what-this-repository-is
 [s11]: https://github.com/btclib-org/.github#11-github-settings
 [s9]: https://github.com/btclib-org/.github#9-prose-comments-and-docstrings
+[s12]: https://github.com/btclib-org/.github#12-releasing
 [s-title]: https://github.com/btclib-org/.github#what-a-pull-request-says-it-is
 [s-rev]: https://github.com/btclib-org/.github#review
 [s-sigs]: https://github.com/btclib-org/.github#signatures
