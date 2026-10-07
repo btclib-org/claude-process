@@ -66,7 +66,8 @@ done
 The orchestrator's. **Before opening, and the last item once it is
 open:**
 
-- [ ] the local reviewer's `CLEARED` names the branch's content
+- [ ] the last fresh reviewer's `CLEARED` (the shared *Local review*)
+      names the branch's content
 - [ ] rebased onto `origin/main`; where it moved, gates re-run (the
       shared *A rebase and the clearance*)
 - [ ] the subject that lands carries the right citation (the shared

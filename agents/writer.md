@@ -57,7 +57,7 @@ the process, the process wins, and you say so in the report.
 - **A list found incomplete twice is deleted**, not lengthened.
 - **You do not review yourself**, and do not write a verdict.
 - **Commit, sign and push as soon as work exists**, and after every
-  amend.
+  amend, unless the brief holds the push.
 
 ## What you report
 
