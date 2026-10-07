@@ -392,7 +392,7 @@ The writer's section; the reviewer judges its result.
 - **No entry in `CHANGELOG.md` or `RELEASE_NOTES.md`.** The changelog
   is written at release time (btclib-org/.github#1622), whatever a
   tree's `CONTRIBUTING.md` still says; an entry found on a branch is
-  dropped.
+  dropped. A release's own pull request writes that release's section.
 - **Backward compatibility is not a constraint.** Choose the most
   rational design and document what it breaks in the commit message and
   the pull request body.

@@ -80,21 +80,24 @@ scans the branch's own commit text for a verb in front of a reference.
 *One fact in one place*][s9]**, the paragraph above naming the section
 and not the forms, which are the half a citation is got wrong in:
 `(closes #N)` cites an issue the change closes, wherever the citation
-sits — the title and the commit subject where [*Merge method*][s11]
-makes that the thing that lands — and `(issue #N)` cites, in those same
-places, an issue the change advances and does *not* close. One token
-holds one meaning whichever file it sits in, so the pair is chosen by
-what is true of the change rather than by which file is being written,
-and a tree's own landed subjects are not what to copy it from: nothing
-already landed is rewritten, so what a repository wrote before the rule
-stays where it is.
+sits — the title, the commit subject where [*Merge method*][s11] makes
+that the thing that lands — and `(issue #N)`
+cites, in those same places, an issue the change advances and does *not*
+close. One token holds one meaning whichever file it sits in, so the
+pair is chosen by what is true of the change rather than by which file
+is being written, and a tree's own landed subjects are not what to copy
+it from: nothing already landed is rewritten, so what a repository wrote
+before the rule stays where it is.
 
 `REVIEWING.md` is the standard a review is written against, and is this
 file's other half. Read before opening a pull request, it is what the
 pull request will be answered against.
 
 A pull request adds no entry to `CHANGELOG.md` or `RELEASE_NOTES.md`:
-the changelog is written at release time (btclib-org/.github#1622).
+the changelog is written at release time (btclib-org/.github#1622). An
+entry per pull request conflicts with every other open pull request at
+each landing; the release pull request writes the changelog once, with
+the whole release in view.
 
 ### One subject, opened as soon as it is written
 

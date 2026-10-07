@@ -334,11 +334,10 @@ one, is where the rule lives.
   code** — what it used to be, what was tried, why it changed? Section
   9's *No history in the prose*: a reader of the tree needs what the
   code is and why it is so, in the present tense; what it was is
-  `git log`'s. The finding asks for the history to
+  `git log`'s and the changelog's. The finding asks for the history to
   go, not to be shortened.
 - Does the branch add an entry to `CHANGELOG.md` or `RELEASE_NOTES.md`?
-  The changelog is written at release time: the finding asks for the
-  entry to be dropped.
+  It adds none, a release's own pull request excepted (section 9).
 - A new or changed workflow: section 10 of the standard, and
   `REPOSITORY.md` before any rule or setting is touched. A renamed job
   is a required check renamed out of existence.
