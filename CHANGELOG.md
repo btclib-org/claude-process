@@ -194,3 +194,8 @@ holds what both share. Neither has a speedy landing (closes #44).
 
 Neither command passes `--admin`. Fixes after a pull request opens are
 new commits. A machine set up before needs `README.md`'s *Updating* (issue #44).
+
+### `lint.yml` runs on the merge queue's event
+
+`Lint` runs on `merge_group`, which nothing sends until the queue is turned
+on (issue btclib-org/.github#1619).
