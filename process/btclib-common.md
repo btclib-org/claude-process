@@ -530,7 +530,8 @@ the orchestrator in the pull request.
   once a gate run on that very commit exited 0, never after a failed
   one. Check `git ls-remote origin <branch>` against `HEAD` after every
   push. On an open pull request, a fix is pushed only after its fresh
-  reviewer's `CLEARED` (*Local review*).
+  reviewer's `CLEARED` (*Local review*), and the orchestrator then has
+  the writer push it.
 - **Before the pull request is opened, the branch converges by amend.**
   **Once it is open, a fix is a new signed commit on top**: the reviewer
   reads what changed since their review, and the squash lands the
@@ -664,11 +665,12 @@ each finding the bot makes costs a push, a CI run and another bot run.
 
 **A rebase voids the gates, not necessarily the `CLEARED`.** Where
 `git range-diff <old base>..<old tip> origin/main..<new tip>` marks
-every commit `=`, the clearance stands. A `!` goes back to the
-reviewer, unless the branch's own added and removed lines are
-unchanged. For a one-commit branch that is proved by comparing every
-added and removed line — bullets and blank lines included, headers
-dropped — with explicit shas, each revision a separate argument:
+every commit `=`, the clearance stands. A `!` keeps it only
+where the branch's own added and removed lines are unchanged; otherwise
+a fresh reviewer reads the whole branch. For a one-commit branch,
+"unchanged" is proved by comparing every added and removed line —
+bullets and blank lines included, headers dropped — with explicit shas,
+each revision a separate argument:
 
 ```shell
 hdr='^(diff --git |index |@@ |--- (a/|/dev/null)|\+\+\+ (b/|/dev/null))'
