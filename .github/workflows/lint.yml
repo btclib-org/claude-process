@@ -29,9 +29,8 @@ on:
   # no other way to ask
   workflow_dispatch:
   # the merge queue's run, on main with this pull request and those
-  # ahead of it in the queue merged in. Lint runs on it; Dependency
-  # review and Sign-off are skipped, since they read the pull request's
-  # own diff and commits, which the queue does not change
+  # ahead of it in the queue merged in. Each job's `if:` says whether it
+  # runs on it
   merge_group:
     types: [checks_requested]
 

@@ -213,7 +213,13 @@ moved, they are working: stop and ask.
       break
     sleep 30
   done
+  gh pr checks <n> --repo <owner>/<repo>
   ```
+
+  The last command's exit code says how the loop ended: `0` all passed,
+  `1` a failure or no checks at all, `8` still pending with none failed.
+  The loop gave up wherever that output still lists a pending check or
+  says `no checks reported`.
 
   A `cancelled` run is not a `failure`.
 - **A red check is read before anything is done about it**:
