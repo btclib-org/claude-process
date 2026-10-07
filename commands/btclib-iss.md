@@ -107,16 +107,17 @@ open:**
 Once a pull request is open, the session follows it as its author.
 `~/.claude/commands/btclib-pr.md` holds the rules, read there and not
 restated here: *What was raised*, *Answering it*, *Rebase and CI* and
-*The human's own pull request*. The landing queue holds here too.
+*The human's own pull request*. Where `main` is strict, the landing
+queue holds here too.
 
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (the shared *Collateral*), before
   anything new starts.
 - **Remove the worktrees once the landing is armed**, or once the pull
-  request waits on its turn in the queue — yours, and tell the writer to
+  request waits on its turn in the landing queue — yours, and tell the writer to
   remove its own.
 - **Report to the human** each pull request as a `PR` link, what it
   closes, and whom it waits on. What arrives after the session ends — a
-  review, its turn in the queue — is `/btclib-pr`'s.
+  review, its turn in the landing queue — is `/btclib-pr`'s.
 
 Then the shared *Wrap-up*.

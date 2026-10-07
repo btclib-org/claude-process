@@ -337,6 +337,25 @@ third party returning 502 would be a red merge with nothing to fix; the
 second posts the ack of record `REVIEWING.md` describes, which is an
 opinion for you to weigh. Neither belongs in a branch rule.
 
+### The merge queue
+
+The merge queue is on and `main` is not strict (`REPOSITORY.md`), so
+*The landing queue*, and *Landing it*'s rebase onto `main`'s tip, do not
+apply here. Each pull request is reviewed, approved and queued as it is
+ready, and is rebased only for a conflict.
+
+`lint.yml` also runs on `merge_group`. The checks are read on the head,
+and the queue runs `Lint` again on `main`'s tip before it merges.
+
+`gh pr merge` queues the pull request rather than merging it, with or
+without `--auto` (`gh pr merge --help`). Unlike *Landing it*'s case, it
+does not refuse a head with no approval: it arms the pull request, and
+the queue takes it once it is approved.
+
+`--admin` bypasses the queue and merges directly. Only the maintainer's
+account (`fametrano`) has that bypass, in pull-request mode, as
+`main-self-merge` has; `REPOSITORY.md` has the command that reads it.
+
 ### A version, and no release
 
 Nothing here is released: no index carries it, no GitHub release cuts it,

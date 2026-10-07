@@ -1,5 +1,5 @@
 ---
-description: btclib-pr — from an open pull request to the decision to approve, and to main; every review answered, rebased, CI green
+description: btclib-pr — from an open pull request to the decision to approve, and to main; every review answered, CI green
 argument-hint: [--night] [pull request URLs or numbers]
 ---
 
@@ -8,8 +8,9 @@ argument-hint: [--night] [pull request URLs or numbers]
 Take the open pull requests named in $ARGUMENTS, in repositories of
 `btclib-org`, to the point where only the decision to approve is left.
 Every review, thread, suggestion and comment is answered, the branch is
-rebased onto the default branch, and CI is green. Where the approval is
-obvious, approve and land. Where it is not, put the decision to the
+rebased onto the default branch where `main` is strict or the branch
+conflicts, and CI is green. Where the approval
+is obvious, approve and land. Where it is not, put the decision to the
 human. With no argument, start from *The sweep*.
 
 **First read `~/.claude/process/btclib-common.md`, whole.** It binds
@@ -47,17 +48,17 @@ Show the human one table, grouped:
 - waiting on the human's review;
 - the human's own, with something to do: a review or thread
    unanswered, changes requested, a red or missing check, the branch
-   behind its base;
+   behind its base where `main` is strict;
 - bots';
 - outside contributors';
 - the rest, listed and not worked.
 
 Each row is a `PR` link and what it waits on. A draft is listed and not
 worked. Then put one numbered question: which to work, and in what
-order, with a recommendation. Within one repository the order is
-`CONTRIBUTING.md`'s *The landing queue*: one pull request carried to the
-default branch at a time, the cheapest and least contended first. At
-night, work the recommendation.
+order, with a recommendation. Within one repository where `main` is
+strict the order is `CONTRIBUTING.md`'s *The landing queue*: one pull
+request carried to the default branch at a time, the cheapest and least
+contended first. At night, work the recommendation.
 
 ## Whose pull request it is
 
@@ -85,10 +86,10 @@ is:
 - **A bot's** — Dependabot, pre-commit.ci. The reviewer checks that the
   diff moves what its title says and nothing else, and in which
   direction: Dependabot follows the default branch, so a submodule
-  pinned off it is offered a rollback. Its branch is the bot's: bring it
-  up to date with `gh pr update-branch` or the bot's own rebase command,
-  never a push. Where the update is wrong, close it with the
-  measurement.
+  pinned off it is offered a rollback. Its branch is the bot's: where
+  `main` is strict, or the branch conflicts, bring it up to date with
+  `gh pr update-branch` or the bot's own rebase command, never a push.
+  Where the update is wrong, close it with the measurement.
 - **An outside contributor's**: *Outside contributors*.
 
 ## What was raised
@@ -187,12 +188,14 @@ moved, they are working: stop and ask.
 - **The reviewer reads the delta** from the sha it last cleared, and the
   rebase case of the shared *A rebase and the clearance*. A fresh
   reviewer reads the whole diff from its parent.
-- **Rebase onto the default branch only the pull request that heads its
+- **Where `main` is strict (the repository's `REPOSITORY.md`), rebase
+  onto the default branch only the pull request that heads its
   repository's queue** (`CONTRIBUTING.md`'s *The landing queue*). The
-  others are answered and wait, untouched otherwise. An outside
-  contributor's branch is never rebased: *Outside contributors* brings
-  `main` in by a merge. Run the gates, and
-  push. Ask the merge the forge will compute, locally:
+  others are answered and wait, untouched otherwise. Where it is not
+  strict, a pull request is rebased only for a conflict or a retarget.
+  An outside contributor's branch is never rebased: *Outside
+  contributors* brings `main` in by a merge. Run the gates, and push.
+  Ask the merge the forge will compute, locally:
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits `1` where GitHub will refuse; `gh pr view --json
   mergeable` is a cached value.
@@ -231,17 +234,20 @@ moved, they are working: stop and ask.
 
 ## The decision
 
-**Approve only the head of its repository's queue.** A push dismisses an
-approval, and `main` is strict, so a pull request that will be rebased
-before it lands would need approving again. The others wait with their
-reviews answered and CI green; each is rebased, gated and decided when
-its turn comes (`CONTRIBUTING.md`'s *The landing queue*).
+**Where `main` is strict (the repository's `REPOSITORY.md`), approve only
+the head of its repository's queue.** A push dismisses an approval, and a
+pull request that will be rebased before it lands would need approving
+again. The others wait with their reviews answered and CI green; each is
+rebased, gated and decided when its turn comes (`CONTRIBUTING.md`'s *The
+landing queue*). Where `main` is not strict, approval is not serialised:
+a push still dismisses it, but a branch is pushed again only for a
+conflict, so every pull request is decided as it is ready.
 
 **The approval is obvious where every item holds:**
 
 - [ ] the human is not the author
-- [ ] the pull request heads its repository's queue, and is not behind
-      its base
+- [ ] where `main` is strict, the pull request heads its repository's
+      queue and is not behind its base
 - [ ] the last fresh reviewer's `CLEARED` names the head, or *A rebase
       and the clearance* carries it to the head
 - [ ] every check on the head is green, not only the required ones
@@ -274,11 +280,11 @@ recommendation first. At night it is a deferred item.
 
 ### The human's own pull request
 
-The decision is somebody else's. Once everything raised is answered,
-the pull request heads its repository's queue and is rebased, CI is
-green, and the last fresh reviewer's `CLEARED` (or *A rebase and the
-clearance*, which carries it to the rebased head) and the bot's ACK
-both name the head:
+The decision is somebody else's. Once everything raised is answered, CI
+is green, and the last fresh reviewer's `CLEARED` (or *A rebase and the
+clearance*, which carries it to the rebased head) and the bot's ACK both
+name the head — and, where `main` is strict, the pull request heads its
+repository's queue and is rebased:
 
 - re-request the review of every owner but the human who has not
   approved the head (`gh pr edit <n> --repo <owner>/<repo>
@@ -346,7 +352,9 @@ human.
   somebody other than the author, `required_signatures`, every review
   thread resolved, and the required status checks. The bot's ACK is a
   comment, not an approval. A push dismisses an approval already given.
-- **Squash, with the head pinned, by auto-merge.** The branch carries
+- **Squash, with the head pinned, by auto-merge.** Where the repository
+  has a merge queue, `--auto` queues the pull request once the
+  requirements are met. The branch carries
   several commits once review has added any, so the subject and the
   message are written, not inherited:
 
@@ -361,11 +369,14 @@ human.
   subject. The message says what the change
   does, and keeps every `Signed-off-by:` and `Co-authored-by:` line of
   the commits it squashes. A finding that lives only in the commit
-  message is fixed here, with no new round.
-- **The pin is the head as pushed after the final rebase**, not the sha
-  a verdict named. A queued pull request that falls `BEHIND` its base
-  (`gh pr view <n> --json mergeStateStatus`) is rebased, gated, approved
-  again, and armed again on the new head.
+  message is fixed here, with no new round. Where the repository has a merge
+  queue, whether it keeps `--subject` and `--body-file` is unmeasured
+  (btclib-org/.github#1619): read the landed subject and message back,
+  and record what landed on that issue.
+- **The pin is the head as last pushed**, not the sha a verdict named.
+  Where `main` is strict, an armed pull request that falls `BEHIND` its
+  base (`gh pr view <n> --json mergeStateStatus`) is rebased, gated,
+  approved again, and armed again on the new head.
 - **A stacked pull request lands like any other**: once its base has
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
   opened as soon as it is written* says, approved, and armed.
@@ -373,11 +384,20 @@ human.
   merge: repeat `gh pr view <n> --repo <owner>/<repo> --json
   state,mergeCommit,autoMergeRequest --jq '.state, .mergeCommit.oid,
   .autoMergeRequest'` until it answers `MERGED`, and `<sha>` is that
-  oid. Where it is `OPEN` with no `autoMergeRequest`, the merge was
-  cancelled: report it. Then `gh api
-  repos/<owner>/<repo>/commits/<sha> --jq .commit.verification` is
-  `verified: true`, and each issue the pull request declared closed is
-  closed. What follows waits for this.
+  oid. Where it is `OPEN` with no `autoMergeRequest`, it may be in the
+  merge queue. Read its entry with the query below; only where that is
+  `null` was the merge cancelled, and then report it. Once it is
+  `MERGED`, `gh api repos/<owner>/<repo>/commits/<sha> --jq
+  .commit.verification` is `verified: true`, and each issue the pull
+  request declared closed is closed. What follows waits for this.
+
+  ```shell
+  gh api graphql -F owner=<owner> -F repo=<repo> -F n=<n> -f query='
+    query($owner:String!,$repo:String!,$n:Int!){
+      repository(owner:$owner,name:$repo){
+        pullRequest(number:$n){mergeQueueEntry{state position}}}}'
+  ```
+
 - **A landing in `btclib-org/claude-process` brings its primary checkout
   forward at once**, by the shared fast-forward. The files under
   `~/.claude/` are symlinks into it, so until then every session reads
