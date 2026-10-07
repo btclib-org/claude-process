@@ -29,12 +29,9 @@ on:
   # no other way to ask
   workflow_dispatch:
   # the merge queue's run, on main with this pull request and those
-  # ahead of it in the queue merged in. Nothing sends this event until a
-  # ruleset turns the queue on (issue btclib-org/.github#1619). Lint runs
-  # on it; Dependency review and Sign-off are skipped, since they read the
-  # pull request's own diff and commits, which the queue does not change.
-  # That a skipped job satisfies a required check is what the queue's
-  # trial measures
+  # ahead of it in the queue merged in. Lint runs on it; Dependency
+  # review and Sign-off are skipped, since they read the pull request's
+  # own diff and commits, which the queue does not change
   merge_group:
     types: [checks_requested]
 
