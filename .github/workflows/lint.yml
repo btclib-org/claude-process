@@ -28,6 +28,12 @@ on:
   # the gates included: a branch whose pull request is not open yet has
   # no other way to ask
   workflow_dispatch:
+  # the merge queue's run, on main with this pull request and those
+  # ahead of it in the queue merged in. Lint runs on it; Dependency
+  # review and Sign-off are skipped, since they read the pull request's
+  # own diff and commits, which the queue does not change
+  merge_group:
+    types: [checks_requested]
 
 # least privilege for the GITHUB_TOKEN. Nothing here writes anything --
 # the hooks that fix in place fix a checkout that is thrown away, the
@@ -43,8 +49,9 @@ concurrency:
   # Keyed on the pull request's number rather than on github.head_ref:
   # two forks whose head branches carry the same name share one head_ref
   # group and cancel each other, and this repository is public. A run
-  # with no pull request -- a push to main, a dispatch -- has no number
-  # and falls back to github.ref, which gives it a group of its own
+  # with no pull request -- a push to main, a dispatch, a merge queue's
+  # run -- has no number and falls back to github.ref, which gives it a
+  # group of its own
   group: lint-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
@@ -80,8 +87,11 @@ jobs:
       # of HEAD nor origin/main. One more level of HEAD and main's tip give
       # the merge base on a push and on a pull request while main is at
       # most one commit past the event; past that there is none, and the
-      # hook says it compared nothing. A full checkout fetches main whole
-      # instead: a shallow fetch would make it shallow
+      # hook says it compared nothing. On a merge queue's run the merge base
+      # is reached only for the queue's first entry; behind it the hook
+      # compares nothing, the pull request's own run having compared it
+      # already. A full checkout fetches main whole instead: a shallow
+      # fetch would make it shallow
       - name: Fetch the base check-changelog compares against
         run: |
           if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
