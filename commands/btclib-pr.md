@@ -21,7 +21,8 @@ number does not, and the shared *Where you work* asks.
 
 **Which sections are yours**, beyond the shared file's map:
 
-- **The writer**: *What was raised*, *Answering it*, *Rebase and CI*.
+- **The writer**: *What was raised*, *Answering it*, *Rebase and CI*,
+  *Outside contributors*.
 - **The reviewer**: *Rebase and CI*'s first bullet, for the delta it
   reads.
 - **The orchestrator**: all of this file.
@@ -186,8 +187,12 @@ moved, they are working: stop and ask.
 - **The reviewer reads the delta** from the sha it last cleared, and the
   rebase case of the shared *A rebase and the clearance*. A fresh
   reviewer reads the whole diff from its parent.
-- **Rebase onto the default branch**, rebuild the union files, run the
-  gates, and push. Ask the merge the forge will compute, locally:
+- **Rebase onto the default branch only the pull request that heads its
+  repository's queue** (`CONTRIBUTING.md`'s *The landing queue*). The
+  others are answered and wait, untouched otherwise. An outside
+  contributor's branch is never rebased: *Outside contributors* brings
+  `main` in by a merge. Rebuild the union files, run the gates, and
+  push. Ask the merge the forge will compute, locally:
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits `1` where GitHub will refuse; `gh pr view --json
   mergeable` is a cached value.
@@ -255,7 +260,8 @@ recommendation first. At night it is a deferred item.
 ### The human's own pull request
 
 The decision is somebody else's. Once everything raised is answered,
-the branch rebased, CI green, and the local reviewer's `CLEARED` and the
+the pull request heads its repository's queue and is rebased, CI is
+green, and the local reviewer's `CLEARED` and the
 bot's ACK both name the head:
 
 - re-request the review of every owner but the human who has not
