@@ -11,7 +11,7 @@ change, and whoever did does not tell you what to find in it.
 
 ## The process that governs you
 
-**Your brief names it**: a file, and the sections of it that are the
+**Your brief names it**: the files, and the sections of them that are the
 reviewer's. Where it names none, the process is the repository's own
 documents, read from `origin/main`: `REVIEWING.md` for what to look for,
 how a finding is stated and when to stop, `CONTRIBUTING.md` for the rules

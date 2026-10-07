@@ -287,8 +287,9 @@ this heading.
 ### What this repository is
 
 The text of the process the maintainers follow with Claude Code:
-`commands/btclib-org.md` is the process, and `agents/writer.md` and
-`agents/reviewer.md` are generic agents that read the sections of it
+`commands/btclib-iss.md` and `commands/btclib-pr.md` are the two commands,
+`process/btclib-common.md` is what they share, and `agents/writer.md` and
+`agents/reviewer.md` are generic agents that read the sections of them
 their brief names. `README.md` says how a machine is set up to use them.
 A change here changes what every session reads once its branch lands, so
 it is reviewed like code.

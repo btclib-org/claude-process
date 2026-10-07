@@ -1,6 +1,7 @@
 ---
-# the lint gate of this repository. What it ships is prose -- the process
-# command, the two agents and the files around them -- so the hooks below
+# the lint gate of this repository. What it ships is prose -- the two
+# commands, the file they share, the two agents and the files around
+# them -- so the hooks below
 # are the ones with a subject here: the markdown, the yaml of the
 # workflows and of the issue forms, the one shell script, and the text
 # every file is made of.

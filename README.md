@@ -13,16 +13,21 @@ workflow badge carries `?branch=main`, and its link the same filter. -->
 The process the btclib-org maintainers follow with
 [Claude Code](https://claude.com/claude-code):
 
-- `commands/btclib-org.md` — the `/btclib-org` command, from an issue or
-  a pull request to `main`;
+- `commands/btclib-iss.md` — the `/btclib-iss` command, from an issue to
+  an open pull request;
+- `commands/btclib-pr.md` — the `/btclib-pr` command, from an open pull
+  request to the decision to approve, and to `main`;
+- `process/btclib-common.md` — what both commands share, read whole by
+  each;
 - `agents/writer.md` — the agent that writes a change in its own
   worktree;
 - `agents/reviewer.md` — the agent that reviews it at fresh context;
 - `scripts/gate-lock.sh` — the gate lock every worker takes before its
   heavy gates.
 
-The command is the single source of the process. The agents are
-generic: they read the sections of it that their brief names.
+The two commands and the shared file are the single source of the
+process. The agents are generic: they read the sections of it that their
+brief names.
 
 ## Prerequisites
 
@@ -48,11 +53,19 @@ git clone https://github.com/btclib-org/claude-process "${CLAUDE_PROCESS:?}"
 ```
 
 ```shell
-mkdir -p ~/.claude/commands ~/.claude/agents ~/.claude/scripts
+mkdir -p ~/.claude/commands ~/.claude/agents ~/.claude/scripts ~/.claude/process
 ```
 
 ```shell
-ln -s "${CLAUDE_PROCESS:?}/commands/btclib-org.md" ~/.claude/commands/btclib-org.md
+ln -s "${CLAUDE_PROCESS:?}/commands/btclib-iss.md" ~/.claude/commands/btclib-iss.md
+```
+
+```shell
+ln -s "${CLAUDE_PROCESS:?}/commands/btclib-pr.md" ~/.claude/commands/btclib-pr.md
+```
+
+```shell
+ln -s "${CLAUDE_PROCESS:?}/process/btclib-common.md" ~/.claude/process/btclib-common.md
 ```
 
 ```shell
@@ -74,19 +87,31 @@ make them again from the new path.
 `ln -s` refuses to overwrite an existing file: move any `writer.md`,
 `reviewer.md` or `gate-lock.sh` you already have out of the way first.
 
-Check it in a new session: `/btclib-org` is listed among the commands,
-and `/agents` lists `writer` and `reviewer`.
+Check it in a new session: `/btclib-iss` and `/btclib-pr` are listed
+among the commands, and `/agents` lists `writer` and `reviewer`.
 
 ## Use
 
 ```text
-/btclib-org <issue or pull request number>
+/btclib-iss <issue URLs or numbers>
 ```
 
-The session asks which repository the work is for. Every pull request
-lands approved by somebody other than its author. By default it also
-waits for green CI and the bot's ACK. Only the repository's maintainer
-is asked about a faster landing, which does not wait for the bot's ACK.
+takes issues to open pull requests, locally reviewed, with the review of
+the other owners requested.
+
+```text
+/btclib-pr [pull request URLs or numbers]
+```
+
+answers what the reviewers raised, rebases, gets CI green, and brings the
+decision to approve. It approves and lands where the approval is
+obvious, and asks where it is not. With no argument it sweeps the
+organization's open pull requests and proposes which to work.
+
+Both work in every repository of `btclib-org`. A bare number makes the
+session ask which repository it is in. Every pull request lands approved
+by somebody other than its author. A session approves on its own only
+where every check is green and the bot's ACK names the head.
 
 ## Updating
 
@@ -98,6 +123,18 @@ CLAUDE_PROCESS=~/Git/claude-process
 
 ```shell
 git -C "${CLAUDE_PROCESS:?}" pull --ff-only
+```
+
+A machine set up before the commands were split has a link
+`~/.claude/commands/btclib-org.md` that points at nothing. Remove it,
+then make the directory and the three links of *Setup* it lacks:
+
+```shell
+rm ~/.claude/commands/btclib-org.md
+```
+
+```shell
+mkdir -p ~/.claude/process
 ```
 
 The links then point at the new text. Do not edit the clone the links
