@@ -104,10 +104,10 @@ reviewers raise and gets CI green, until only an approval is missing.
 /btclib-pr [pull request URLs or numbers]
 ```
 
-answers what the reviewers raised, rebases, gets CI green, and brings the
-decision to approve. It approves and lands where the approval is
-obvious, and asks where it is not. With no argument it sweeps the
-organization's open pull requests and proposes which to work.
+answers what the reviewers raised, rebases where it must, gets CI green,
+and brings the decision to approve. It approves and lands where the
+approval is obvious, and asks where it is not. With no argument it
+sweeps the organization's open pull requests and proposes which to work.
 
 Both work in every repository of `btclib-org`. A bare number makes the
 session ask which repository it is in. Every pull request lands approved
