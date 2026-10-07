@@ -194,3 +194,8 @@ holds what both share. Neither has a speedy landing (closes #44).
 
 Neither command passes `--admin`. Fixes after a pull request opens are
 new commits. A machine set up before needs `README.md`'s *Updating* (issue #44).
+
+### `/btclib-iss` follows its pull request until only the approval is left
+
+After opening, it answers every review and thread, gets CI green and the
+bot's ACK, and arms the landing, by `/btclib-pr`'s rules.

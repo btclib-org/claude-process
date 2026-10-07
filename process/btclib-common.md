@@ -3,7 +3,7 @@
 Two commands carry work in every repository of `btclib-org`:
 
 - `/btclib-iss` takes issues to open pull requests, locally reviewed,
-  with their reviewers requested;
+  and follows them as their author until only the approval is missing;
 - `/btclib-pr` takes open pull requests through their reviews and CI to
   the decision to approve, and lands what is approved.
 
