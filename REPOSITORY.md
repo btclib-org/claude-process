@@ -58,8 +58,11 @@ gh api repos/btclib-org/claude-process/branches/main/protection \
 review` or `Sign-off` job stops a merge by anyone but the maintainer, and
 the queue merges nothing that is red.**
 `strict` is off: a pull request need not be up to date with `main`. The
-merge queue below tests it on `main`'s tip instead. All three contexts
-are bound to `15368`, the Actions app, so nothing else can report one.
+merge queue below tests it on `main`'s tip instead. This departs from
+section 11, which makes `main` strict: it is the trial of a merge queue
+in place of strict (btclib-org/.github#1619), ahead of any change to
+section 11. All three contexts are bound to `15368`, the Actions app, so
+nothing else can report one.
 
 | Check | Produced by |
 | --- | --- |

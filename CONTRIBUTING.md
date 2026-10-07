@@ -350,7 +350,8 @@ and the queue runs `Lint` again on `main`'s tip before it merges.
 `gh pr merge` queues the pull request rather than merging it, with or
 without `--auto` (`gh pr merge --help`). Unlike *Landing it*'s case, it
 does not refuse a head with no approval: it arms the pull request, and
-the queue takes it once it is approved.
+the queue takes it once it is approved (gh 2.102.0's
+`pkg/cmd/pr/merge/merge.go`; not yet seen on a landing).
 
 `--admin` bypasses the queue and merges directly. Only the maintainer's
 account (`fametrano`) has that bypass, in pull-request mode, as
