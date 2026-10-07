@@ -599,15 +599,22 @@ each finding the bot makes costs a push, a CI run and another bot run.
 - The fresh reviewer is a new worker. It reads the branch's whole diff
   from its parent, briefed with this section and with the bot's
   prompt: the `prompt:` block of `reusable-claude-review.yml` at
-  `origin/main` of `btclib-org/.github`, the tree's `extra-prompt`
+  `origin/main` of `btclib-org/.github`, with the tree's `extra-prompt`
   (its `claude-review.yml`) in place of `${{ inputs.extra-prompt }}`,
-  and nothing from "Do not run the gates" on. The brief gives the
-  branch and the sha to review, which on an open pull request is not
-  pushed yet: the reviewer reads that sha, not the pull request's
-  head. Where no pull request is open, the commit message stands for
-  the title and description. Line 1 of the bot's summary format ("this
-  job ran no gates") is replaced by the gate case of *The gates are
-  the writer's*. It posts nothing; its verdict is `CLEARED <sha>` or
+  and nothing from "Do not run the gates" on. The workflow is fetched
+  by:
+
+  ```shell
+  gh api -H 'Accept: application/vnd.github.raw' \
+    repos/btclib-org/.github/contents/.github/workflows/reusable-claude-review.yml
+  ```
+
+  The brief gives the branch and the sha to review, which on an open
+  pull request is not pushed yet: the reviewer reads that sha, not the
+  pull request's head. Where no pull request is open, the commit
+  message stands for the title and description. Whatever the bot's
+  prompt says about gates, the fresh reviewer follows *The gates are the
+  writer's* instead. It posts nothing; its verdict is `CLEARED <sha>` or
   `CHANGES REQUESTED`, not an ACK.
 - A blocking finding goes back to the writer, and a further fresh
   reviewer reads the whole diff once it is fixed. A non-blocking finding
@@ -620,8 +627,6 @@ each finding the bot makes costs a push, a CI run and another bot run.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same: its fix is read by a fresh reviewer before it is
   pushed.
-- A change only to the union files needs none (*A rebase and the
-  clearance*).
 
 **The verdict holds:**
 

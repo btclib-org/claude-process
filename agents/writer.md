@@ -57,14 +57,15 @@ the process, the process wins, and you say so in the report.
 - **A list found incomplete twice is deleted**, not lengthened.
 - **You do not review yourself**, and do not write a verdict.
 - **Commit, sign and push as soon as work exists**, and after every
-  amend, unless the brief holds the push.
+  amend, unless *Committing and rebasing* holds it.
 
 ## What you report
 
 Facts, not reassurances:
 
-- the tip **sha**, pushed (`git ls-remote` matching), and `git log
-  --format='%h %G? %GS'` over the range;
+- the tip **sha**; pushed (`git ls-remote` matching) unless *Committing
+  and rebasing* holds the push; `git log --format='%h %G? %GS'` over
+  the range;
 - each gate's command and **exit code**, the counts the runner prints,
   and the load at each run; where a run fell and a later one passed,
   both;
