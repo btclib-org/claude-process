@@ -46,8 +46,7 @@ a report to the human — an issue is **`ISS 123`** and a pull request is
 Bare `#123` is only for where the forge or the standard fixes the form:
 the closing keyword in a pull request body, the `(closes #N)` or
 `(issue #N)` on the subject that lands (see *Citations and closing
-keywords*), and a
-`CHANGELOG.md` entry's citation.
+keywords*).
 
 ## What binds every role
 
@@ -390,9 +389,13 @@ The writer's section; the reviewer judges its result.
 
 ### What the prose that lands may say
 
+- **No entry in `CHANGELOG.md` or `RELEASE_NOTES.md`.** The changelog
+  is written at release time (btclib-org/.github#1622), whatever a
+  tree's `CONTRIBUTING.md` still says; an entry found on a branch is
+  dropped.
 - **Backward compatibility is not a constraint.** Choose the most
-  rational design and document what it breaks: `CHANGELOG.md` always,
-  `RELEASE_NOTES.md` where the caller has to act.
+  rational design and document what it breaks in the commit message and
+  the pull request body.
 - **No counts** — not entries, tests, errors or files. Exhaustive words
   ("the only three", "every other") hold only where a command counted
   them, and then the command is written, not the total. A count that
@@ -401,8 +404,7 @@ The writer's section; the reviewer judges its result.
   exception is the defect being corrected, and that "before" is measured
   against a snapshot.
 - **One sentence per fact.** A clause whose removal loses nothing
-  checkable is decoration. Do not restate the commit in the CHANGELOG or
-  the code in a comment.
+  checkable is decoration. Do not restate the code in a comment.
 - **A second reason gets its own paragraph.** A clause grafted into a
   standing paragraph inherits its subject, and every later sentence
   becomes false of it.
@@ -418,11 +420,10 @@ the orchestrator in the pull request.
   subject; a multi-commit branch under the pull request's title.
 - **`(closes #N)` where the branch closes the issue, `(issue #N)` where
   it advances it without closing, nothing where it does neither** — on
-  the subject and in the `CHANGELOG.md` entry alike, and the two agree.
-  Across trackers: `(closes owner/repo#N)`. This is the standard's rule
-  (section 11, *What a pull request says it is*); a tree's landed
-  subjects may drift from it and are not the model: a divergence found is
-  an issue to file. Nothing landed is rewritten.
+  the subject. Across trackers: `(closes owner/repo#N)`. This is the
+  standard's rule (section 11, *What a pull request says it is*); a
+  tree's landed subjects may drift from it and are not the model: a
+  divergence found is an issue to file. Nothing landed is rewritten.
 - **An issue owed by several trees is closed by the last landing only.**
   Where switching that last tree's `(issue …)` to `closes` would send an
   already cleared branch back to review, land it as cleared and close the
@@ -583,45 +584,6 @@ the orchestrator in the pull request.
   PATH=/abs/wt/.venv/bin:$PATH git -C /abs/wt commit …`) and read the
   commit back.
 
-### Union files after a rebase
-
-Every branch adds its entry to `CHANGELOG.md` and `RELEASE_NOTES.md` at
-the same place, so a rebase or a merge over a landing that wrote one
-can damage them: git stops on a conflict, and deleting the markers
-loses a line both entries share or leaves an entry beside the one it
-replaces. A tree that still sets `merge=union` gets the same damage
-with no conflict, and git exits `0`. Either way, rebuild them.
-
-Save the old base and the old tip before you start (`git -C <wt>
-merge-base HEAD origin/main`, `git -C <wt> rev-parse HEAD`). Then, with
-the rebase or merge stopped or finished, run btclib-org/.github's script
-from a checkout of it brought forward, bound to your worktree:
-
-```shell
-env -C <wt> uv run --no-project --python 3.15 \
-  <.github checkout>/.github/scripts/rebuild_union_files.py \
-  <old base> <old tip>
-```
-
-The new base is `MERGE_HEAD` during a merge, otherwise the merge base
-with `origin/main`; `--base <sha>` names another. In `btclib-org/.github`
-itself the path is `.github/scripts/rebuild_union_files.py`.
-
-- **`0`**: every file already agrees.
-- **`1`**: it wrote a file. `git add` it, then `git rebase --continue` or
-  `git merge --continue`; where the rebase had finished, amend, and
-  where the merge had, commit on top.
-- **`2`, the message names a file** (`::error::<file>: refused, <why>`):
-  it refused that file; another may still have been written. Rebuild
-  the refused one by hand: the new base's copy with your block added at
-  the end of its open section.
-- **`2`, the message names no file**: a revision did not name a commit
-  or git failed, and nothing was read or written. Fix what it printed
-  and run the script again.
-
-Then run the gates, and re-read the section around your entry for prose
-the rebase made false ("the entry above" now naming a stranger).
-
 ## Local review
 
 **`REVIEWING.md` says what the reviewer looks for.** This section says
@@ -665,32 +627,29 @@ fresh context, never the author on itself.
 **A rebase voids the gates, not necessarily the `CLEARED`.** Where
 `git range-diff <old base>..<old tip> origin/main..<new tip>` marks
 every commit `=`, the clearance stands. A `!` goes back to the
-reviewer, unless the only difference is in the union files. For a
-one-commit branch that is proved by comparing every added and removed
-line — bullets and blank lines included, headers dropped — outside the
-union files, with explicit shas, each revision a separate argument:
+reviewer, unless the branch's own added and removed lines are
+unchanged. For a one-commit branch that is proved by comparing every
+added and removed line — bullets and blank lines included, headers
+dropped — with explicit shas, each revision a separate argument:
 
 ```shell
 hdr='^(diff --git |index |@@ |--- (a/|/dev/null)|\+\+\+ (b/|/dev/null))'
 before=$(git -C <wt> diff '<cleared sha>^' '<cleared sha>' \
-           -- . ':!CHANGELOG.md' ':!RELEASE_NOTES.md' \
            | grep -vE "$hdr" | grep -E '^[+-]')
 after=$(git -C <wt> diff '<new sha>^' '<new sha>' \
-          -- . ':!CHANGELOG.md' ':!RELEASE_NOTES.md' \
           | grep -vE "$hdr" | grep -E '^[+-]')
 printf '%s\n' "$before" | shasum
 printf '%s\n' "$after"  | shasum
 printf '%s\n' "$before" "$after" | grep -c .   # not zero
 ```
 
-Equal hashes over a non-empty stream, **and** your entries' own blocks
-byte-identical at both shas, and the clearance stands. A branch of
-several commits is compared the same way over `<base>..<tip>` at both
-ends. Say in the pull request which case it was.
+Equal hashes over a non-empty stream, and the clearance stands. A
+branch of several commits is compared the same way over `<base>..<tip>`
+at both ends. Say in the pull request which case it was.
 
 **"This branch has conflicts" on GitHub is real** even where a local
 rebase exits `0`: the forge does not apply a tree's `merge=union`.
-Rebase, rebuild the union files, run the gates, and push.
+Rebase, run the gates, and push.
 
 ## Collateral
 

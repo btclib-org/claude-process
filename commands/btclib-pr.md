@@ -166,7 +166,7 @@ pull request, item by item.
 **On another person's pull request, minor changes are the session's and
 substantial ones are the author's.**
 
-- **Minor**: the rebase, the union files, a reviewer's suggestion
+- **Minor**: the rebase, a reviewer's suggestion
   applied as written, a typo, a lint or format fix, a red check whose fix
   changes no behaviour, a few lines that take no decision.
 - **Substantial**: anything that changes behaviour, an interface, the
@@ -191,7 +191,7 @@ moved, they are working: stop and ask.
   repository's queue** (`CONTRIBUTING.md`'s *The landing queue*). The
   others are answered and wait, untouched otherwise. An outside
   contributor's branch is never rebased: *Outside contributors* brings
-  `main` in by a merge. Rebuild the union files, run the gates, and
+  `main` in by a merge. Run the gates, and
   push. Ask the merge the forge will compute, locally:
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits `1` where GitHub will refuse; `gh pr view --json
@@ -287,8 +287,7 @@ contributor is told on their pull request what moved and how to resolve
 it. Completing it:
 
 - **Add, never rewrite.** Their commits stay byte for byte. `main` comes
-  in by a signed merge, not a rebase, with the union files rebuilt
-  across it (the shared *Union files after a rebase*). The fixes are a
+  in by a signed merge, not a rebase. The fixes are a
   signed commit of ours on top, signed off by us.
 - **Their sign-off is theirs to add.** A commit of theirs without the
   trailer is not ours to fix: a sign-off we add for them is not their

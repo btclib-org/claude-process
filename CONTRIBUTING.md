@@ -80,40 +80,21 @@ scans the branch's own commit text for a verb in front of a reference.
 *One fact in one place*][s9]**, the paragraph above naming the section
 and not the forms, which are the half a citation is got wrong in:
 `(closes #N)` cites an issue the change closes, wherever the citation
-sits — the title, the commit subject where [*Merge method*][s11] makes
-that the thing that lands, and a `CHANGELOG.md` entry — and `(issue #N)`
-cites, in those same places, an issue the change advances and does *not*
-close. One token holds one meaning whichever file it sits in, so the
-pair is chosen by what is true of the change rather than by which file
-is being written, and a tree's own landed subjects are not what to copy
-it from: nothing already landed is rewritten, so what a repository wrote
-before the rule stays where it is.
+sits — the title and the commit subject where [*Merge method*][s11]
+makes that the thing that lands — and `(issue #N)` cites, in those same
+places, an issue the change advances and does *not* close. One token
+holds one meaning whichever file it sits in, so the pair is chosen by
+what is true of the change rather than by which file is being written,
+and a tree's own landed subjects are not what to copy it from: nothing
+already landed is rewritten, so what a repository wrote before the rule
+stays where it is.
 
 `REVIEWING.md` is the standard a review is written against, and is this
 file's other half. Read before opening a pull request, it is what the
 pull request will be answered against.
 
-`CHANGELOG.md` gets an entry for anything a reader would notice, and the
-release notes move only for something a user has to *act* on, in the
-repositories that publish.
-
-Where that entry goes is [section 9][s9]'s — the end of the open
-section — and a gate reads it only in part: `check-changelog` refuses an
-entry under a release older than the newest, and cannot tell where in
-the open section the branch's entry sits. The open
-section's headings, in the order the file holds them, a branch's own
-last:
-
-```shell
-awk '/^## /{n++} n==1 && /^### /' CHANGELOG.md
-```
-
-`n==1` takes the open section, from the first `##` heading to the next,
-and the scan is `/^## /` rather than `/^## v/`: a section headed
-`## Unreleased` is no match for `/^## v/`, which counts from the first
-release heading instead and prints a released section's entries — or
-nothing, where the tree has released nothing — while reading as a
-check that passed.
+A pull request adds no entry to `CHANGELOG.md` or `RELEASE_NOTES.md`:
+the changelog is written at release time (btclib-org/.github#1622).
 
 ### One subject, opened as soon as it is written
 
