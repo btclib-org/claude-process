@@ -194,3 +194,8 @@ holds what both share. Neither has a speedy landing (closes #44).
 
 Neither command passes `--admin`. Fixes after a pull request opens are
 new commits. A machine set up before needs `README.md`'s *Updating* (issue #44).
+
+### The repository description names both commands
+
+The description, and its record in `REPOSITORY.md`, name `/btclib-iss`,
+`/btclib-pr` and the file they share (issue #45).

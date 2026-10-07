@@ -225,8 +225,9 @@ has no topics.
 
 ```shell
 gh api repos/btclib-org/claude-process --jq '{description, homepage}'
-# {"description":"The btclib-org Claude Code process: the /btclib-org
-#  command and the writer and reviewer agents","homepage":null}
+# {"description":"The btclib-org Claude Code process: the /btclib-iss
+#  and /btclib-pr commands, the file they share, and the writer and
+#  reviewer agents","homepage":null}
 ```
 
 `homepage` is null. The standard gives that field to a tree that
