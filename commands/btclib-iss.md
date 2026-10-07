@@ -1,5 +1,5 @@
 ---
-description: btclib-iss — from an issue to an open pull request, measuring rather than asserting, with a local review before GitHub
+description: btclib-iss — from an issue to a pull request that waits only on its approval, measuring rather than asserting, with a local review before GitHub
 argument-hint: [--night] <issue numbers or URLs>
 ---
 
@@ -7,9 +7,10 @@ argument-hint: [--night] <issue numbers or URLs>
 
 Take on the issues named in $ARGUMENTS, in a repository of `btclib-org`,
 and take each to an open pull request: written, gated, cleared by a
-local review, and with its reviewers requested. That is where this
-command ends. Answering the reviews, CI, the approval and the landing
-are `/btclib-pr`'s.
+local review, and with its reviewers requested. Then follow each as its
+author, by `/btclib-pr`'s rules, until only another owner's approval is
+missing: CI green, every review and thread answered, the bot's ACK on
+the head, and the landing armed. The approval is theirs.
 
 **First read `~/.claude/process/btclib-common.md`, whole.** It binds
 this command, names the roles, and holds every rule the two commands
@@ -21,8 +22,10 @@ says which a number is. A pull request among the arguments is
 
 **Which sections are yours**, beyond the shared file's map:
 
-- **The writer**: *What the issue still asks*.
-- **The reviewer**: nothing more.
+- **The writer**: *What the issue still asks*, and `/btclib-pr`'s *What
+  was raised*, *Answering it* and *Rebase and CI*.
+- **The reviewer**: `/btclib-pr`'s *Rebase and CI*'s first bullet, for
+  the delta it reads.
 - **The orchestrator**: all of this file.
 
 ## Several issues, several pull requests
@@ -97,21 +100,21 @@ open:**
   gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>,<login>
   ```
 
-- **Arm nothing.** Auto-merge is armed by `/btclib-pr`, on a head whose
-  reviews it has read.
+## Following it
 
-## Handing over
-
-Once each pull request is open:
+Once a pull request is open, the session follows it as its author.
+`~/.claude/commands/btclib-pr.md` holds the rules, read there and not
+restated here: *What was raised*, *Answering it*, *Rebase and CI* and
+*The human's own pull request*. The landing queue holds here too.
 
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (the shared *Collateral*), before
   anything new starts.
-- **Remove the worktrees** — yours, and tell the writer to remove its
-  own. The branch is on the forge; `/btclib-pr` works it from a worktree
-  of its own.
+- **Remove the worktrees once the landing is armed**, or once the pull
+  request waits on its turn in the queue — yours, and tell the writer to
+  remove its own.
 - **Report to the human** each pull request as a `PR` link, what it
-  closes, and whom it waits on. The next step is `/btclib-pr`, by the
-  author once reviews arrive, and by another owner to approve it.
+  closes, and whom it waits on. What arrives after the session ends — a
+  review, its turn in the queue — is `/btclib-pr`'s.
 
 Then the shared *Wrap-up*.

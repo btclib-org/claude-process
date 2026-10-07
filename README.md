@@ -14,7 +14,7 @@ The process the btclib-org maintainers follow with
 [Claude Code](https://claude.com/claude-code):
 
 - `commands/btclib-iss.md` — the `/btclib-iss` command, from an issue to
-  an open pull request;
+  a pull request that waits only on its approval;
 - `commands/btclib-pr.md` — the `/btclib-pr` command, from an open pull
   request to the decision to approve, and to `main`;
 - `process/btclib-common.md` — what both commands share, read whole by
@@ -97,7 +97,8 @@ among the commands, and `/agents` lists `writer` and `reviewer`.
 ```
 
 takes issues to open pull requests, locally reviewed, with the review of
-the other owners requested.
+the other owners requested. It then answers what the bot and the
+reviewers raise and gets CI green, until only an approval is missing.
 
 ```text
 /btclib-pr [pull request URLs or numbers]
