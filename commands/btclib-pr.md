@@ -242,7 +242,8 @@ its turn comes (`CONTRIBUTING.md`'s *The landing queue*).
 - [ ] the human is not the author
 - [ ] the pull request heads its repository's queue, and is not behind
       its base
-- [ ] the local reviewer's `CLEARED` names the head
+- [ ] the last fresh reviewer's `CLEARED` names the head, or *A rebase
+      and the clearance* carries it to the head
 - [ ] every check on the head is green, not only the required ones
 - [ ] the bot's review names the head with an ACK
 - [ ] no thread is unresolved, and nobody else's changes requested
@@ -275,8 +276,9 @@ recommendation first. At night it is a deferred item.
 
 The decision is somebody else's. Once everything raised is answered,
 the pull request heads its repository's queue and is rebased, CI is
-green, and the local reviewer's `CLEARED` and the
-bot's ACK both name the head:
+green, and the last fresh reviewer's `CLEARED` (or *A rebase and the
+clearance*, which carries it to the rebased head) and the bot's ACK
+both name the head:
 
 - re-request the review of every owner but the human who has not
   approved the head (`gh pr edit <n> --repo <owner>/<repo>

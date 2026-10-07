@@ -372,7 +372,8 @@ The writer's section; the reviewer judges its result.
 **Before handing over, every item holds:**
 
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
-      `HEAD`
+      `HEAD` (on an open pull request, a fix waits for its fresh
+      reviewer's `CLEARED`: *Local review*)
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
@@ -528,7 +529,8 @@ the orchestrator in the pull request.
   step; it needs no gate. After that, push a commit or an amend only
   once a gate run on that very commit exited 0, never after a failed
   one. Check `git ls-remote origin <branch>` against `HEAD` after every
-  push.
+  push. On an open pull request, a fix is pushed only after its fresh
+  reviewer's `CLEARED` (*Local review*).
 - **Before the pull request is opened, the branch converges by amend.**
   **Once it is open, a fix is a new signed commit on top**: the reviewer
   reads what changed since their review, and the squash lands the
@@ -587,8 +589,44 @@ the orchestrator in the pull request.
 ## Local review
 
 **`REVIEWING.md` says what the reviewer looks for.** This section says
-how the round runs. One dedicated `reviewer` agent per pull request, at
-fresh context, never the author on itself.
+how the round runs. One dedicated `reviewer` agent per pull request for
+its rounds, at fresh context, never the author on itself.
+
+**After the first `CLEARED`, a fresh reviewer reads the whole branch.**
+Otherwise nobody reads it whole again before GitHub's review bot, and
+each finding the bot makes costs a push, a CI run and another bot run.
+
+- The fresh reviewer is a new worker. It reads the branch's whole diff
+  from its parent, briefed with this section and with the bot's
+  prompt: the `prompt:` block of `reusable-claude-review.yml` at
+  `origin/main` of `btclib-org/.github`, with the tree's `extra-prompt`
+  (its `claude-review.yml`) in place of `${{ inputs.extra-prompt }}`,
+  and nothing from "Do not run the gates" on. The workflow is fetched
+  by:
+
+  ```shell
+  gh api -H 'Accept: application/vnd.github.raw' \
+    repos/btclib-org/.github/contents/.github/workflows/reusable-claude-review.yml
+  ```
+
+  The brief gives the branch and the sha to review, which on an open
+  pull request is not pushed yet: the reviewer reads that sha, not the
+  pull request's head. Where no pull request is open, the commit
+  message stands for the title and description. Whatever the bot's
+  prompt says about gates, the fresh reviewer follows *The gates are the
+  writer's* instead. It posts nothing; its verdict is `CLEARED <sha>` or
+  `CHANGES REQUESTED`, not an ACK.
+- A blocking finding goes back to the writer, and a further fresh
+  reviewer reads the whole diff once it is fixed. A non-blocking finding
+  waits for the next change to the branch (*Which prose is worth a
+  round*).
+- The rounds stop at a fresh `CLEARED`. A blocking finding from the
+  third fresh reviewer since the first `CLEARED`, or since the review
+  on GitHub that sent the branch back, goes to the human; there is no
+  fourth.
+- A branch a review on GitHub sends back, the bot's or a person's, goes
+  through the same: its fix is read by a fresh reviewer before it is
+  pushed.
 
 **The verdict holds:**
 
@@ -751,7 +789,8 @@ Rebase, run the gates, and push.
 - **Reuse.** A writer takes a new, unrelated pull request only after
   `/compact`; its own deferred half and its own collateral it takes
   uncompacted. The reviewer is the same worker for every round of its
-  pull request, and comes back only for that pull request's collateral.
+  pull request, and comes back only for that pull request's collateral;
+  the fresh reviewers of *Local review* are new workers, one per round.
   Resuming a worker is `SendMessage` to its id; `Agent` always starts a
   new one.
 - **Models**: the writer runs on Sonnet (its agent definition pins it);
