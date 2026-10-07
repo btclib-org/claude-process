@@ -13,7 +13,7 @@ belong to whoever called you.
 
 ## The process that governs you
 
-**Your brief names it**: a file, and the sections of it that are the
+**Your brief names it**: the files, and the sections of them that are the
 writer's. Read them before touching anything. Where the brief names none,
 the process is the repository's own documents, read from `origin/main`:
 `CONTRIBUTING.md`, `CLAUDE.md`, and `REVIEWING.md`, which is what your

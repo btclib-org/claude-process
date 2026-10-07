@@ -477,20 +477,22 @@ this heading.
 Each of these is a question, and the document that answers it is named
 because that document, and not this one, is where the rule lives.
 
-- **Does the change keep the command the single source?** The two agents
-  read the sections of `commands/btclib-org.md` their brief names, so a
-  rule stated in an agent file is a second copy that will disagree with
-  the first. What a diff added to the agents is read against the command:
+- **Does the change keep the process the single source?** The two agents
+  read the sections of `process/btclib-common.md` and of the command
+  their brief names, so a rule stated in an agent file is a second copy
+  that will disagree with the first. A rule both commands need sits in
+  the shared file, once. What a diff added to the agents is read against
+  them:
 
     ```shell
     git diff origin/main... -- agents/
     ```
 
-- **Does a rule sit where it fires?** `commands/btclib-org.md` orders its
-  sections by when the work reaches them, and its map says which role
-  reads which. A rule added under a heading the role that needs it does
-  not read is a rule that role never sees.
-- **Does the command still lean on the standard rather than copy it?**
+- **Does a rule sit where it fires?** Each command orders its sections
+  by when the work reaches them, and the maps say which role reads
+  which. A rule added under a heading the role that needs it does not
+  read is a rule that role never sees.
+- **Do the commands still lean on the standard rather than copy it?**
   The organization's rules are `btclib-org/.github`'s `README.md`, and
   this tree points at a section by the words it holds. A paragraph that
   restates one is a copy, and a pointer to a heading that no longer

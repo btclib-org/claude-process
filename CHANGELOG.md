@@ -183,3 +183,14 @@ the scratchpad argument is empty or not a directory (closes #34).
 A `###` heading under a release older than the newest, absent at the merge
 base with `origin/main`, is refused. With no such base the hook compares
 nothing and says so (issue btclib-org/.github#1614).
+
+### `/btclib-org` is split into `/btclib-iss` and `/btclib-pr`
+
+`/btclib-iss` takes issues to open pull requests; `/btclib-pr` takes them
+to the decision to approve, and lands them. `process/btclib-common.md`
+holds what both share. Neither has a speedy landing (closes #44).
+
+### What the split changes for a session
+
+Neither command passes `--admin`. Fixes after a pull request opens are
+new commits. A machine set up before needs `README.md`'s *Updating* (issue #44).

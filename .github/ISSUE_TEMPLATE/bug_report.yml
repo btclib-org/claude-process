@@ -7,8 +7,9 @@ body:
   - type: markdown
     attributes:
       value: >
-        This repository holds the text of the `/btclib-org` command and of
-        the `writer` and `reviewer` agents. A report here is a sentence
+        This repository holds the text of the `/btclib-iss` and `/btclib-pr`
+        commands, of the file they share, and of the `writer` and
+        `reviewer` agents. A report here is a sentence
         that is false, a command that fails as written, or two sections
         that disagree.
 
@@ -23,7 +24,7 @@ body:
       description: >
         The file and the heading, so the sentence can be found by the
         words the document holds.
-      placeholder: "commands/btclib-org.md, The gates"
+      placeholder: "process/btclib-common.md, The gates"
     validations:
       required: true
 
