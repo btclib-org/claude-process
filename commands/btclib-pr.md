@@ -8,8 +8,8 @@ argument-hint: [--night] [pull request URLs or numbers]
 Take the open pull requests named in $ARGUMENTS, in repositories of
 `btclib-org`, to the point where only the decision to approve is left.
 Every review, thread, suggestion and comment is answered, the branch is
-rebased onto the default branch where `main` is strict or the branch
-conflicts, and CI is green. Where the approval
+rebased onto the default branch where the repository has no merge queue
+or the branch conflicts, and CI is green. Where the approval
 is obvious, approve and land. Where it is not, put the decision to the
 human. With no argument, start from *The sweep*.
 
@@ -48,15 +48,15 @@ Show the human one table, grouped:
 - waiting on the human's review;
 - the human's own, with something to do: a review or thread
    unanswered, changes requested, a red or missing check, the branch
-   behind its base where `main` is strict;
+   behind its base where the repository has no merge queue;
 - bots';
 - outside contributors';
 - the rest, listed and not worked.
 
 Each row is a `PR` link and what it waits on. A draft is listed and not
 worked. Then put one numbered question: which to work, and in what
-order, with a recommendation. Within one repository where `main` is
-strict the order is `CONTRIBUTING.md`'s *The landing queue*: one pull
+order, with a recommendation. Within one repository with no merge
+queue the order is `CONTRIBUTING.md`'s *The landing queue*: one pull
 request carried to the default branch at a time, the cheapest and least
 contended first. At night, work the recommendation.
 
@@ -87,8 +87,9 @@ is:
   diff moves what its title says and nothing else, and in which
   direction: Dependabot follows the default branch, so a submodule
   pinned off it is offered a rollback. Its branch is the bot's: where
-  `main` is strict, or the branch conflicts, bring it up to date with
-  `gh pr update-branch` or the bot's own rebase command, never a push.
+  the repository has no merge queue, or the branch conflicts, bring it
+  up to date with `gh pr update-branch` or the bot's own rebase command,
+  never a push.
   Where the update is wrong, close it with the measurement.
 - **An outside contributor's**: *Outside contributors*.
 
@@ -188,11 +189,20 @@ moved, they are working: stop and ask.
 - **The reviewer reads the delta** from the sha it last cleared, and the
   rebase case of the shared *A rebase and the clearance*. A fresh
   reviewer reads the whole diff from its parent.
-- **Where `main` is strict (the repository's `REPOSITORY.md`), rebase
-  onto the default branch only the pull request that heads its
-  repository's queue** (`CONTRIBUTING.md`'s *The landing queue*). The
-  others are answered and wait, untouched otherwise. Where it is not
-  strict, a pull request is rebased only for a conflict or a retarget.
+- **Where the repository has no merge queue, rebase onto the default
+  branch only the pull request that heads its repository's queue**
+  (`CONTRIBUTING.md`'s *The landing queue*). The others are answered and
+  wait, untouched otherwise. Where it has one, a pull request is rebased
+  only for a conflict or a retarget, because the merge queue tests it on
+  the tip of `main`. This prints the queue's parameters, or nothing where
+  there is none:
+
+  ```shell
+  gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
+    | xargs -I{} gh api repos/<owner>/<repo>/rulesets/{} \
+      --jq '.rules[] | select(.type=="merge_queue") | .parameters'
+  ```
+
   An outside contributor's branch is never rebased: *Outside
   contributors* brings `main` in by a merge. Run the gates, and push.
   Ask the merge the forge will compute, locally:
@@ -240,19 +250,19 @@ moved, they are working: stop and ask.
 
 ## The decision
 
-**Where `main` is strict (the repository's `REPOSITORY.md`), approve only
+**Where the repository has no merge queue (*Rebase and CI*), approve only
 the head of its repository's queue.** A push dismisses an approval, and a
 pull request that will be rebased before it lands would need approving
 again. The others wait with their reviews answered and CI green; each is
 rebased, gated and decided when its turn comes (`CONTRIBUTING.md`'s *The
-landing queue*). Where `main` is not strict, approval is not serialised:
+landing queue*). Where it has a merge queue, approval is not serialised:
 a push still dismisses it, but a branch is pushed again only for a
 conflict, so every pull request is decided as it is ready.
 
 **The approval is obvious where every item holds:**
 
 - [ ] the human is not the author
-- [ ] where `main` is strict, the pull request heads its repository's
+- [ ] where the repository has no merge queue, the pull request heads its repository's
       queue and is not behind its base
 - [ ] the last fresh reviewer's `CLEARED` names the head, or *A rebase
       and the clearance* carries it to the head
@@ -289,8 +299,8 @@ recommendation first. At night it is a deferred item.
 The decision is somebody else's. Once everything raised is answered, CI
 is green, and the last fresh reviewer's `CLEARED` (or *A rebase and the
 clearance*, which carries it to the rebased head) and the bot's ACK both
-name the head — and, where `main` is strict, the pull request heads its
-repository's queue and is rebased:
+name the head — and, where the repository has no merge queue, the pull
+request heads its repository's queue and is rebased:
 
 - re-request the review of every owner but the human who has not
   approved the head (`gh pr edit <n> --repo <owner>/<repo>

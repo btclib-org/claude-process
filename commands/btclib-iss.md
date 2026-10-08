@@ -10,8 +10,8 @@ and take each to an open pull request: written, gated, cleared by a
 local review, and with its reviewers requested. Then follow each as its
 author, by `/btclib-pr`'s rules, until only another owner's approval is
 missing: CI green, every review and thread answered, the bot's ACK on
-the head, and the landing armed: where `main` is strict, once it heads
-the landing queue; elsewhere, as it is ready. The approval is theirs.
+the head, and the landing armed: where the repository has no merge queue, once it
+heads the landing queue; elsewhere, as it is ready. The approval is theirs.
 
 **First read `~/.claude/process/btclib-common.md`, whole.** It binds
 this command, names the roles, and holds every rule the two commands
@@ -109,7 +109,7 @@ Once a pull request is open, the session follows it as its author.
 `~/.claude/commands/btclib-pr.md` holds the rules, read there and not
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
 *The human's own pull request* and *Landing*'s first three bullets. Where
-`main` is strict, the landing queue holds here too.
+the repository has no merge queue, the landing queue holds here too.
 
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (the shared *Collateral*), before
