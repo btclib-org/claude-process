@@ -194,8 +194,15 @@ moved, they are working: stop and ask.
   (`CONTRIBUTING.md`'s *The landing queue*). The others are answered and
   wait, untouched otherwise. Where it has one, a pull request is rebased
   only for a conflict or a retarget, because the merge queue tests it on
-  the tip of `main`. The ruleset read in `REPOSITORY.md` answers whether
-  it has one: it prints the queue's parameters, or nothing.
+  the tip of `main`. This prints the queue's parameters, or nothing where
+  there is none:
+
+  ```shell
+  gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
+    | xargs -I{} gh api repos/<owner>/<repo>/rulesets/{} \
+      --jq '.rules[] | select(.type=="merge_queue") | .parameters'
+  ```
+
   An outside contributor's branch is never rebased: *Outside
   contributors* brings `main` in by a merge. Run the gates, and push.
   Ask the merge the forge will compute, locally:
