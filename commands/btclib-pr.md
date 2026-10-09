@@ -89,8 +89,18 @@ is:
   pinned off it is offered a rollback. Its branch is the bot's: where
   the repository has no merge queue, or the branch conflicts, bring it
   up to date with `gh pr update-branch` or the bot's own rebase command,
-  never a push.
+  never a push but the one below.
   Where the update is wrong, close it with the measurement.
+
+  Where the tree's `CONTRIBUTING.md` says an owner commits a hook's
+  output to a bot's branch, that commit is signed, signed off, and
+  pushed as a fast-forward only, never with any `--force`. The diff then
+  moves a second file, and the reviewer checks that it is the hook's
+  output: the hook passes on the head. Dependabot stops rebasing a pull
+  request once extra commits are pushed to it ([GitHub's
+  documentation][dependabot-rebase]), so from then on the branch is
+  brought up to date with `gh pr update-branch`. Where it conflicts,
+  `@dependabot recreate` drops the commit, which is then made again.
 - **An outside contributor's**: *Outside contributors*.
 
 ## What was raised
@@ -426,3 +436,5 @@ human.
   own.
 
 Then the shared *Wrap-up*.
+
+[dependabot-rebase]: https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/manage-dependabot-prs#allowing-dependabot-to-rebase-and-force-push-over-extra-commits
