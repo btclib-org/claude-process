@@ -389,6 +389,10 @@ human.
   queue, whether it keeps `--subject` and `--body-file` is unmeasured
   (btclib-org/.github#1619): read the landed subject and message back,
   and record what landed on that issue.
+
+  Never land through the maintainer's bypass (`--admin`, or any other
+  route to it) unless the human has instructed it for that pull request.
+  It merges with no approval, even with required checks red.
 - **The pin is the head as last pushed**, not the sha a verdict named.
   Where `main` is strict, an armed pull request that falls `BEHIND` its
   base (`gh pr view <n> --json mergeStateStatus`) is rebased, gated,
