@@ -11,12 +11,22 @@
 #   . scripts/gate-lock.sh
 #   gate_take; echo $?
 #   gate_release; echo $?
-#   d=$(mktemp -d); gate_take "$d" && gate_release "$d"; rmdir "$d"
+#   d=$(mktemp -d); gate_take "$d" && gate_release "$d"; rm -r "$d"
 #
-# gate_take waits for the load (at most ~20 minutes, then runs anyway),
-# then for the lock (at most ~30 minutes). It writes the holder's PID into
-# the lock, so that only the holder releases it. A lock whose holder's
-# process is gone is stale, and gate_take removes it.
+# Waiters queue in arrival order. gate_take writes a ticket into
+# <scratchpad>/gate.queue, named by its arrival time and PID, and waits
+# until its ticket is the oldest one whose process is alive. Then it waits
+# for the load to fall under GATE_LOCK_LOAD and takes the lock. Neither
+# wait has a bound: a holder that never finishes keeps every waiter
+# waiting, and `cat <scratchpad>/gate.lock/owner` names it.
+#
+# A ticket holds its PID, that process's start time, read in UTC, and the
+# worktree. A ticket whose process is gone, or whose PID now belongs to a
+# process started at another time, is dead, and any waiter removes it.
+#
+# gate_take writes the holder's PID into the lock, so that only the holder
+# releases it. A lock whose holder's process is gone is stale, and
+# gate_take removes it.
 #
 # Reclaiming renames the owner file, which only one waiter wins (mv is
 # atomic; the others find no file). The winner reads the PID in what it
@@ -27,24 +37,62 @@
 # killed while it holds the owner file renamed to stale.<pid> leaves a lock
 # with no owner, which the human removes.
 
+GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-20}
+GATE_LOCK_POLL=${GATE_LOCK_POLL:-5}
+
+_gl_started() {
+  # ps pads the time with spaces, which `read` strips: squeeze them so that
+  # the ticket and a fresh read compare equal
+  LC_ALL=C TZ=UTC0 ps -o lstart= -p "$1" 2>/dev/null |
+    tr -s ' ' | sed 's/^ //; s/ $//'
+}
+
+_gl_alive() {
+  # $1 is a ticket: "<pid>" on its first line, its start time on the second
+  _gl_tpid="" _gl_tstart=""
+  { { read -r _gl_tpid; read -r _gl_tstart; } < "$1"; } 2>/dev/null || return 1
+  [ -n "$_gl_tpid" ] && [ -n "$_gl_tstart" ] &&
+    [ "$(_gl_started "$_gl_tpid")" = "$_gl_tstart" ]
+}
+
+_gl_load() {
+  if [ -r /proc/loadavg ]; then cut -d' ' -f1 /proc/loadavg
+  else LC_ALL=C sysctl -n vm.loadavg | cut -d' ' -f2; fi
+}
+
 gate_take() {
   [ -d "$1" ] || {
     echo "usage: gate_take <scratchpad> [<worktree>]; no directory '$1'"
     return 1
   }
   _gl_lock="$1/gate.lock"
-  _gl_n=$(getconf _NPROCESSORS_ONLN)
-  _gl_i=0
-  while [ "$_gl_i" -lt 40 ]; do
-    if [ -r /proc/loadavg ]; then _gl_l=$(cut -d' ' -f1 /proc/loadavg)
-    else _gl_l=$(LC_ALL=C sysctl -n vm.loadavg | cut -d' ' -f2); fi
-    [ "${_gl_l%.*}" -lt $((2 * _gl_n)) ] && break
-    _gl_i=$((_gl_i + 1)); sleep 30
-  done
-  _gl_i=0
-  while [ "$_gl_i" -lt 60 ]; do
+  _gl_queue="$1/gate.queue"
+  mkdir -p "$_gl_queue"
+  _gl_start=$(_gl_started $$)
+  [ -n "$_gl_start" ] || {
+    echo "gate_take: ps -o lstart= prints nothing for pid $$"
+    return 1
+  }
+  _gl_ticket="$_gl_queue/$(date +%s).$(printf '%010d' $$)"
+  while :; do
+    # written aside and renamed, so that no waiter reads it half written,
+    # and written again if a waiter removed it, so that it keeps its place
+    [ -f "$_gl_ticket" ] || {
+      printf '%s\n%s\n%s\n' "$$" "$_gl_start" "${2:-}" > "$_gl_queue/.$$" &&
+        mv "$_gl_queue/.$$" "$_gl_ticket"
+    }
+    _gl_head=""
+    for _gl_t in "$_gl_queue"/*; do
+      [ -f "$_gl_t" ] || continue
+      if _gl_alive "$_gl_t"; then _gl_head=$_gl_t; break; fi
+      rm -f "$_gl_t"
+    done
+    [ "$_gl_head" = "$_gl_ticket" ] || { sleep "$GATE_LOCK_POLL"; continue; }
+    _gl_l=$(_gl_load)
+    [ "${_gl_l%.*}" -lt "$GATE_LOCK_LOAD" ] || { sleep "$GATE_LOCK_POLL"; continue; }
     if mkdir "$_gl_lock" 2>/dev/null; then
       echo "$$ $(date +%s) ${2:-}" > "$_gl_lock/owner"
+      rm -f "$_gl_ticket"
       echo "gate.lock taken by $$ at load $_gl_l"
       return 0
     fi
@@ -63,10 +111,8 @@ gate_take() {
       fi
       continue
     fi
-    _gl_i=$((_gl_i + 1)); sleep 30
+    sleep "$GATE_LOCK_POLL"
   done
-  echo "gate.lock still held after ~30 min: $(cat "$_gl_lock/owner" 2>/dev/null)"
-  return 1
 }
 
 gate_release() {

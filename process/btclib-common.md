@@ -515,13 +515,17 @@ the orchestrator in the pull request.
   about whose it is. A lock with no owner file — a hand `mkdir`, one
   from the old recipe, or one a waiter killed mid-reclaim left with only
   a `stale.<pid>` in it — is never reclaimed: the human removes it with
-  `rm -r`, after checking that no gate runs. The script is POSIX `sh`. The
-  threshold is a 1-minute load under twice the core count, read under `LC_ALL=C`
-  because some locales print a decimal comma. Past 20 minutes of load the gates
-  run anyway, and the report gives the load. Where the lock is still held after
-  30 minutes, `gate_take` fails and prints the holder, and the worker reports it
-  to the orchestrator. A load generator is killed by the PID you recorded, and
-  `ps` shows it gone before the lock is released.
+  `rm -r`, after checking that no gate runs. The script is POSIX `sh`.
+  Waiters queue in arrival order, each with a ticket in
+  `<scratchpad>/gate.queue`; any waiter removes a ticket whose process is
+  gone. The one first in line waits for a 1-minute load under
+  `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
+  decimal comma, and then takes the lock. `gate_take` waits for the load and
+  for the holder with no bound, and the report gives the load. A timeout on
+  the background call covers the gates, not `gate_take`. A holder that never
+  finishes keeps everyone waiting; `<scratchpad>/gate.lock/owner` names it.
+  A load generator is killed by the PID you recorded, and `ps` shows it gone
+  before the lock is released.
 
 ### Committing and rebasing
 
