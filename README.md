@@ -22,8 +22,10 @@ The process the btclib-org maintainers follow with
 - `agents/writer.md` — the agent that writes a change in its own
   worktree;
 - `agents/reviewer.md` — the agent that reviews it at fresh context;
-- `scripts/gate-lock.sh` — the gate lock every worker takes before its
-  heavy gates.
+- `scripts/gate-lock.sh` — the gate lock every worker of every session
+  takes before its heavy gates;
+- `scripts/test-gate-lock.sh` — `sh scripts/test-gate-lock.sh` shows two
+  sessions taking that lock one after the other.
 
 The two commands and the shared file are the single source of the
 process. The agents are generic: they read the sections of it that their

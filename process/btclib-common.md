@@ -491,19 +491,22 @@ the orchestrator in the pull request.
   `os-macos.yml` where macOS is in question. Which sweeps a tree has,
   and what its pull requests already cover, is read from
   `.github/workflows/` on `origin/main`.
-- **The gate lock.** One worker gates at a time: the suite, the hooks,
-  the docs build and any load generator. Wait for the load, then take
+- **The gate lock.** One worker gates at a time, on the whole machine:
+  the suite, the hooks, the docs build and any load generator. The lock
+  and its queue sit in one directory, `$GATE_LOCK_DIR`, by default
+  `/tmp/claude-<uid>/gate`, shared by every session, so jobs from
+  different sessions queue in one place. Wait for the load, then take
   the lock — so that nobody holds it while only waiting — and release it
   the moment the gates finish. The lock is taken and released only
-  through `~/.claude/scripts/gate-lock.sh`, sourced in the same
-  background shell call as the gates (*Long jobs run in the background*),
-  never by a hand-written `mkdir` or `rmdir`:
+  through `~/.claude/scripts/gate-lock.sh`, sourced in
+  the same background shell call as the gates (*Long jobs run in the
+  background*), never by a hand-written `mkdir` or `rmdir`:
 
   ```shell
   . ~/.claude/scripts/gate-lock.sh
-  gate_take <scratchpad> <worktree> && {
+  gate_take <worktree> && {
     # … gates, recording the load at each run …
-    gate_release <scratchpad>
+    gate_release
   }
   ```
 
@@ -515,17 +518,21 @@ the orchestrator in the pull request.
   about whose it is. A lock with no owner file — a hand `mkdir`, one
   from the old recipe, or one a waiter killed mid-reclaim left with only
   a `stale.<pid>` in it — is never reclaimed: the human removes it with
-  `rm -r`, after checking that no gate runs. The script is POSIX `sh`.
-  Waiters queue in arrival order, each with a ticket in
-  `<scratchpad>/gate.queue`; any waiter removes a ticket whose process is
-  gone. The one first in line waits for a 1-minute load under
+  `rm -r` of `gate.lock` alone, after checking that no gate runs. The
+  script is POSIX `sh`. Waiters queue in arrival order, each with a
+  ticket in `gate.queue` in that directory; any waiter removes a ticket
+  whose process is gone. The one first in line waits for a 1-minute load under
   `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
   decimal comma, and then takes the lock. `gate_take` waits for the load and
   for the holder with no bound, and the report gives the load. A timeout on
   the background call covers the gates, not `gate_take`. A holder that never
-  finishes keeps everyone waiting; `<scratchpad>/gate.lock/owner` names it.
-  A load generator is killed by the PID you recorded, and `ps` shows it gone
-  before the lock is released.
+  finishes keeps everyone waiting; `gate.lock/owner` in that directory
+  names it. A load generator is killed by the PID you recorded, and `ps`
+  shows it gone before the lock is released.
+
+  A call with a scratchpad, `gate_take <scratchpad> <worktree>` and
+  `gate_release <scratchpad>`, takes and releases the same lock: the
+  scratchpad is ignored.
 
 ### Committing and rebasing
 
