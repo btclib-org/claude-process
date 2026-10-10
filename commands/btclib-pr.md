@@ -196,9 +196,9 @@ moved, they are working: stop and ask.
 
 ## Rebase and CI
 
-- **The reviewer reads the delta** from the sha it last cleared, and the
+- **The reviewer reads the delta** from the sha it last read, and the
   rebase case of the shared *A rebase and the clearance*. A fresh
-  reviewer reads the whole diff from its parent.
+  reviewer's first read is the whole diff from its parent.
 - **Where the repository has no merge queue, rebase onto the default
   branch only the pull request that heads its repository's queue**
   (`CONTRIBUTING.md`'s *The landing queue*). The others are answered and
