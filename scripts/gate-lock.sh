@@ -1,24 +1,31 @@
 # shellcheck shell=sh
-# The gate lock, shared by every worker of a session. POSIX sh, sourced in
-# the same shell call that runs the gates, so that `$$` is the holder:
+# The gate lock, one per machine and shared by every worker of every
+# session. POSIX sh, sourced in the same shell call that runs the gates, so
+# that `$$` is the holder:
 #
 #   . ~/.claude/scripts/gate-lock.sh
-#   gate_take <scratchpad> <worktree> && { <gates>; gate_release <scratchpad>; }
+#   gate_take [<worktree>] && { <gates>; gate_release; }
 #
-# Without a directory, both print their usage and return 1. To check, from
-# the repository root in a fresh sh:
-#
-#   . scripts/gate-lock.sh
-#   gate_take; echo $?
-#   gate_release; echo $?
-#   d=$(mktemp -d); gate_take "$d" && gate_release "$d"; rm -r "$d"
+# The lock and its queue sit in $GATE_LOCK_DIR, by default
+# /tmp/claude-<uid>/gate. `gate_take <scratchpad> <worktree>` and
+# `gate_release <scratchpad>` take and release the same lock: the
+# scratchpad is ignored.
 #
 # Waiters queue in arrival order. gate_take writes a ticket into
-# <scratchpad>/gate.queue, named by its arrival time and PID, and waits
+# $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
 # until its ticket is the oldest one whose process is alive. Then it waits
 # for the load to fall under GATE_LOCK_LOAD and takes the lock. Neither
 # wait has a bound: a holder that never finishes keeps every waiter
-# waiting, and `cat <scratchpad>/gate.lock/owner` names it.
+# waiting, and `cat $GATE_LOCK_DIR/gate.lock/owner` names it.
+#
+# To check, from the repository root in a fresh sh, with a directory of
+# your own so as not to wait on a real gate:
+#
+#   . scripts/gate-lock.sh
+#   GATE_LOCK_DIR=$(mktemp -d); export GATE_LOCK_DIR
+#   gate_take; echo $?
+#   gate_release; echo $?
+#   rm -r "$GATE_LOCK_DIR"
 #
 # A ticket holds its PID, that process's start time, read in UTC, and the
 # worktree. A ticket whose process is gone, or whose PID now belongs to a
@@ -39,6 +46,14 @@
 
 GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-20}
 GATE_LOCK_POLL=${GATE_LOCK_POLL:-5}
+
+_gl_dir() {
+  _gl_d=${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}
+  [ -d "$_gl_d" ] || (umask 077 && mkdir -p "$_gl_d") || {
+    echo "gate lock: cannot create '$_gl_d'"
+    return 1
+  }
+}
 
 _gl_started() {
   # ps pads the time with spaces, which `read` strips: squeeze them so that
@@ -61,12 +76,10 @@ _gl_load() {
 }
 
 gate_take() {
-  [ -d "$1" ] || {
-    echo "usage: gate_take <scratchpad> [<worktree>]; no directory '$1'"
-    return 1
-  }
-  _gl_lock="$1/gate.lock"
-  _gl_queue="$1/gate.queue"
+  _gl_dir || return 1
+  _gl_wt=${2:-${1:-}}
+  _gl_lock="$_gl_d/gate.lock"
+  _gl_queue="$_gl_d/gate.queue"
   mkdir -p "$_gl_queue"
   _gl_start=$(_gl_started $$)
   [ -n "$_gl_start" ] || {
@@ -78,7 +91,8 @@ gate_take() {
     # written aside and renamed, so that no waiter reads it half written,
     # and written again if a waiter removed it, so that it keeps its place
     [ -f "$_gl_ticket" ] || {
-      printf '%s\n%s\n%s\n' "$$" "$_gl_start" "${2:-}" > "$_gl_queue/.$$" &&
+      mkdir -p "$_gl_queue" &&
+      printf '%s\n%s\n%s\n' "$$" "$_gl_start" "$_gl_wt" > "$_gl_queue/.$$" &&
         mv "$_gl_queue/.$$" "$_gl_ticket"
     }
     _gl_head=""
@@ -91,7 +105,7 @@ gate_take() {
     _gl_l=$(_gl_load)
     [ "${_gl_l%.*}" -lt "$GATE_LOCK_LOAD" ] || { sleep "$GATE_LOCK_POLL"; continue; }
     if mkdir "$_gl_lock" 2>/dev/null; then
-      echo "$$ $(date +%s) ${2:-}" > "$_gl_lock/owner"
+      echo "$$ $(date +%s) $_gl_wt" > "$_gl_lock/owner"
       rm -f "$_gl_ticket"
       echo "gate.lock taken by $$ at load $_gl_l"
       return 0
@@ -116,11 +130,8 @@ gate_take() {
 }
 
 gate_release() {
-  [ -d "$1" ] || {
-    echo "usage: gate_release <scratchpad>; no directory '$1'"
-    return 1
-  }
-  _gl_lock="$1/gate.lock"
+  _gl_dir || return 1
+  _gl_lock="$_gl_d/gate.lock"
   _gl_i=0
   while [ "$_gl_i" -lt 5 ]; do
     _gl_pid=""
