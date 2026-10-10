@@ -306,7 +306,9 @@ the repository has it. A question put to the maintainer takes
 `decision`; a wait on an event or a person the comment names takes
 `blocked`; a pause the human decided takes `on-hold`. A hold kept only
 in the session's context does not exist, and another session will take
-the work.
+the work. A hold on an exhausted review quota is recorded once for the
+organization, and each pull request links it (`/btclib-pr`'s *Rebase and
+CI*).
 
 ### Which prose is worth a round
 
