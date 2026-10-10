@@ -21,8 +21,8 @@ not yours; one that is cannot be skipped as somebody else's.
 - **The writer**: *Before starting*, *Writing work*, and the sections of
   the command its brief names.
 - **The reviewer**: *Local review*, and in *Writing work* the checklist,
-  *What the prose that lands may say* and *Citations and closing
-  keywords*, which it judges.
+  *What the prose that lands may say*, *Citations and closing keywords*
+  and *Signed and signed off*, which it judges.
 - **The orchestrator**: all of this file and all of its command.
 
 **Three roles this file names.** *The human* is whoever runs the
@@ -169,9 +169,9 @@ These bind the writer, the reviewer and the orchestrator alike.
   worktree, so anything pushed meanwhile is silently rebuilt away. While
   a writer is live, send changes as instructions, even one word. Once it
   has reported finished — its report, not its silence — the orchestrator
-  may fix the branch directly, with the same gates, signature and fresh
-  review round. `git merge-base --is-ancestor <yours> <theirs>` says
-  whether an out-of-band edit survived.
+  may fix the branch directly, with the same gates, signature and
+  review rounds (*Local review*). `git merge-base --is-ancestor <yours>
+  <theirs>` says whether an out-of-band edit survived.
 - **A finding against a file may also be in the commit message.** Read
   the message before `git commit --amend --no-edit`, and correct it
   there too: squashed, it lands on `main` and is never rewritten.
@@ -211,8 +211,9 @@ conversation asks again. The grant lives in the session, not in memory.
   pass paths and revisions as literal arguments or an array, and confirm
   a comparison answering "no difference" can see a difference at all.
 - **`grep` reads lines, and prose wraps.** A wrapped phrase answers `0`.
-  Use `grep -z`, `grep -Pzo`, `pcre2grep -M` or Python over the whole
-  file, or a distinctive single word. `grep -c` counts lines, so a
+  Use `grep -zE` with `[[:space:]]+` between words (macOS `grep` has no
+  `-P`), `pcre2grep -M`, Python over the whole file, or a distinctive
+  single word. `grep -c` counts lines, so a
   one-line document (notebook, JSON, bundle) answers at most `1`, and its
   base64 payloads match anything: parse structured documents. A phrase
   count never says a file is free of a restatement — read the file.
@@ -342,7 +343,7 @@ does it before briefing anybody.
   request, and open pull requests citing the issue:
 
   ```shell
-  gh pr list --repo <owner>/<repo> --state open \
+  gh pr list --repo <owner>/<repo> --state open --limit 200 \
     --json number,title,body \
     --jq '.[] | select((.title + .body) | test("#<issue>\\b")) | .number'
   ```
@@ -361,9 +362,10 @@ does it before briefing anybody.
   fresh review of the whole diff from its parent. Its worktree can be
   reused, reinstalling the build first (a flagged build may be in its
   `.venv`).
-- **Clean the machine.** `uptime`, and `ps -eo pid,etime,pcpu,command |
-  sort -k3 -rn | head`. Kill what is orphaned and older than a suite
-  takes — not what belongs to a live session running its gates.
+- **Look at the machine.** `uptime`, and `ps -eo pid,etime,pcpu,command |
+  sort -k3 -rn | head`. Kill only what this session started. Report to
+  the human anything else that looks orphaned: no process listing
+  proves its session gone.
 
 ## Writing work
 
@@ -372,8 +374,8 @@ The writer's section; the reviewer judges its result.
 **Before handing over, every item holds:**
 
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
-      `HEAD` (on an open pull request, a fix waits for its fresh
-      reviewer's `CLEARED`: *Local review*)
+      `HEAD` (on an open pull request, a fix waits for the rounds of
+      *Local review* to end)
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
@@ -423,8 +425,8 @@ the orchestrator in the pull request.
   it advances it without closing, nothing where it does neither** — on
   the subject. Across trackers: `(closes owner/repo#N)`. This is the
   standard's rule (section 11, *What a pull request says it is*); a
-  tree's landed subjects may drift from it and are not the model: a
-  divergence found is an issue to file. Nothing landed is rewritten.
+  tree's landed subjects may drift from it and are not the model.
+  Nothing landed is rewritten.
 - **An issue owed by several trees is closed by the last landing only.**
   Where switching that last tree's `(issue …)` to `closes` would send an
   already cleared branch back to review, land it as cleared and close the
@@ -533,9 +535,9 @@ the orchestrator in the pull request.
   step; it needs no gate. After that, push a commit or an amend only
   once a gate run on that very commit exited 0, never after a failed
   one. Check `git ls-remote origin <branch>` against `HEAD` after every
-  push. On an open pull request, a fix is pushed only after its fresh
-  reviewer's `CLEARED` (*Local review*), and the orchestrator then has
-  the writer push it.
+  push. On an open pull request, a fix is pushed only once the rounds of
+  *Local review* have ended, and the orchestrator then has the writer
+  push it.
 - **Before the pull request is opened, the branch converges by amend.**
   **Once it is open, a fix is a new signed commit on top**: the reviewer
   reads what changed since their review, and the squash lands the
@@ -594,20 +596,50 @@ the orchestrator in the pull request.
 ## Local review
 
 **`REVIEWING.md` says what the reviewer looks for.** This section says
-how the round runs. One dedicated `reviewer` agent per pull request for
-its rounds, at fresh context, never the author on itself.
+how the rounds run. Every reviewer is a `reviewer` agent at fresh
+context, never the author on itself.
 
-**After the first `CLEARED`, a fresh reviewer reads the whole branch.**
-Otherwise nobody reads it whole again before GitHub's review bot, and
-each finding the bot makes costs a push, a CI run and another bot run.
+### The rounds
 
-- The fresh reviewer is a new worker. It reads the branch's whole diff
-  from its parent, briefed with this section and with the bot's
-  prompt: the `prompt:` block of `reusable-claude-review.yml` at
-  `origin/main` of `btclib-org/.github`, with the tree's `extra-prompt`
-  (its `claude-review.yml`) in place of `${{ inputs.extra-prompt }}`,
-  and nothing from "Do not run the gates" on. The workflow is fetched
-  by:
+These rounds hold wherever a process sends work to a reviewer: a
+branch, or a text to be posted.
+
+- **The dedicated reviewer reads it first.** One per pull request or
+  text, it reads the first version and each fix answering a review on
+  GitHub.
+- **A reviewer stays until it clears.** This holds for the dedicated
+  reviewer and for every fresh one. Its `CHANGES REQUESTED` goes back
+  to the writer, and the fix goes back to the same reviewer
+  (`SendMessage` to its id), which reads the delta from what it last
+  read. No new reviewer starts before the one in charge has answered
+  `CLEARED`. Where a finding is declined and its reviewer still holds
+  it, both positions go to the human (`REVIEWING.md`'s *Re-review*),
+  and the rounds wait for the answer. Where the human upholds the
+  finding, the fix goes back to that reviewer. Where they decline it,
+  their answer stands in for that reviewer's `CLEARED`.
+- **Then a fresh reviewer reads the whole of it.** It is a new worker,
+  started once the dedicated reviewer has cleared. Where its first
+  verdict is `CLEARED`, the rounds end. Where it is `CHANGES
+  REQUESTED`, it stays until it clears, as above, and then a further
+  fresh reviewer reads the whole of it.
+- **The third fresh reviewer is the last.** Counted since the dedicated
+  reviewer last cleared, or since a rebase that changed the branch's
+  lines, it stays until it clears, and the rounds then end.
+- A non-blocking finding waits for the next change (*Which prose is
+  worth a round*).
+
+### A pull request's rounds
+
+The fresh reviewer is what reads the branch whole before GitHub's
+review bot. Without it, each finding the bot makes costs a push, a CI
+run and another bot run.
+
+- The fresh reviewer reads the branch's whole diff from its parent,
+  briefed with *Local review* and with the bot's prompt: the `prompt:`
+  block of `reusable-claude-review.yml` at `origin/main` of
+  `btclib-org/.github`, with the tree's `extra-prompt` (its
+  `claude-review.yml`) in place of `${{ inputs.extra-prompt }}`, and
+  nothing from "Do not run the gates" on. The workflow is fetched by:
 
   ```shell
   gh api -H 'Accept: application/vnd.github.raw' \
@@ -621,17 +653,10 @@ each finding the bot makes costs a push, a CI run and another bot run.
   prompt says about gates, the fresh reviewer follows *The gates are the
   writer's* instead. It posts nothing; its verdict is `CLEARED <sha>` or
   `CHANGES REQUESTED`, not an ACK.
-- A blocking finding goes back to the writer, and a further fresh
-  reviewer reads the whole diff once it is fixed. A non-blocking finding
-  waits for the next change to the branch (*Which prose is worth a
-  round*).
-- The rounds stop at a fresh `CLEARED`. A blocking finding from the
-  third fresh reviewer since the first `CLEARED`, or since the review
-  on GitHub that sent the branch back, goes to the human; there is no
-  fourth.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
-  through the same: its fix is read by a fresh reviewer before it is
-  pushed.
+  through the same rounds before its fix is pushed.
+
+### The verdict
 
 **The verdict holds:**
 
@@ -708,8 +733,9 @@ Rebase, run the gates, and push.
   so in the report and the commit.
 - **Everything else is a new issue, filed by whoever noticed it, when
   they notice it**, in the repository hosting that code. Search first
-  (`gh issue list --state open --search "<word> <word>"`). Measure first;
-  where that would mean leaving the work at hand, put the deciding
+  (`gh issue list --repo <owner>/<repo> --state open --search
+  "<word> <word>"`). Measure first; where that would mean leaving the
+  work at hand, put the deciding
   command in the body and say it was not run. A small, self-contained
   one that no red gate, security or packaging defect waits on is filed
   with the `good first issue` label, a *Done when* and the file to look
@@ -725,8 +751,9 @@ Rebase, run the gates, and push.
   the bot's review cannot call the API.
 - **A measurement that refutes an issue closes it**, with the commands
   and figures in the closing comment.
-- **Read back the number before reporting it**: `gh issue view <n>`. In
-  a report, collateral appears as `ISS 123`, never as a description.
+- **Read back the number before reporting it**:
+  `gh issue view <n> --repo <owner>/<repo>`. In a report, collateral
+  appears as `ISS 123`, never as a description.
 - **The reviewer files with the body inline**: it has no `Write` tool;
   where it cannot file, the body goes verbatim in its report.
 - **Collateral is closed within the same session**, whoever filed it —
@@ -794,11 +821,10 @@ Rebase, run the gates, and push.
   for the disagreement.
 - **Reuse.** A writer takes a new, unrelated pull request only after
   `/compact`; its own deferred half and its own collateral it takes
-  uncompacted. The reviewer is the same worker for every round of its
-  pull request, and comes back only for that pull request's collateral;
-  the fresh reviewers of *Local review* are new workers, one per round.
-  Resuming a worker is `SendMessage` to its id; `Agent` always starts a
-  new one.
+  uncompacted. The dedicated reviewer is the same worker for its
+  rounds, and comes back only for that pull request's collateral. Each
+  fresh reviewer of *Local review* is a new worker. Resuming a worker is
+  `SendMessage` to its id; `Agent` always starts a new one.
 - **Models**: the writer runs on Sonnet (its agent definition pins it);
   the orchestrator may run on Opus.
 - **A worker that exceeds the time you set is interrupted**, not waited
