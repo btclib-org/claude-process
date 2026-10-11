@@ -272,10 +272,10 @@ this heading.
 The text of the process the maintainers follow with Claude Code:
 `commands/btclib-iss.md` and `commands/btclib-pr.md` are the two commands,
 `process/btclib-common.md` is what they share, and `agents/writer.md` and
-`agents/reviewer.md` are generic agents that read the sections of them
-their brief names. `README.md` says how a machine is set up to use them.
-A change here changes what every session reads once its branch lands, so
-it is reviewed like code.
+`agents/reviewer.md` are the agents a session briefs with them.
+`README.md` says how a machine is set up to use them. A change here
+changes what every session reads once its branch lands, so it is
+reviewed like code.
 
 ### The environment and the gates
 
@@ -343,9 +343,8 @@ opinion for you to weigh. Neither belongs in a branch rule.
 The merge queue is on and `main` is not strict (`REPOSITORY.md`), so
 *The landing queue*, and *Landing it*'s rebase onto `main`'s tip, do not
 apply here. Each pull request is reviewed, approved and queued as it is
-ready, and is rebased only for a conflict. The maintainer's own, under
-`/btclib-pr`'s `--land`, skips the approval and the queue: it lands
-through the bypass.
+ready, and is rebased only for a conflict. `/btclib-pr`'s *Landing*
+says when the maintainer's own lands through the bypass instead.
 
 `lint.yml` also runs on `merge_group`. The checks are read on the head,
 and the queue runs `Lint` again on `main`'s tip before it merges.

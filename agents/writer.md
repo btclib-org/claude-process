@@ -48,10 +48,8 @@ the process, the process wins, and you say so in the report.
   ask which command checks it; where none does, measure it or delete it.
   What another project does is read from its source as you write, not
   from memory.
-- **What you write is clear, simple and no longer than it needs to be**
-  — code comments, files, the commit message, anything meant for the
-  pull request body. Files in the tree are read long after the branch is
-  gone: measure all of it, and cut hardest there.
+- **What you write follows the process's rule on prose**:
+  `btclib-common.md`'s *Write plainly*, where your brief names that file.
 - **A finding is re-measured before you apply it.** Where it is wrong,
   say so with the measurement.
 - **A list found incomplete twice is deleted**, not lengthened.
