@@ -1,17 +1,19 @@
 ---
-description: btclib-iss — from an issue to a pull request that waits only on its approval, measuring rather than asserting, with a local review before GitHub
-argument-hint: [--night] <issue numbers or URLs>
+description: btclib-iss — from an issue to a pull request that waits only on its approval, or lands under --land, measuring rather than asserting, with a local review before GitHub
+argument-hint: [--night] [--land] <issue numbers or URLs>
 ---
 
 # From an issue to a pull request
 
 Take on the issues named in $ARGUMENTS, in a repository of `btclib-org`,
 and take each to an open pull request: written, gated, cleared by a
-local review, and with its reviewers requested. Then follow each as its
-author, by `/btclib-pr`'s rules, until only another owner's approval is
-missing: CI green, every review and thread answered, the bot's ACK on
-the head, and the landing armed: where the repository has no merge queue, once it
-heads the landing queue; elsewhere, as it is ready. The approval is theirs.
+local review, and, unless `--land` covers it, with its reviewers
+requested. Then follow each as its author, by `/btclib-pr`'s rules,
+until only another owner's approval is missing: CI green, every review
+and thread answered, the bot's ACK on the head, and the landing armed:
+where the repository has no merge queue, once it heads the landing
+queue; elsewhere, as it is ready. The approval is theirs. Under
+`--land`, the session lands it instead (*Following it*).
 
 **First read `~/.claude/process/btclib-common.md`, whole.** It binds
 this command, names the roles, and holds every rule the two commands
@@ -111,9 +113,9 @@ open:**
   `gh pr view <n> --json closingIssuesReferences --jq
   '.closingIssuesReferences | length'`. The field lags creation by
   seconds to minutes; ask again.
-- **Request the review** of every owner but the author, as
-  `btclib-org/.github`'s `GOVERNANCE.md` names them: every pull request
-  lands approved by somebody other than its author.
+- **Unless `--land` covers it (*Following it*), request the review** of
+  every owner but the author, as `btclib-org/.github`'s `GOVERNANCE.md`
+  names them: the pull request lands only on their approval.
 
   ```shell
   gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>,<login>
@@ -126,6 +128,8 @@ Once a pull request is open, the session follows it as its author.
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
 *The human's own pull request* and *Landing*'s first three bullets. Where
 the repository has no merge queue, the landing queue holds here too.
+Where the human gave this command `--land`, it passes through to the
+pull requests opened for the named issues, and all of *Landing* applies.
 
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (the shared *Collateral*), before
@@ -134,7 +138,8 @@ the repository has no merge queue, the landing queue holds here too.
   session hands it over to whom it waits on** — yours, and tell the
   writer to remove its own.
 - **Report to the human** each pull request as a `PR` link, what it
-  closes, and whom it waits on. What arrives after the session ends — a
-  review, its turn in the landing queue — is `/btclib-pr`'s.
+  closes, and whom it waits on or that it landed. What arrives after
+  the session ends — a review, its turn in the landing queue — is
+  `/btclib-pr`'s.
 
 Then the shared *Wrap-up*.

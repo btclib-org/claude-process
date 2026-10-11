@@ -3,9 +3,11 @@
 Two commands carry work in every repository of `btclib-org`:
 
 - `/btclib-iss` takes issues to open pull requests, locally reviewed,
-  and follows them as their author until only the approval is missing;
+  and follows them as their author until only the approval is missing,
+  or, under `--land`, until they land;
 - `/btclib-pr` takes open pull requests through their reviews and CI to
-  the decision to approve, and lands what is approved.
+  the decision to approve, and lands what is approved, and the human's
+  own under `--land`.
 
 This file binds both. Each command opens by having it read whole, and
 holds only what is its own. The `writer` and `reviewer` agents are
@@ -925,8 +927,9 @@ not landed, and its cut-back is one of the item's alternatives.
   recommendation. The recommendation goes in the report. The one
   exception is which pull requests `/btclib-pr`'s *The sweep* works.
 - **Everything that does not depend on it goes on**: other issues, other
-  pull requests, review rounds, collateral, and the approvals and
-  landings `/btclib-pr` calls obvious.
+  pull requests, review rounds, collateral, the approvals and landings
+  `/btclib-pr` calls obvious, and the landings `--land` instructs, given
+  before the night or during it (`/btclib-pr`'s *Landing*).
 - **When nothing left can advance without an answer, the work stops
   and waits**, still in night mode. Nothing is left running: no worker
   mid-turn, no background job. A lock left by a worker you stopped is

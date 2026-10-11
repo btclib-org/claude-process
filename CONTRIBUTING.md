@@ -343,7 +343,9 @@ opinion for you to weigh. Neither belongs in a branch rule.
 The merge queue is on and `main` is not strict (`REPOSITORY.md`), so
 *The landing queue*, and *Landing it*'s rebase onto `main`'s tip, do not
 apply here. Each pull request is reviewed, approved and queued as it is
-ready, and is rebased only for a conflict.
+ready, and is rebased only for a conflict. The maintainer's own, under
+`/btclib-pr`'s `--land`, skips the approval and the queue: it lands
+through the bypass.
 
 `lint.yml` also runs on `merge_group`. The checks are read on the head,
 and the queue runs `Lint` again on `main`'s tip before it merges.

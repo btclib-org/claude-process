@@ -14,7 +14,8 @@ The process the btclib-org maintainers follow with
 [Claude Code](https://claude.com/claude-code):
 
 - `commands/btclib-iss.md` — the `/btclib-iss` command, from an issue to
-  a pull request that waits only on its approval;
+  a pull request that waits only on its approval, or lands under
+  `--land`;
 - `commands/btclib-pr.md` — the `/btclib-pr` command, from an open pull
   request to the decision to approve, and to `main`;
 - `process/btclib-common.md` — what both commands share, read whole by
@@ -99,6 +100,7 @@ among the commands, and `/agents` lists `writer` and `reviewer`.
 takes issues to open pull requests, locally reviewed, with the review of
 the other owners requested. It then answers what the bot and the
 reviewers raise and gets CI green, until only an approval is missing.
+Under `--land`, it requests no review and lands them.
 
 ```text
 /btclib-pr [pull request URLs or numbers]
@@ -111,8 +113,9 @@ sweeps the organization's open pull requests and proposes which to work.
 
 Both work in every repository of `btclib-org`. A bare number makes the
 session ask which repository it is in. Every pull request lands approved
-by somebody other than its author. A session approves on its own only
-where every check is green and the bot's ACK names the head.
+by somebody other than its author, unless the human lands their own with
+`--land`. A session approves on its own only where every check is green
+and the bot's ACK names the head.
 
 ## Updating
 
