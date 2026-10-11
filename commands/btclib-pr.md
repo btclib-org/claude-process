@@ -280,7 +280,7 @@ on. Where the branch moved, they are working: stop and ask.
 
       The quota is the organization's, so it is held once, not pull
       request by pull request: one open issue in `btclib-org/.github`,
-      pinned, titled `Review quota exhausted, resets <date> <hour> UTC`.
+      pinned, titled `Review quota exhausted, resets <date>T<hour> UTC`.
       The log gives the reset as `resets Oct 10, 11am (UTC)`, or as
       `resets 11am (UTC)` when it is less than a day away. Where it gives
       no date, the reset is the first such hour after the log line's
@@ -293,7 +293,7 @@ on. Where the branch moved, they are working: stop and ask.
       ```
 
       Where it lists none, open it with the reset the log gives, as
-      `2026-10-10 11:00`:
+      `2026-10-10T11:00`:
 
       ```shell
       reset=<reset>
@@ -312,7 +312,7 @@ on. Where the branch moved, they are working: stop and ask.
       ```
 
       A pull request whose only red check is this one waits on that
-      issue: its comment links the issue, and it takes no `blocked`
+      issue: its hold comment links the issue, and it takes no `blocked`
       label. Whether it lands before the reset is decided as *The
       decision* and *Landing* say. Whoever finds the reset passed closes
       the issue:
@@ -321,8 +321,11 @@ on. Where the branch moved, they are working: stop and ask.
       gh issue close --repo btclib-org/.github --comment 'Quota reset.' <number>
       ```
 
-      and re-runs `Claude review` on each pull request that linked it,
-      found by the issue's cross-references:
+      and re-runs `Claude review` on each open pull request that linked
+      it. The issue's timeline lists every cross-reference, issues and
+      closed pull requests included. This keeps the open pull requests,
+      and prints the repository and the failed `Claude review` run of
+      each:
 
       ```shell
       number=<number>
@@ -330,7 +333,22 @@ on. Where the branch moved, they are working: stop and ask.
 
       ```shell
       gh api --paginate "repos/btclib-org/.github/issues/${number:?}/timeline" \
-        --jq '.[] | select(.event=="cross-referenced") | .source.issue.html_url'
+        --jq '.[] | select(.event == "cross-referenced"
+          and .source.issue.pull_request != null
+          and .source.issue.state == "open") | .source.issue.html_url' |
+        while read -r pr; do
+          gh pr checks "$pr" --json name,link,bucket --jq '.[]
+            | select(.bucket == "fail" and (.name | endswith("Claude review")))
+            | .link
+            | capture("github.com/(?<r>[^/]+/[^/]+)/actions/runs/(?<id>[0-9]+)")
+            | "\(.r) \(.id)"'
+        done
+      ```
+
+      Re-run each line it prints:
+
+      ```shell
+      gh run rerun --repo <owner>/<repo> --failed <run id>
       ```
 
 - **The bot's review is answered like any other**, iterating to an ACK
