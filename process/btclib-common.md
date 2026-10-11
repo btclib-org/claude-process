@@ -377,8 +377,10 @@ does it before briefing anybody.
   ```
 
 - **Claim it before work starts.** The orchestrator comments on the
-  issue or pull request that a session is taking it; that comment is
-  what the next session's check reads.
+  issue or pull request that a session is taking it, in a comment
+  starting `Claimed`; that comment is what the next session's check
+  reads. On another person's pull request it also holds the branch
+  (*A claim holds a pull request's branch*).
 - **A branch left by a session that no longer runs is unreviewed work in
   progress**, however finished it looks. No process listing proves a
   session gone — an idle live session shows its id in no command line.
@@ -615,10 +617,10 @@ the orchestrator in the pull request.
   Where it prints a login other than the human's, push nothing and
   report it. Where it prints nothing and the branch is another person's
   (`/btclib-pr`'s *Another person's branch*), nothing is pushed until
-  the orchestrator has commented a claim, a comment starting `Claimed`.
-  The claim stands until the pull request lands, or until a comment
-  starting `Released` ends it, which the claiming session posts once it
-  is done with the branch.
+  the orchestrator has claimed it (*Before starting*). The claim stands
+  until the pull request lands, or until the claiming session posts a
+  comment starting `Released`: once it hands the pull request over to
+  whom it waits on, and at the latest before it ends.
 - **One git write per Bash call, nothing chained to it.** A commit, an
   amend, a rebase or a push chained with `cp`, `rm`, a gate or another
   git write is refused as a whole. Run each in its own call.
@@ -987,6 +989,9 @@ the comments on the issues. It holds:
 
 Before the wrap-up, every collateral issue the session opened has its
 pull request or is named with its exception (*Collateral*).
+
+**Release every claim the session holds** (*A claim holds a pull
+request's branch*).
 
 **Remove what the session created**: its clean worktrees, build
 directories, and caches in its scratch directories. A worktree with
