@@ -297,12 +297,18 @@ on. Where the branch moved, they are working: stop and ask.
         echo ahead || echo passed
       ```
 
-      Where it prints `passed`, the run is stale: re-run it, as *not
-      reproducing* says. Where it prints `ahead`, the quota is held. The
-      title carries the date so that a later reader can tell whether the
-      reset has passed. Look for the issue. This prints each
-      open one's number, its reset, and `passed` once the reset is at
-      or before the current UTC time:
+      Where it prints `passed`, the run is stale. Re-run it, and its
+      result stands:
+
+      ```shell
+      gh run rerun --repo <owner>/<repo> --failed <run id>
+      ```
+
+      Where it prints `ahead`, the quota is held. The title carries the
+      date so that a later reader can tell whether the reset has passed.
+      Look for the issue. This prints each open one's number, its reset,
+      and `passed` where the reset is at or before the current UTC time,
+      `pending` otherwise:
 
       ```shell
       gh issue list --repo btclib-org/.github --state open \
