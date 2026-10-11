@@ -1,6 +1,6 @@
 ---
 description: btclib-pr — from an open pull request to the decision to approve, and to main; every review answered, CI green
-argument-hint: [--night] [pull request URLs or numbers]
+argument-hint: [--night] [--land] [pull request URLs or numbers]
 ---
 
 # From a pull request to main
@@ -10,8 +10,9 @@ Take the open pull requests named in $ARGUMENTS, in repositories of
 Every review, thread, suggestion and comment is answered, and CI is
 green. The branch is rebased when it heads its repository's landing
 queue, or when it conflicts. Where the approval is obvious, approve and
-land. Where it is not, put the decision to the
-human. With no argument, start from *The sweep*.
+land; where the human gave `--land` for their own, land it. Otherwise,
+put the decision to the human. With no argument, start from *The
+sweep*.
 
 **First read `~/.claude/process/btclib-common.md`, whole.** It binds
 this command, names the roles, and holds every rule the two commands
@@ -433,8 +434,10 @@ the obvious approvals go on.
 
 ### The human's own pull request
 
-The session cannot approve it, so another owner decides. Once every item
-above holds but the first and the last four:
+The session cannot approve it. Where `--land` covers it (*Landing*), the
+session lands it once every item above holds but the first and the last
+four, as *Landing* qualifies them. Without `--land`, another owner
+decides; once the same items hold:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
@@ -448,14 +451,12 @@ above holds but the first and the last four:
 - arm the landing, so that their approval lands it (*Landing*);
 - report whom it waits on.
 
-A push dismisses their approval: request it again on the new head. The
-bypass is never the way round a missing approval, unless the human
-instructs it for that pull request (*Landing*).
+A push dismisses their approval: request it again on the new head.
 
 A pull request that changes `claude-review.yml` gets no review from the
 bot. The action refuses to run where its workflow differs from the
-default branch's, and its check fails. There the landing is armed
-without the bot's ACK, every other check green.
+default branch's, and its check fails. There `--land` does not apply:
+the landing is armed without the bot's ACK, every other check green.
 
 ## Outside contributors
 
@@ -537,6 +538,23 @@ human.
   Never land through the maintainer's bypass (`--admin`, or any other
   route to it) unless the human has instructed it for that pull request.
   It merges with no approval, even with required checks red.
+
+  **`--land` is that instruction**, for the pull requests named with it,
+  or opened by `/btclib-iss` for the issues named with it, and no others.
+  The human's words in the session, naming the pull requests, count
+  too. The bypass then lands only the human's own pull request, once it
+  has reached the point *The human's own pull request* names. A check
+  that only reports and is red on `main` too does not hold it, and is
+  named in the report. In place of the command above:
+
+  ```shell
+  gh pr merge <n> --repo <owner>/<repo> --squash --admin \
+    --match-head-commit <the head that lands> \
+    --subject "<title> (closes #<issue>) (#<n>)" --body-file <message>
+  ```
+
+  Where the repository has a merge queue, `--admin` merges directly,
+  past the queue and its checks on `main`'s tip (`gh pr merge --help`).
 - **The pin is the head as last pushed**, not the sha a verdict named.
   Where `main` is strict, an armed pull request that falls `BEHIND` its
   base (`gh pr view <n> --json mergeStateStatus`) is rebased, gated,
