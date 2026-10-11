@@ -343,14 +343,15 @@ the work.
 
 ### Which prose is worth a round
 
-**A reviewer blocks on a false sentence in the tree's own files, as on a
-code defect, not on one that could be worded better.** The tree's own
-files are every tracked file, docstrings and comments included. A
-wording finding — text that breaks *Write plainly* — is still made, with
-the shorter text, and is fixed with the next change to the branch. It
-does not send a branch back.
+**A reviewer blocks on a sentence in the tree's own files that is false,
+misleading, or a rule stated a second time (*Write plainly*), as on a
+code defect.** The tree's own files are every tracked file, docstrings
+and comments included. Only wording that could be better does not
+block. A wording finding is still made, with the shorter text, and is
+fixed with the next change to the branch.
 
-**A false sentence anywhere else does not send a cleared branch back**:
+**A false or misleading sentence anywhere else does not send a cleared
+branch back**:
 pull request bodies, issues, comments, reports, the commit message.
 Answer `CLEARED <sha>` with the finding underneath. It is still fixed
 with the next change to the branch. The commit message is corrected in
