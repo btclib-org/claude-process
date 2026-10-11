@@ -284,8 +284,23 @@ on. Where the branch moved, they are working: stop and ask.
       The log gives the reset as `resets Oct 10, 11am (UTC)`, or as
       `resets 11am (UTC)` when it is less than a day away. Where it gives
       no date, the reset is the first such hour after the log line's
-      timestamp. The title carries the date so that a later reader can
-      tell whether the reset has passed. Look for it. This prints each
+      timestamp. Write it as `2026-10-10T11:00`:
+
+      ```shell
+      reset=<reset>
+      ```
+
+      This prints `ahead` or `passed`:
+
+      ```shell
+      expr "${reset:?}" \> "$(date -u +%Y-%m-%dT%H:%M)" > /dev/null &&
+        echo ahead || echo passed
+      ```
+
+      Where it prints `passed`, the run is stale: re-run it, as *not
+      reproducing* says. Where it prints `ahead`, the quota is held. The
+      title carries the date so that a later reader can tell whether the
+      reset has passed. Look for the issue. This prints each
       open one's number, its reset, and `passed` once the reset is at
       or before the current UTC time:
 
@@ -298,7 +313,12 @@ on. Where the branch moved, they are working: stop and ask.
       ```
 
       Where it lists more than one with the same reset, keep the lowest
-      number and close each other one as its duplicate:
+      number. Unpin each other one, since closing does not unpin, and
+      close it as its duplicate:
+
+      ```shell
+      gh issue unpin --repo btclib-org/.github <number>
+      ```
 
       ```shell
       kept=<lowest number>
@@ -308,12 +328,7 @@ on. Where the branch moved, they are working: stop and ask.
       gh issue close --repo btclib-org/.github --duplicate-of "${kept:?}" <number>
       ```
 
-      Where it lists none `pending`, open one with the reset the log
-      gives, as `2026-10-10T11:00`:
-
-      ```shell
-      reset=<reset>
-      ```
+      Where it lists none `pending`, open one with the log's reset:
 
       ```shell
       gh issue create --repo btclib-org/.github \
@@ -331,7 +346,11 @@ on. Where the branch moved, they are working: stop and ask.
       `pending` issue: its hold comment links that issue, and it takes
       no `blocked` label. Whether it lands before the reset is decided
       as *The decision* and *Landing* say. Whoever sees an issue
-      `passed` closes it:
+      `passed` unpins and closes it:
+
+      ```shell
+      gh issue unpin --repo btclib-org/.github <number>
+      ```
 
       ```shell
       gh issue close --repo btclib-org/.github --comment 'Quota reset.' <number>
