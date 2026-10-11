@@ -335,8 +335,8 @@ included.
 
 **A hold is recorded on the issue or pull request**, in the same turn it
 is told to the human: a comment saying why it waits, and its label where
-the repository has it. A question put to the maintainer takes
-`decision`; a wait on an event or a person the comment names takes
+the repository has it. A question put to the human or the maintainer
+takes `decision`; a wait on an event or a person the comment names takes
 `blocked`; a pause the human decided takes `on-hold`. A hold kept only
 in the session's context does not exist, and another session will take
 the work.
@@ -410,8 +410,7 @@ The writer's section; the reviewer judges its result.
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
 - [ ] every gate the tree names ran on this tip, committed, with exit
-      code `0`, under the gate lock, with the load and the memory
-      pressure recorded at the run
+      code `0`, under the gate lock (*The gates*)
 - [ ] `git status --porcelain` is empty in the worktree, checked after
       the last gate
 - [ ] the subject that lands carries the right citation, and the body
@@ -579,7 +578,7 @@ the orchestrator in the pull request.
   gone. The one first in line waits for a 1-minute load under
   `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
   decimal comma, and then takes the lock. `gate_take` waits for the load and
-  for the holder with no bound, and the report gives the load. A timeout on
+  for the holder with no bound. A timeout on
   the background call covers the gates, not `gate_take`. A holder that never
   finishes keeps everyone waiting; `<scratchpad>/gate.lock/owner` names it.
   A load generator is killed by the PID you recorded, and `ps` shows it gone
@@ -954,11 +953,11 @@ reserved decision is opened, not landed, and its cut-back is one of the
 decision's alternatives.
 
 - **Record each item as a hold**, its comment in the shape *When the
-  human has to decide* gives, on the issue or pull request it concerns;
-  a missing label is not created at night. An item that belongs to no
-  issue or pull request (a permission refused outside any issue's work,
-  a dirty primary checkout not provably the session's), and any question
-  about an outside contributor's pull request, which they read, go in
+  human has to decide* gives; a missing label is not created at night.
+  An item that belongs to no issue or pull request (a permission refused
+  outside any issue's work, a dirty primary checkout not provably the
+  session's), and any question about an outside contributor's pull
+  request, which they read, go in
   the report only.
 - **Never resolve a deferred item by default**, nor by taking your own
   recommendation. The recommendation goes in the report. The one

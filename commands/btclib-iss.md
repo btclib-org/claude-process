@@ -103,8 +103,8 @@ open:**
   `gh pr view <n> --json closingIssuesReferences --jq
   '.closingIssuesReferences | length'`. The field lags creation by
   seconds to minutes; ask again.
-- **Unless `--land` covers it (`/btclib-pr`'s *Landing*), request now
-  the reviews** `/btclib-pr`'s *The human's own pull request* names.
+- **Unless `--land` covers it (`/btclib-pr`'s *Landing*), request the
+  reviews** that `/btclib-pr`'s *The human's own pull request* names.
 
 ## Following it
 
