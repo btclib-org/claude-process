@@ -144,8 +144,9 @@ where a page comes back full.
 - **Checks**: `gh pr checks <n> --repo <owner>/<repo>`.
 
 An unresolved thread is an item. So is a review or comment from anybody
-but the human, posted after the human's last comment and last push. A
-resolved thread is done.
+but the human that asks something, where nobody has answered it or it
+came after the human's last comment and last push. A resolved thread is
+done.
 
 ## Answering it
 
@@ -288,11 +289,21 @@ queue*). Where the repository has a merge queue, each pull request is
 decided once it is ready.
 
 **The approval is obvious where every item holds**, each measured on the
-head `<sha>`. The diff's files are read once, by a command that must
+head `<sha>`. The diff is read once, by two commands that must each
 exit `0`:
 
 ```shell
 gh pr diff <n> --repo <owner>/<repo> --name-only > <list file>
+```
+
+```shell
+gh pr diff <n> --repo <owner>/<repo> > <diff file>
+```
+
+The list omits the old path of a renamed file, so add it from the diff:
+
+```shell
+grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 ```
 
 - [ ] the author is not the human: `.author.login` differs from
@@ -312,22 +323,70 @@ gh pr diff <n> --repo <owner>/<repo> --name-only > <list file>
       .body'`
 - [ ] no review thread is unresolved, every page read (*What was
       raised*)
+- [ ] every item of *What was raised* is answered
 - [ ] no other reviewer's changes requested stand: `latestReviews`
       holds no `CHANGES_REQUESTED`
 - [ ] no item waits on a decision or on the author, and the branch
       takes no decision its issue reserved
-- [ ] the list holds no file under `.github/`, no `RELEASING.md`,
-      `REPOSITORY.md` or `SECURITY.md`
+- [ ] the repository is not `btclib-org/claude-process`, whose every
+      file gives instructions or rules
+- [ ] the list holds no file that gives instructions or rules: the
+      first command below prints nothing, and the second, where it
+      runs, exits `0`
 - [ ] every other file in the list is a doc, a test, `pyproject.toml`
-      or `uv.lock`: the command below prints nothing, and exits `1`
-- [ ] `pyproject.toml` and `uv.lock` gain no dependency and no major
-      version
+      or `uv.lock`: the third command below prints nothing
+- [ ] `pyproject.toml` and `uv.lock` only move dependencies they
+      already hold to a new version, never a major one, read from the
+      fourth command below
 
-The command prints each file in the list that is none of these:
+The first prints each file under `.github/` or any `.claude/`, any top-level
+`RELEASING.md`, `REPOSITORY.md` or `SECURITY.md`, and any `CLAUDE.md`,
+`REVIEWING.md`, `GOVERNANCE.md` or `CONTRIBUTING.md`. It exits `1` where
+there is none:
+
+```shell
+grep -E -e '^\.github/|^(RELEASING|REPOSITORY|SECURITY)\.md$' \
+  -e '(^|/)(\.claude/|(CLAUDE|REVIEWING|GOVERNANCE|CONTRIBUTING)\.md$)' \
+  <list file>
+```
+
+The second looks for the readme a package publishes: the `readme` of
+`[project]` in the head's `pyproject.toml`. Read the file first. Where
+`gh` answers `Not Found`, the tree has none, and the second is skipped:
+
+```shell
+gh api -H 'Accept: application/vnd.github.raw' \
+  "repos/<owner>/<repo>/contents/pyproject.toml?ref=<sha>" > <toml file>
+```
+
+The second prints the readme where the list holds it, and exits `0`
+only where it does not:
+
+```shell
+uv run --no-project --python 3.13 python -c 'import sys, tomllib
+r = tomllib.load(open(sys.argv[1], "rb"))["project"].get("readme", "")
+r = r if isinstance(r, str) else r.get("file", "")
+sys.exit(bool(r) and r in open(sys.argv[2]).read().splitlines() and r)' \
+  <toml file> <list file>
+```
+
+The third prints each file that fails its item, and exits `1` where
+none does:
 
 ```shell
 grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file>
 ```
+
+The fourth prints the diff of `pyproject.toml` and `uv.lock`:
+
+```shell
+awk '/^diff --git /{p = ($3 == "a/pyproject.toml" || $3 == "a/uv.lock")}
+  p' <diff file>
+```
+
+Any other change in them fails this item, a new requirement or
+`[[package]]` included. A version whose first non-zero number changes
+is a major one.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
@@ -375,13 +434,17 @@ the obvious approvals go on.
 ### The human's own pull request
 
 The session cannot approve it, so another owner decides. Once every item
-above holds but the first and the last three:
+above holds but the first and the last four:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
   `gh api "orgs/btclib-org/members?role=admin" --jq '.[].login'` lists
-  them. Then `gh pr edit <n> --repo <owner>/<repo> --add-reviewer
-  <login>`;
+  them:
+
+  ```shell
+  gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>
+  ```
+
 - arm the landing, so that their approval lands it (*Landing*);
 - report whom it waits on.
 

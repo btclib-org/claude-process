@@ -902,7 +902,7 @@ answering, the night does not start.
 **Turning it off** ends the night at once. The work in flight goes on
 under the ordinary rules. The morning report is the next message, unless
 it was given while the work waited. Its deferred items are then asked
-one at a time, in the report's order (*When the human has to decide*).
+one at a time (*When the human has to decide*).
 
 **During the night no question is asked interactively.** Every point
 where a command stops for the human — a decision, a refused permission,
@@ -956,11 +956,19 @@ Before the wrap-up, every collateral issue the session opened has its
 pull request or is named with its exception (*Collateral*).
 
 **Remove what the session created**: its clean worktrees, build
-directories, and caches in its scratch directories. A read-only tree,
-as Go's module cache is, takes `chmod -R u+w <dir>` before
-`rm -rf <dir>`. A worktree with uncommitted or unpushed work stays (*Before
-removing or discarding anything that could be work*), and so does
-anything another session made. Name both in the report.
+directories, and caches in its scratch directories. A worktree with
+uncommitted or unpushed work stays (*Before removing or discarding
+anything that could be work*), and so does anything another session
+made. Name both in the report. A read-only tree, as Go's module cache
+is, is made writable first:
+
+```shell
+chmod -R u+w <dir>
+```
+
+```shell
+rm -rf <dir>
+```
 
 At the end of a session, report two things to the human, and edit
 neither file on your own:
