@@ -266,7 +266,7 @@ on. Where the branch moved, they are working: stop and ask.
     - **not reproducing**: the shared *A failure that does not reproduce
       is measured*. One re-run measures it (`gh run rerun <run id>
       --repo <owner>/<repo> --failed`); two different answers are an
-      issue, not a green.
+      issue, not a green;
     - **review quota exhausted**: the log of `Claude review` holds the
       line `api_error_status 429` (match with that, not with
       `api_error_status` alone: the log also echoes the workflow's own
@@ -283,10 +283,9 @@ on. Where the branch moved, they are working: stop and ask.
       pinned, titled `Review quota exhausted, resets <date> <hour> UTC`.
       The log gives the reset as `resets Oct 10, 11am (UTC)`, or as
       `resets 11am (UTC)` when it is less than a day away. Where it gives
-      no date, the date is the day of the log line's timestamp, or the
-      next day where the hour has passed. The title carries the date so
-      that a later reader can tell whether the reset has passed. Look
-      for it:
+      no date, the reset is the first such hour after the log line's
+      timestamp. The title carries the date so that a later reader can
+      tell whether the reset has passed. Look for it:
 
       ```shell
       gh issue list --repo btclib-org/.github --state open \
@@ -306,16 +305,17 @@ on. Where the branch moved, they are working: stop and ask.
         --body 'Claude review fails with 429 in every repository until the reset.'
       ```
 
-      Pin it, with the number that command printed:
+      Pin it, with the URL that command printed:
 
       ```shell
-      gh issue pin --repo btclib-org/.github <number>
+      gh issue pin <url>
       ```
 
-      A pull request whose only red check is this one links that issue
-      in a comment, with no hold comment and no `blocked` label of its
-      own. Whether it lands before the reset stays the maintainer's call
-      (*The decision*). Whoever finds the reset passed closes the issue:
+      A pull request whose only red check is this one waits on that
+      issue: its comment links the issue, and it takes no `blocked`
+      label. Whether it lands before the reset is decided as *The
+      decision* and *Landing* say. Whoever finds the reset passed closes
+      the issue:
 
       ```shell
       gh issue close --repo btclib-org/.github --comment 'Quota reset.' <number>
