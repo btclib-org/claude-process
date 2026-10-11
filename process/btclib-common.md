@@ -338,9 +338,9 @@ is told to the human: a comment saying why it waits, and its label where
 the repository has it. A question put to the human or the maintainer
 takes `decision`; a wait on an event or a person the comment names takes
 `blocked`; a pause the human decided takes `on-hold`. A wait on an
-exhausted review quota takes no label: `/btclib-pr`'s *Rebase and CI*
-says where it is recorded. A hold kept only in the session's context
-does not exist, and another session will take the work.
+exhausted review quota is recorded as `/btclib-pr`'s *Rebase and CI*
+says. A hold kept only in the session's context does not exist, and
+another session will take the work.
 
 ### Which prose is worth a round
 
