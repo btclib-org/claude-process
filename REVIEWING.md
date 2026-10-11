@@ -488,7 +488,7 @@ because that document, and not this one, is where the rule lives.
 - **Does the change keep the process the single source?** The opening
   of `process/btclib-common.md` says where a rule is stated; a copy
   anywhere else will disagree with it. What a diff added to the agents
-  is read against them:
+  is read against the process:
 
     ```shell
     git diff origin/main... -- agents/

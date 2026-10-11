@@ -83,9 +83,10 @@ These bind the writer, the reviewer and the orchestrator alike.
   comments, reports — is clear, simple and no longer than it needs to
   be: the point first, plain words, one fact per sentence. A clause whose
   removal loses nothing a reader needs is cut. **Say a thing once;
-  elsewhere, point to it**: a summary names the section that holds a
-  rule and does not restate it. A text the reader has to read twice has
-  failed, however correct.
+  elsewhere, point to it** (the standard's section 9, *One fact in one
+  place*): a summary names the section that holds a rule and does not
+  restate it. A text the reader has to read twice has failed, however
+  correct.
 - **Parallelize as much as you can.** Reads, remote work, writers and
   reviewers run side by side, within the machine's CPU load, memory
   pressure and free disk (*The gates*, *Before starting*).
@@ -515,6 +516,8 @@ the orchestrator in the pull request.
   out load first; measure the rate on a quiet machine, then open an
   issue. A branch that fails differently on every run cannot land,
   whatever the last run says.
+- **Every worker that gates reports the load and the memory pressure at
+  each run**, a reviewer running the gates itself included.
 - **Wait for normal memory pressure before `gate_take`**, in the same
   background call:
 
@@ -525,7 +528,7 @@ the orchestrator in the pull request.
   ```
 
   macOS answers `1` for normal, `2` for warn and `4` for critical. The
-  level is read again at each gate run and reported beside the load.
+  level is read again at each gate run.
   Where the read fails, as off macOS, the loop does not wait.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
   worktree, the same name on every run of that branch. A teardown
@@ -857,9 +860,8 @@ Rebase, run the gates, and push.
 
 - **Dispatching a writer**: this file's path
   (`~/.claude/process/btclib-common.md`), the command's, and the
-  sections of both that are its role's — the agents are generic and know
-  no process of their own — the issue or pull request, the repository,
-  the worktree and scratch paths, the force-push grant, and
+  sections of both that are its role's, the issue or pull request, the
+  repository, the worktree and scratch paths, the force-push grant, and
   the claims you measured. The same for a reviewer.
 - **Before dispatching, ask whether the issue is collateral of a pull
   request this session worked** (*Collateral*).
