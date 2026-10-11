@@ -559,14 +559,14 @@ the orchestrator in the pull request.
   different sessions queue in one place. Wait for the load, then take
   the lock — so that nobody holds it while only waiting — and release it
   the moment the gates finish. The lock is taken and released only
-  through `~/.claude/scripts/gate-lock.sh`, sourced in
-  the same background shell call as the gates (*Long jobs run in the
-  background*), never by a hand-written `mkdir` or `rmdir`:
+  through `~/.claude/scripts/gate-lock.sh`, sourced in the same
+  background shell call as the gates (*Long jobs run in the background*),
+  never by a hand-written `mkdir` or `rmdir`:
 
   ```shell
   . ~/.claude/scripts/gate-lock.sh
   gate_take <worktree> && {
-    # … gates, recording the load at each run …
+    # … the gates …
     gate_release
   }
   ```
@@ -576,13 +576,13 @@ the orchestrator in the pull request.
   gone is stale, and `gate_take` removes it itself, by renaming the owner
   file first, which only one waiter wins. No session removes a
   lock any other way: a failed `mkdir` or an old lock says nothing
-  about whose it is. A lock with no owner file — a hand `mkdir`, one
-  from the old recipe, or one a waiter killed mid-reclaim left with only
-  a `stale.<pid>` in it — is never reclaimed: the human removes it with
-  `rm -r` of `gate.lock` alone, after checking that no gate runs. The
-  script is POSIX `sh`. Waiters queue in arrival order, each with a
-  ticket in `gate.queue` in that directory; any waiter removes a ticket
-  whose process is gone. The one first in line waits for a 1-minute load under
+  about whose it is. A lock with no owner file — a hand `mkdir`, or one
+  a waiter killed mid-reclaim left with only a `stale.<pid>` in it — is
+  never reclaimed: the human removes it with `rm -r` of `gate.lock`
+  alone, after checking that no gate runs. The script is POSIX `sh`.
+  Waiters queue in arrival order, each with a ticket in `gate.queue` in
+  that directory; any waiter removes a ticket whose process is gone. The
+  one first in line waits for a 1-minute load under
   `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
   decimal comma, and then takes the lock. `gate_take` waits for the load and
   for the holder with no bound. A timeout on
@@ -590,10 +590,6 @@ the orchestrator in the pull request.
   finishes keeps everyone waiting; `gate.lock/owner` in that directory
   names it. A load generator is killed by the PID you recorded, and `ps`
   shows it gone before the lock is released.
-
-  A call with a scratchpad, `gate_take <scratchpad> <worktree>` and
-  `gate_release <scratchpad>`, takes and releases the same lock: the
-  scratchpad is ignored.
 
 ### Committing and rebasing
 
