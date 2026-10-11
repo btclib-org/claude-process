@@ -405,7 +405,8 @@ The writer's section; the reviewer judges its result.
 **Before handing over, every item holds:**
 
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
-      `HEAD` (*Committing and rebasing*)
+      `HEAD`, except a fix on an open pull request (*Committing and
+      rebasing*)
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
@@ -429,8 +430,9 @@ Grep the tree for the rule's key words (*`grep` reads lines, and prose
 wraps*), and write down each hit as `file:line` with what you do with
 it. Change them all in one round. A restatement becomes a pointer to the
 section that holds the rule (*Write plainly*). The list goes in your
-report, and the reviewer checks that its own grep finds no sentence the
-list missed.
+report. The reviewer checks it is complete: its own grep finds no
+sentence the list missed, and it reads the files where the rule is
+stated.
 
 ### What the prose that lands may say
 
@@ -877,8 +879,9 @@ Rebase, run the gates, and push.
   before the reviewer is asked**, and the report you hand it names that
   sha.
 - **Do not retract part of a brief mid-round.** Let the round finish and
-  discard the finding. Where it cannot wait, say why the brief was wrong
-  (*The verdict*'s last bullet).
+  discard the finding. Where it cannot wait, say why the brief was wrong,
+  and that a reviewer reading it as a contradiction should say so rather
+  than comply.
 - **The writer's report crosses to the reviewer whole**, in its own words;
   what you add is appended and marked as yours. Name every gate with its
   exit code, the one the repository calls the gate of record first.
@@ -957,8 +960,7 @@ decision's alternatives.
   An item that belongs to no issue or pull request (a permission refused
   outside any issue's work, a dirty primary checkout not provably the
   session's), and any question about an outside contributor's pull
-  request, which they read, go in
-  the report only.
+  request, which they read, go in the report only.
 - **Never resolve a deferred item by default**, nor by taking your own
   recommendation. The recommendation goes in the report. The one
   exception is which pull requests `/btclib-pr`'s *The sweep* works.
