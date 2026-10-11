@@ -73,8 +73,12 @@ its state there.
 
 ```shell
 gh issue edit <n> --repo <owner>/<repo> --remove-label upstream-dependent
-gh issue edit <n> --repo <owner>/<repo> \
-  --remove-label upstream-dependent,blocked
+```
+
+Where `blocked` waited on the same thing:
+
+```shell
+gh issue edit <n> --repo <owner>/<repo> --remove-label blocked
 ```
 
 ## Opening the pull request
