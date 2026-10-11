@@ -285,11 +285,27 @@ on. Where the branch moved, they are working: stop and ask.
       `resets 11am (UTC)` when it is less than a day away. Where it gives
       no date, the reset is the first such hour after the log line's
       timestamp. The title carries the date so that a later reader can
-      tell whether the reset has passed. Look for it:
+      tell whether the reset has passed. Look for it. This prints each
+      open one's number, its reset, and `passed` once the reset is at
+      or before the current UTC time:
 
       ```shell
       gh issue list --repo btclib-org/.github --state open \
-        --search 'in:title "Review quota exhausted"'
+        --search 'in:title "Review quota exhausted"' --json number,title \
+        --jq '.[] | (.title | capture("resets (?<r>[^ ]+) UTC").r) as $r
+          | "\(.number) \($r) \(if $r <= (now | strftime("%Y-%m-%dT%H:%M"))
+            then "passed" else "pending" end)"'
+      ```
+
+      Where it lists more than one, keep the lowest number and close
+      each other one as its duplicate:
+
+      ```shell
+      kept=<lowest number>
+      ```
+
+      ```shell
+      gh issue close --repo btclib-org/.github --duplicate-of "${kept:?}" <number>
       ```
 
       Where it lists none, open it with the reset the log gives, as
@@ -314,28 +330,36 @@ on. Where the branch moved, they are working: stop and ask.
       A pull request whose only red check is this one waits on that
       issue: its hold comment links the issue, and it takes no `blocked`
       label. Whether it lands before the reset is decided as *The
-      decision* and *Landing* say. Whoever finds the reset passed closes
-      the issue:
+      decision* and *Landing* say. Whoever sees `passed` closes the
+      issue:
 
       ```shell
       gh issue close --repo btclib-org/.github --comment 'Quota reset.' <number>
       ```
 
       and re-runs `Claude review` on each open pull request that linked
-      it. The issue's timeline lists every cross-reference, issues and
-      closed pull requests included. This keeps the open pull requests,
-      and prints the repository and the failed `Claude review` run of
-      each:
+      it or one of its duplicates. Their timelines list every
+      cross-reference, issues and closed pull requests included. This
+      reads every issue titled with that reset, keeps the open pull
+      requests, and prints the repository and the failed `Claude review`
+      run of each:
 
       ```shell
-      number=<number>
+      reset=<reset>
       ```
 
       ```shell
-      gh api --paginate "repos/btclib-org/.github/issues/${number:?}/timeline" \
-        --jq '.[] | select(.event == "cross-referenced"
-          and .source.issue.pull_request != null
-          and .source.issue.state == "open") | .source.issue.html_url' |
+      gh issue list --repo btclib-org/.github --state all --limit 100 \
+        --search 'in:title "Review quota exhausted"' --json number,title \
+        --jq ".[] | select(.title
+          == \"Review quota exhausted, resets ${reset:?} UTC\") | .number" |
+        while read -r number; do
+          gh api --paginate \
+            "repos/btclib-org/.github/issues/${number}/timeline" \
+            --jq '.[] | select(.event == "cross-referenced"
+              and .source.issue.pull_request != null
+              and .source.issue.state == "open") | .source.issue.html_url'
+        done | sort -u |
         while read -r pr; do
           gh pr checks "$pr" --json name,link,bucket --jq '.[]
             | select(.bucket == "fail" and (.name | endswith("Claude review")))
