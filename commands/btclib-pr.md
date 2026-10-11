@@ -7,10 +7,10 @@ argument-hint: [--night] [pull request URLs or numbers]
 
 Take the open pull requests named in $ARGUMENTS, in repositories of
 `btclib-org`, to the point where only the decision to approve is left.
-Every review, thread, suggestion and comment is answered, the branch is
-rebased onto the default branch where the repository has no merge queue
-or the branch conflicts, and CI is green. Where the approval
-is obvious, approve and land. Where it is not, put the decision to the
+Every review, thread, suggestion and comment is answered, and CI is
+green. The branch is rebased when it heads its repository's landing
+queue, or when it conflicts. Where the approval is obvious, approve and
+land. Where it is not, put the decision to the
 human. With no argument, start from *The sweep*.
 
 **First read `~/.claude/process/btclib-common.md`, whole.** It binds
@@ -54,8 +54,9 @@ Show the human one table, grouped:
 - the rest, listed and not worked.
 
 Each row is a `PR` link and what it waits on. A draft is listed and not
-worked. Then put one numbered question: which to work, and in what
-order, with a recommendation. Within one repository with no merge
+worked. Then put one decision (the shared *When the human has to
+decide*): which to work, and in what order, the recommended order first
+with its reason. Within one repository with no merge
 queue the order is `CONTRIBUTING.md`'s *The landing queue*: one pull
 request carried to the default branch at a time, the cheapest and least
 contended first. At night, work the recommendation.
@@ -114,14 +115,19 @@ where a page comes back full.
 - **Review threads**, inline, with whether each is resolved:
 
   ```shell
-  gh api graphql -F owner=<owner> -F repo=<repo> -F n=<n> -f query='
-    query($owner: String!, $repo: String!, $n: Int!) {
+  gh api graphql --paginate -F owner=<owner> -F repo=<repo> -F n=<n> \
+    -f query='
+    query($owner: String!, $repo: String!, $n: Int!, $endCursor: String) {
       repository(owner: $owner, name: $repo) {
         pullRequest(number: $n) {
-          reviewThreads(first: 100) {
+          reviewThreads(first: 100, after: $endCursor) {
+            pageInfo { hasNextPage endCursor }
             nodes {
               id isResolved isOutdated path line
-              comments(first: 50) { nodes { author { login } body url } }
+              comments(first: 100) {
+                totalCount
+                nodes { author { login } body url }
+              }
             }
           }
         }
@@ -129,13 +135,18 @@ where a page comes back full.
     }'
   ```
 
+  A thread whose `totalCount` exceeds its `nodes` is read whole on its
+  own.
+
 - **Suggestions**: a fenced `suggestion` block in a thread's comment.
 - **Comments** on the pull request itself: `gh pr view <n> --repo
   <owner>/<repo> --json comments`.
 - **Checks**: `gh pr checks <n> --repo <owner>/<repo>`.
 
-An unresolved thread, a review newer than the last push, and a comment
-nobody has answered are all items. A resolved thread is done.
+An unresolved thread is an item. So is a review or comment from anybody
+but the human that asks something, where nobody has answered it or it
+came after the human's last comment and last push. A resolved thread is
+done.
 
 ## Answering it
 
@@ -214,10 +225,11 @@ moved, they are working: stop and ask.
   ```
 
   An outside contributor's branch is never rebased: *Outside
-  contributors* brings `main` in by a merge. Run the gates, and push.
-  Ask the merge the forge will compute, locally:
+  contributors* brings `main` in by a merge.
+- **After a rebase or a merge of `main`, run the gates and push.** Ask
+  the merge the forge will compute, locally:
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
-  <branch>` exits `1` where GitHub will refuse; `gh pr view --json
+  <branch>` exits `1` where GitHub will refuse. `gh pr view --json
   mergeable` is a cached value.
 - **Wait for the checks on the head just pushed**, in the background,
   by asking until none is pending: `gh pr checks --watch` can return
@@ -260,66 +272,188 @@ moved, they are working: stop and ask.
 
 ## The decision
 
-**Where the repository has no merge queue (*Rebase and CI*), approve only
-the head of its repository's queue.** A push dismisses an approval, and a
-pull request that will be rebased before it lands would need approving
-again. The others wait with their reviews answered and CI green; each is
-rebased, gated and decided when its turn comes (`CONTRIBUTING.md`'s *The
-landing queue*). Where it has a merge queue, approval is not serialised:
-a push still dismisses it, but a branch is pushed again only for a
-conflict, so every pull request is decided as it is ready.
+**The session approves as the human.** It acts through their `gh` login
+(`gh api user --jq .login`), so its approval is theirs. Their standing
+instruction covers an obvious approval, as defined below, and nothing
+else. Every other approval is theirs to give.
 
-**The approval is obvious where every item holds:**
+**GitHub refuses an approval from a pull request's author.** On the
+human's own pull request the session never approves: *The human's own
+pull request* says what it does instead.
 
-- [ ] the human is not the author
-- [ ] where the repository has no merge queue, the pull request heads its repository's
-      queue and is not behind its base
-- [ ] the last fresh reviewer's `CLEARED` names the head, or *A rebase
-      and the clearance* carries it to the head
-- [ ] every check on the head is green, not only the required ones
-- [ ] the bot's review names the head with an ACK
-- [ ] no thread is unresolved, and nobody else's changes requested
-      stand
-- [ ] no item is left as a decision, the branch takes no decision its
-      issue reserved, and no substantial change waits on the author
-- [ ] the diff touches no workflow, no release or publishing machinery,
-      no repository setting, no cryptographic or other security-relevant
-      code, no new dependency or major version, and nothing the tree's
-      `CONTRIBUTING.md` names as decided by CI alone
+**Where the repository has no merge queue (*Rebase and CI*), decide only
+the head of its landing queue.** A push dismisses an approval, and every
+other pull request will be rebased before it lands. The others wait,
+answered and green, for their turn (`CONTRIBUTING.md`'s *The landing
+queue*). Where the repository has a merge queue, each pull request is
+decided once it is ready.
 
-Where it is obvious, approve, with a body naming the head and what was
-checked, and land (*Landing*):
+**The approval is obvious where every item holds**, each measured on the
+head `<sha>`. The diff is read once, by two commands that must each
+exit `0`:
 
 ```shell
-gh pr review <n> --repo <owner>/<repo> --approve --body-file <body>
+gh pr diff <n> --repo <owner>/<repo> --name-only > <list file>
 ```
 
-**Then read the approval back**: `gh pr view <n> --repo <owner>/<repo>
---json reviewDecision --jq .reviewDecision` answers `APPROVED`. Where it
-does not, the ruleset asks for another approval — the session's own
-commits on the branch can be the reason. Request it from an owner who
-wrote nothing on it, and report.
+```shell
+gh pr diff <n> --repo <owner>/<repo> > <diff file>
+```
 
-**Where it is not obvious**, put it to the human as numbered questions:
-approve, ask the author for changes, or wait, each with its cost, the
-recommendation first. At night it is a deferred item.
+The list omits the old path of a renamed file, so add it from the diff:
+
+```shell
+grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
+```
+
+- [ ] the author is not the human: `.author.login` differs from
+      `gh api user --jq .login`
+- [ ] where the repository has no merge queue, the pull request heads
+      its landing queue, and `mergeStateStatus` is not `BEHIND`
+- [ ] the latest fresh reviewer's `CLEARED` names `<sha>`, or *A rebase
+      and the clearance* carries it to `<sha>`
+- [ ] every check passed or was skipped, required or not:
+      `gh pr checks <n> --repo <owner>/<repo> --json bucket --jq
+      'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
+      "skipping")'` answers `true`. A cancelled check (bucket
+      `cancel`) fails this item until a re-run passes.
+- [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
+      --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
+      select(.author.login == "claude" and .body != "")] | last |
+      .body'`
+- [ ] no review thread is unresolved, every page read (*What was
+      raised*)
+- [ ] every item of *What was raised* is answered
+- [ ] no other reviewer's changes requested stand: `latestReviews`
+      holds no `CHANGES_REQUESTED`
+- [ ] no item waits on a decision or on the author, and the branch
+      takes no decision its issue reserved
+- [ ] the repository is not `btclib-org/claude-process`, whose every
+      file gives instructions or rules
+- [ ] the list holds no file that gives instructions or rules: the
+      first command below prints nothing, and the second, where it
+      runs, exits `0`
+- [ ] every other file in the list is a doc, a test, `pyproject.toml`
+      or `uv.lock`: the third command below prints nothing
+- [ ] `pyproject.toml` and `uv.lock` only move dependencies they
+      already hold to a new version, never a major one, read from the
+      fourth command below
+
+The first prints each file under `.github/` or any `.claude/`, any top-level
+`RELEASING.md`, `REPOSITORY.md` or `SECURITY.md`, and any `CLAUDE.md`,
+`REVIEWING.md`, `GOVERNANCE.md` or `CONTRIBUTING.md`. It exits `1` where
+there is none:
+
+```shell
+grep -E -e '^\.github/|^(RELEASING|REPOSITORY|SECURITY)\.md$' \
+  -e '(^|/)(\.claude/|(CLAUDE|REVIEWING|GOVERNANCE|CONTRIBUTING)\.md$)' \
+  <list file>
+```
+
+The second looks for the readme a package publishes: the `readme` of
+`[project]` in the head's `pyproject.toml`. Read the file first. Where
+`gh` answers `Not Found`, the tree has none, and the second is skipped:
+
+```shell
+gh api -H 'Accept: application/vnd.github.raw' \
+  "repos/<owner>/<repo>/contents/pyproject.toml?ref=<sha>" > <toml file>
+```
+
+The second prints the readme where the list holds it, and exits `0`
+only where it does not:
+
+```shell
+uv run --no-project --python 3.13 python -c 'import sys, tomllib
+r = tomllib.load(open(sys.argv[1], "rb"))["project"].get("readme", "")
+r = r if isinstance(r, str) else r.get("file", "")
+sys.exit(bool(r) and r in open(sys.argv[2]).read().splitlines() and r)' \
+  <toml file> <list file>
+```
+
+The third prints each file that fails its item, and exits `1` where
+none does:
+
+```shell
+grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file>
+```
+
+The fourth prints the diff of `pyproject.toml` and `uv.lock`:
+
+```shell
+awk '/^diff --git /{p = ($3 == "a/pyproject.toml" || $3 == "a/uv.lock")}
+  p' <diff file>
+```
+
+Any other change in them fails this item, a new requirement or
+`[[package]]` included. A version whose first non-zero number changes
+is a major one.
+
+**Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
+pin a commit, so the call is the API's:
+
+```shell
+gh api repos/<owner>/<repo>/pulls/<n>/reviews -f event=APPROVE \
+  -f commit_id=<sha> -F body=@<body file>
+```
+
+The body says, one line each:
+
+- the head it approves, `<sha>`;
+- the `CLEARED` it relies on, and the rebase case;
+- the bot's ACK, as a link;
+- that every check passed or was skipped;
+- what was not checked.
+
+Then land it, pinned to the same `<sha>` (*Landing*).
+
+**Read the approval back**:
+
+```shell
+gh pr view <n> --repo <owner>/<repo> \
+  --json headRefOid,reviewDecision,reviews --jq '.headRefOid,
+  .reviewDecision, ([.reviews[] | select(.state == "APPROVED")] | last
+  | .author.login, .commit.oid)'
+```
+
+It answers `<sha>`, `APPROVED`, the human's login, and `<sha>`. Where
+the head moved, decide again on the new head. Where the decision is not
+`APPROVED`, the ruleset asks for another approval. Request it from an
+owner who is neither the human nor the author and pushed no commit to
+the branch, and report whom it waits on.
+
+**Where it is not obvious, the human decides**, as one decision (the
+shared *When the human has to decide*). Its context is the `PR` link,
+the head sha, and each failed item with its measurement. The
+alternatives are: approve as it is; ask the author for changes, naming
+them; wait, naming on what or whom; close, where that is an option.
+Record it as a hold on the pull request, with the `decision` label. On
+"approve", approve as above, with a body saying it follows the human's
+decision. At night it is a deferred item (the shared *Night mode*), and
+the obvious approvals go on.
 
 ### The human's own pull request
 
-The decision is somebody else's. Once everything raised is answered, CI
-is green, and the last fresh reviewer's `CLEARED` (or *A rebase and the
-clearance*, which carries it to the rebased head) and the bot's ACK both
-name the head — and, where the repository has no merge queue, the pull
-request heads its repository's queue and is rebased:
+The session cannot approve it, so another owner decides. Once every item
+above holds but the first and the last four:
 
-- re-request the review of every owner but the human who has not
-  approved the head (`gh pr edit <n> --repo <owner>/<repo>
-  --add-reviewer <login>`);
+- request the review of every owner but the human who has not approved
+  `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
+  `gh api "orgs/btclib-org/members?role=admin" --jq '.[].login'` lists
+  them:
+
+  ```shell
+  gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>
+  ```
+
 - arm the landing, so that their approval lands it (*Landing*);
 - report whom it waits on.
 
+A push dismisses their approval: request it again on the new head. The
+bypass is never the way round a missing approval, unless the human
+instructs it for that pull request (*Landing*).
+
 A pull request that changes `claude-review.yml` gets no review from the
-bot: the action refuses to run where its workflow differs from the
+bot. The action refuses to run where its workflow differs from the
 default branch's, and its check fails. There the landing is armed
 without the bot's ACK, every other check green.
 
@@ -406,10 +540,11 @@ human.
 - **The pin is the head as last pushed**, not the sha a verdict named.
   Where `main` is strict, an armed pull request that falls `BEHIND` its
   base (`gh pr view <n> --json mergeStateStatus`) is rebased, gated,
-  approved again, and armed again on the new head.
+  decided again on the new head (*The decision*), and armed again.
 - **A stacked pull request lands like any other**: once its base has
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
-  opened as soon as it is written* says, approved, and armed.
+  opened as soon as it is written* says, gated, decided again on the new
+  head (*The decision*), and armed.
 - **Check what landed, once it has.** `--auto` returns before the
   merge: repeat `gh pr view <n> --repo <owner>/<repo> --json
   state,mergeCommit,autoMergeRequest --jq '.state, .mergeCommit.oid,

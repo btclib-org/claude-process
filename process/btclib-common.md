@@ -78,11 +78,15 @@ These bind the writer, the reviewer and the orchestrator alike.
   simple and no longer than it needs to be: the point first, plain
   words, one fact per sentence. A text the reader has to read twice has
   failed, however correct.
-- **The machine is shared.** Heavy local work runs one gate at a time,
-  after the load falls, as *The gates* says. Targeted test runs use
-  `-n 0` or `-n 2`, never `-n auto`; the whole suite runs as the tree's
-  gate says. Other sessions' processes are not yours to
-  kill.
+- **Parallelize as much as you can.** Reads, remote work, writers and
+  reviewers run side by side, within the machine's CPU load, memory
+  pressure and free disk (*The gates*, *Before starting*).
+- **The machine is shared.** Heavy local work — a suite, the hooks, a
+  docs build — runs one gate at a time, under the gate lock, as *The
+  gates* says. Everything else runs in parallel while one worker gates.
+  Targeted test runs use `-n 0` or `-n 2`, never `-n auto`; the whole
+  suite runs as the tree's gate says. Other sessions' processes are not
+  yours to kill.
 
 ### Where you work
 
@@ -288,13 +292,30 @@ rebasing*.
 
 ### When the human has to decide
 
-**A question put to the human comes with what decides it**,
-wherever it is asked. Give each question its alternatives, what each
-costs, and your recommendation first, with its reason. Number several
-questions so that one line (`1a; 2b`) answers them all. Do not ask a
-question until it has these. The repository question is the exception:
-it lists the candidates without recommending one, since the repository
-is never inferred (*Where you work*).
+**One decision at a time.** Put one decision to the human per message,
+and wait for the answer before putting the next. Never a batch, and
+never a list of numbered questions. A report may list what waits on the
+human, one line each; it asks none of it. Where several decisions wait,
+put first the one that blocks the most work.
+
+**Each decision comes in one shape**, and is not asked until it has it:
+
+- a brief context: what is at stake, why work stops here, and its link;
+- the recommendation first, with its reason;
+- the other alternatives, each with what it costs.
+
+Letter the alternatives, so that one letter answers.
+
+**This holds wherever work stops for the human.** The repository
+question is the exception: it lists the candidates without recommending
+one, since the repository is never inferred (*Where you work*). It is
+still asked on its own.
+
+**A writer or reviewer puts a decision in its report**, in this shape,
+and the orchestrator asks it.
+
+**At night nothing is asked** (*Night mode*). Each deferred item is
+written in this shape, and asked once night mode is off.
 
 **A hold is recorded on the issue or pull request**, in the same turn it
 is told to the human: a comment saying why it waits, and its label where
@@ -361,6 +382,9 @@ does it before briefing anybody.
   sort -k3 -rn | head`. Kill only what this session started. Report to
   the human anything else that looks orphaned: no process listing
   proves its session gone.
+- **Look at the free disk** before cloning, building or adding a
+  worktree: `df -g <scratchpad>`. Under 30 GB available, stop and tell
+  the human.
 
 ## Writing work
 
@@ -375,7 +399,8 @@ The writer's section; the reviewer judges its result.
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
 - [ ] every gate the tree names ran on this tip, committed, with exit
-      code `0`, under the gate lock, with the load recorded at the run
+      code `0`, under the gate lock, with the load and the memory
+      pressure recorded at the run
 - [ ] `git status --porcelain` is empty in the worktree, checked after
       the last gate
 - [ ] the subject that lands carries the right citation, and the body
@@ -469,6 +494,18 @@ the orchestrator in the pull request.
   out load first; measure the rate on a quiet machine, then open an
   issue. A branch that fails differently on every run cannot land,
   whatever the last run says.
+- **Wait for normal memory pressure before `gate_take`**, in the same
+  background call:
+
+  ```shell
+  while [ "$(sysctl -n kern.memorystatus_vm_pressure_level)" -gt 1 ]; do
+    sleep 30
+  done
+  ```
+
+  macOS answers `1` for normal, `2` for warn and `4` for critical. The
+  level is read again at each gate run and reported beside the load.
+  Where the read fails, as off macOS, the loop does not wait.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
   worktree, the same name on every run of that branch. A teardown
   `OSError` or `FileNotFoundError` on `popen-gw*` is a neighbour's run on
@@ -609,10 +646,11 @@ branch, or a text to be posted.
   (`SendMessage` to its id), which reads the delta from what it last
   read. No new reviewer starts before the one in charge has answered
   `CLEARED`. Where a finding is declined and its reviewer still holds
-  it, both positions go to the human (`REVIEWING.md`'s *Re-review*),
-  and the rounds wait for the answer. Where the human upholds the
-  finding, the fix goes back to that reviewer. Where they decline it,
-  their answer stands in for that reviewer's `CLEARED`.
+  it, both positions go to the human as one decision (*When the human
+  has to decide*, `REVIEWING.md`'s *Re-review*), and the rounds wait for
+  the answer. Where the human upholds the finding, the fix goes back to
+  that reviewer. Where they decline it, their answer stands in for that
+  reviewer's `CLEARED`.
 - **Then a fresh reviewer reads the whole of it.** It is a new worker,
   started once the reviewer before it has cleared. Where its first
   verdict is `CHANGES REQUESTED`, it stays until it clears, as above,
@@ -624,8 +662,10 @@ branch, or a text to be posted.
   scratch directory. The rounds do not converge where a closed finding
   comes back, from any reviewer, or where a fix leaves the reviewer that
   asked for it with as many findings as before, or more. Then the
-  orchestrator puts the writer's and the reviewer's positions to the
-  human, and the rounds wait for the answer.
+  orchestrator puts it to the human as one decision (*When the human has
+  to decide*): another round, the branch as it stands, or a cut-back,
+  with the writer's and the reviewer's positions. The rounds wait for
+  the answer.
 - A non-blocking finding waits for the next change (*Which prose is
   worth a round*).
 
@@ -813,7 +853,8 @@ Rebase, run the gates, and push.
 - **Workers writing in one repository at once contend for regions of a
   file.** Tell each which regions the others hold, and to stop and
   report rather than cross. The number of workers is set by the disjoint
-  regions and your own capacity to review and land, not by the machine.
+  regions and your own capacity to review and land, within the machine's
+  limits (*Parallelize as much as you can*).
 - **A quiet worker is asked for status, not stopped.** Where the
   human asks for a kill, say what will be lost and leave the
   worktree standing.
@@ -836,7 +877,8 @@ Rebase, run the gates, and push.
   for.
 - **Writing runs in parallel; gating does not.** Every worker that gates
   — a reviewer running gates itself included, whose brief then names
-  *The gates* — uses the gate lock, and reports the load at the run.
+  *The gates* — uses the gate lock, and reports the load and the memory
+  pressure at the run.
 - **A writer that has reported is sent nothing further until its
   reviewer has answered.**
 - **Check the primary checkout between rounds**:
@@ -849,19 +891,18 @@ Rebase, run the gates, and push.
 
 The orchestrator's, in either command. The human turns it on and off, as
 many times as they like within a session: on with `--night` in the
-arguments or in words at any point, off in words at any point. It
-otherwise lasts until the session ends.
+arguments or in words at any point, off in words at any point. **Night
+mode has no ceiling and no duration**: it lasts until the human turns it
+off.
 
-**At activation, and only then, ask what shapes the night** — only what
-the session has not already settled: the repository where the command
-needs one, and a ceiling on time if they want one. Where they leave
-before answering, the repository question stops the night before it
-starts.
+**At activation, ask only for the repository**, where the command needs
+one and the session has not settled it. Where they leave before
+answering, the night does not start.
 
-**Turning it off** ends the night at once: the work in flight goes on
-under the ordinary rules, the morning report is given as the next
-message, and its deferred items become questions again, answered with
-the same one line.
+**Turning it off** ends the night at once. The work in flight goes on
+under the ordinary rules. The morning report is the next message, unless
+it was given while the work waited. Its deferred items are then asked
+one at a time (*When the human has to decide*).
 
 **During the night no question is asked interactively.** Every point
 where a command stops for the human — a decision, a refused permission,
@@ -873,27 +914,28 @@ depends on it stops there. A branch taking a reserved decision is opened,
 not landed, and its cut-back is one of the item's alternatives.
 
 - **Record each item as a hold is recorded** (*When the human has to
-  decide*): a comment carrying the question on the issue or pull
-  request it concerns, and the `decision` label where the repository has
-  one. None is created at night. An item that belongs to no issue or
-  pull request (a permission refused outside any issue's work, a dirty
-  primary checkout not provably the session's), and any
-  question about an outside contributor's pull request, which they
-  read, go in the report only.
+  decide*): a comment carrying the item, in the shape *When the human
+  has to decide* gives, on the issue or pull request it concerns, and
+  the `decision` label where the repository has one. None is created at
+  night. An item that belongs to no issue or pull request (a permission
+  refused outside any issue's work, a dirty primary checkout not
+  provably the session's), and any question about an outside
+  contributor's pull request, which they read, go in the report only.
 - **Never resolve a deferred item by default**, nor by taking your own
   recommendation. The recommendation goes in the report. The one
   exception is which pull requests `/btclib-pr`'s *The sweep* works.
 - **Everything that does not depend on it goes on**: other issues, other
   pull requests, review rounds, collateral, and the approvals and
   landings `/btclib-pr` calls obvious.
-- **The night ends** when nothing left can advance without an answer,
-  at the ceiling, or when the human turns it off. Ended any way but
-  the last, nothing is left running: no worker mid-turn, no
-  background job. A lock left by a worker you stopped is stale, and
-  the next `gate_take` removes it. Nobody removes one by hand. Worktrees of
-  branches waiting on an answer stay standing.
+- **When nothing left can advance without an answer, the work stops
+  and waits**, still in night mode. Nothing is left running: no worker
+  mid-turn, no background job. A lock left by a worker you stopped is
+  stale, and the next `gate_take` removes it. Nobody removes one by
+  hand. Worktrees of branches waiting on an answer stay standing. The
+  morning report may be given then. No question is asked until the
+  human turns night mode off.
 
-**The morning report** is the message that ends the night; a copy in
+**The morning report** is a message to the human. A copy in
 `<scratchpad>/night-report-<date>.md` is a convenience, since the
 scratchpad may not outlive the session. The record is that message and
 the comments on the issues. It holds:
@@ -901,18 +943,35 @@ the comments on the issues. It holds:
 - what was opened, approved and landed, with links, and each landing's
   verification;
 - what is open and ready, and what it waits on;
-- the deferred items, numbered as *When the human has to decide*
-  says, each with the link where it is also recorded;
+- the deferred items, each in the shape *When the human has to decide*
+  gives, with the link where it is also recorded. The report asks none
+  of them;
 - the collateral filed, by number, each with its pull request, in review,
   or excepted with its reason;
-- *Wrap-up*'s two items, where the night ends the session.
+- *Wrap-up*'s report, where the session ends with the night.
 
 ## Wrap-up
 
 Before the wrap-up, every collateral issue the session opened has its
-pull request or is named with its exception (*Collateral*). At the end
-of a session, report two things to the human, and edit neither file on
-your own:
+pull request or is named with its exception (*Collateral*).
+
+**Remove what the session created**: its clean worktrees, build
+directories, and caches in its scratch directories. A worktree with
+uncommitted or unpushed work stays (*Before removing or discarding
+anything that could be work*), and so does anything another session
+made. Name both in the report. A read-only tree, as Go's module cache
+is, is made writable first:
+
+```shell
+chmod -R u+w <dir>
+```
+
+```shell
+rm -rf <dir>
+```
+
+At the end of a session, report two things to the human, and edit
+neither file on your own:
 
 - **What the session learned about the repository that `CLAUDE.md` does
   not say**, in the shape of its *Non-obvious facts*: what it is, roughly
@@ -923,4 +982,6 @@ your own:
   roughly where — this file or a command.
 
 Both are proposals. Closing them is the human's call, and for the
-process files the maintainer's, since they are shared.
+process files the maintainer's, since they are shared. Each one that
+needs their answer is put to them as its own decision (*When the human
+has to decide*).

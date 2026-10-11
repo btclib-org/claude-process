@@ -86,7 +86,7 @@ gh issue edit <n> --repo <owner>/<repo> --remove-label blocked
 The orchestrator's. **Before opening, and the last item once it is
 open:**
 
-- [ ] the last fresh reviewer's `CLEARED` (the shared *Local review*)
+- [ ] the latest fresh reviewer's `CLEARED` (the shared *Local review*)
       names the branch's content, or *A rebase and the clearance*
       carries it to the rebased branch
 - [ ] rebased onto `origin/main`; where it moved, gates re-run (the
@@ -130,9 +130,9 @@ the repository has no merge queue, the landing queue holds here too.
 - **The collateral has numbers, and goes back now** to that pull
   request's writer/reviewer pair (the shared *Collateral*), before
   anything new starts.
-- **Remove the worktrees once the landing is armed**, or once the pull
-  request waits on its turn in the landing queue — yours, and tell the writer to
-  remove its own.
+- **Remove the worktrees once the pull request has landed, or once the
+  session hands it over to whom it waits on** — yours, and tell the
+  writer to remove its own.
 - **Report to the human** each pull request as a `PR` link, what it
   closes, and whom it waits on. What arrives after the session ends — a
   review, its turn in the landing queue — is `/btclib-pr`'s.
