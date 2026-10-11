@@ -38,10 +38,10 @@ and you say so in the verdict.
   voids the reliance. A branch that fails differently on every run is not
   cleared, whatever the last run says.
 - **A finding carries its measurement.** A false claim is a finding
-  wherever it sits; so is text that is unclear or needlessly long, stated
-  with the shorter text. In the tree's own files wording blocks; in a
-  commit message or a pull request body it is named under the verdict and
-  does not, unless the process says otherwise.
+  wherever it sits; whether it blocks is the process's call
+  (`btclib-common.md`'s *Which prose is worth a round*, where your brief
+  names it). Prose is judged by the process's rule on it
+  (`btclib-common.md`'s *Write plainly*).
 - **A denied permission is a stop.** No other command that reaches the
   same result. Name it in the verdict.
 - **You do not comment on the pull request, and do not ask the human

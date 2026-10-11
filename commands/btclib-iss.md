@@ -1,23 +1,18 @@
 ---
-description: btclib-iss — from an issue to a pull request that waits only on its approval, or lands under --land, measuring rather than asserting, with a local review before GitHub
+description: btclib-iss — from an issue to an open pull request, locally reviewed before GitHub and followed as its author, measuring rather than asserting
 argument-hint: [--night] [--land] <issue numbers or URLs>
 ---
 
 # From an issue to a pull request
 
 Take on the issues named in $ARGUMENTS, in a repository of `btclib-org`,
-and take each to an open pull request: written, gated, cleared by a
-local review, and, unless `--land` covers it, with its reviewers
-requested. Then follow each as its author, by `/btclib-pr`'s rules,
-until only another owner's approval is missing: CI green, every review
-and thread answered, the bot's ACK on the head, and the landing armed:
-where the repository has no merge queue, once it heads the landing
-queue; elsewhere, as it is ready. The approval is theirs. Under
-`--land`, the session lands it instead (*Following it*).
+and take each to an open pull request, written, gated and cleared by a
+local review (*Opening the pull request*). Then follow each as its
+author (*Following it*).
 
-**First read `~/.claude/process/btclib-common.md`, whole.** It binds
-this command, names the roles, and holds every rule the two commands
-share. This file holds only what is this command's own.
+**First read `~/.claude/process/btclib-common.md`, whole.** Its opening
+says what it holds and what this file holds. What the session writes,
+and this file, follow its *Write plainly*.
 
 GitHub numbers issues and pull requests together, so `gh pr view <n>`
 says which a number is. A pull request among the arguments is
@@ -100,26 +95,16 @@ open:**
 - [ ] a reserved decision, if any, is the body's first paragraph
 - [ ] `closingIssuesReferences` counts what you meant to close
 
-- **Open only after the local review has cleared it.**
-- **A change to `claude-review.yml` is its own pull request.** The
-  action refuses to run where its workflow differs from the default
-  branch's.
-- **Rebase onto `origin/main`** and run the gates again.
-- **Title and body.** The title carries the citation; the body carries
-  the keyword, one per line, and states the reserved decision first
-  where there is one. It also says which gates ran on the head, with
-  their exit codes, and which rebase case the clearance is in.
+- **A change to `claude-review.yml` is its own pull request**: the bot
+  does not review it (`/btclib-pr`'s *The human's own pull request*).
+- **The body also says which gates ran on the head**, with their exit
+  codes, and which rebase case the clearance is in.
 - **Count what GitHub will close**:
   `gh pr view <n> --json closingIssuesReferences --jq
   '.closingIssuesReferences | length'`. The field lags creation by
   seconds to minutes; ask again.
-- **Unless `--land` covers it (*Following it*), request the review** of
-  every owner but the author, as `btclib-org/.github`'s `GOVERNANCE.md`
-  names them: the pull request lands only on their approval.
-
-  ```shell
-  gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>,<login>
-  ```
+- **Unless `--land` covers it (`/btclib-pr`'s *Landing*), request the
+  reviews** that `/btclib-pr`'s *The human's own pull request* names.
 
 ## Following it
 
@@ -128,12 +113,10 @@ Once a pull request is open, the session follows it as its author.
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
 *The human's own pull request* and *Landing*'s first three bullets. Where
 the repository has no merge queue, the landing queue holds here too.
-Where the human gave this command `--land`, it passes through to the
-pull requests opened for the named issues, and all of *Landing* applies.
+Under `--land`, all of *Landing* applies.
 
-- **The collateral has numbers, and goes back now** to that pull
-  request's writer/reviewer pair (the shared *Collateral*), before
-  anything new starts.
+- **The collateral has numbers, and goes back now** (the shared
+  *Collateral*), before anything new starts.
 - **Remove the worktrees once the pull request has landed, or once the
   session hands it over to whom it waits on** — yours, and tell the
   writer to remove its own.

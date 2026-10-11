@@ -3,17 +3,19 @@
 Two commands carry work in every repository of `btclib-org`:
 
 - `/btclib-iss` takes issues to open pull requests, locally reviewed,
-  and follows them as their author until only the approval is missing,
-  or, under `--land`, until they land;
+  and follows them as their author;
 - `/btclib-pr` takes open pull requests through their reviews and CI to
-  the decision to approve, and lands what is approved, and the human's
-  own under `--land`.
+  the decision to approve, and to `main`.
 
-This file binds both. Each command opens by having it read whole, and
-holds only what is its own. The `writer` and `reviewer` agents are
-generic: the brief names this file and the command, and they read the
-sections the maps give them. Change a rule here or in the command where
-it fires, not in an agent.
+`/btclib-pr`'s *The decision* and *Landing* say when a pull request is
+approved and when it lands.
+
+This file binds both and holds the rules they share, except those
+`/btclib-iss`'s *Following it* reads in `/btclib-pr`. Each command opens
+by having it read whole, and holds only what is its own. The
+`writer` and `reviewer` agents are generic: the brief names this file
+and the command, and they read the sections the maps give them. Change
+a rule here or in the command where it fires, not in an agent.
 
 **Which sections are yours.** A heading that is not yours is genuinely
 not yours; one that is cannot be skipped as somebody else's.
@@ -23,8 +25,9 @@ not yours; one that is cannot be skipped as somebody else's.
 - **The writer**: *Before starting*, *Writing work*, and the sections of
   the command its brief names.
 - **The reviewer**: *Local review*, and in *Writing work* the checklist,
-  *What the prose that lands may say*, *Citations and closing keywords*
-  and *Signed and signed off*, which it judges.
+  *A rule stated more than once*, *What the prose that lands may say*,
+  *Citations and closing keywords* and *Signed and signed off*, which it
+  judges.
 - **The orchestrator**: all of this file and all of its command.
 
 **Three roles this file names.** *The human* is whoever runs the
@@ -75,11 +78,15 @@ These bind the writer, the reviewer and the orchestrator alike.
   ```
 
   Where it is not on its default branch or not clean, stop and say so.
-- **Write plainly.** Everything written — code comments, docs, commit
-  messages, pull request and issue bodies, comments, reports — is clear,
-  simple and no longer than it needs to be: the point first, plain
-  words, one fact per sentence. A text the reader has to read twice has
-  failed, however correct.
+- **Write plainly.** Everything written — code comments, docs, these
+  process files, commit messages, pull request and issue bodies,
+  comments, reports — is clear, simple and no longer than it needs to
+  be: the point first, plain words, one fact per sentence. A clause whose
+  removal loses nothing a reader needs is cut. **Say a thing once;
+  elsewhere, point to it** (the standard's section 9, *One fact in one
+  place*): a summary names the section that holds a rule and does not
+  restate it. A text the reader has to read twice has failed, however
+  correct.
 - **Parallelize as much as you can.** Reads, remote work, writers and
   reviewers run side by side, within the machine's CPU load, memory
   pressure and free disk (*The gates*, *Before starting*).
@@ -125,13 +132,12 @@ These bind the writer, the reviewer and the orchestrator alike.
   difference of one byte, a staged or committed change — is reported and
   left for the human.
 - **Every command that writes carries an explicit absolute path.** Shell
-  state does not survive between calls and the working directory resets
-  to the primary checkout, so `WT=…` in one call is empty in the next and
-  `cd "$WT"` lands in the primary checkout. A fresh worktree and the
-  checkout are byte-identical, so reads look right and only the write
-  shows it. Use `git -C <abs>`, `env -C <abs>`, absolute paths in every
-  edit, an explicit target for `git clone`; never a relative `>` or a
-  `sed -i` on a bare filename.
+  state does not survive between calls either (*Never open a command
+  with `cd`*), so `WT=…` in one call is empty in the next. A fresh
+  worktree and the checkout are byte-identical, so reads look right and
+  only the write shows it. Use `git -C <abs>`, `env -C <abs>`, absolute
+  paths in every edit, an explicit target for `git clone`; never a
+  relative `>` or a `sed -i` on a bare filename.
 - **A command can write without your meaning it to, and `.gitignore`
   hides it.** `compileall`, a linter cache, a build inspected in place
   all leave files `git status` does not show. Ask even read-only
@@ -325,37 +331,31 @@ the human's: which pull requests to work, an approval, the session's own
 review rounds (*The rounds*), a finding its reviewer still holds
 included.
 
-**At night nothing is asked** (*Night mode*). Each deferred item is
-written in this shape, and asked once night mode is off.
+**At night**, *Night mode* says what becomes of a decision.
 
 **A hold is recorded on the issue or pull request**, in the same turn it
 is told to the human: a comment saying why it waits, and its label where
-the repository has it. A question put to the maintainer takes
-`decision`; a wait on an event or a person the comment names takes
+the repository has it. A question put to the human or the maintainer
+takes `decision`; a wait on an event or a person the comment names takes
 `blocked`; a pause the human decided takes `on-hold`. A hold kept only
 in the session's context does not exist, and another session will take
 the work.
 
 ### Which prose is worth a round
 
-**Every text is plain and short** (*Shell, checkouts and prose*),
-whatever its weight below: the weight decides whether
-a finding sends a cleared branch back, not whether it is made.
+**A reviewer blocks on a false sentence in the tree's own files, as on a
+code defect, not on one that could be worded better.** The tree's own
+files are every tracked file, docstrings and comments included. A
+wording finding — text that breaks *Write plainly* — is still made, with
+the shorter text, and is fixed with the next change to the branch. It
+does not send a branch back.
 
-**Prose in the tree's own files carries weight**: docstrings, source
-comments, `CHANGELOG.md`, `CONTRIBUTING.md`, `CLAUDE.md`,
-`REPOSITORY.md`, comments in `pyproject.toml` and workflow YAML. A defect
-there blocks, like a code defect.
-
-**Everything else weighs less**: pull request bodies, issues, comments,
-reports, the commit message. A finding that lives only there does not
-send a cleared branch back: answer `CLEARED <sha>` with the finding
-underneath, to be fixed with the next change to the branch. That does
-not make a false clause acceptable — it is still named and fixed — and
-the commit
-message, the one of these that cannot be rewritten after a squash, is
-corrected in an amend where the branch is amended anyway, and otherwise
-in the squash (`/btclib-pr`'s *Landing*).
+**A false sentence anywhere else does not send a cleared branch back**:
+pull request bodies, issues, comments, reports, the commit message.
+Answer `CLEARED <sha>` with the finding underneath. It is still fixed
+with the next change to the branch. The commit message is corrected in
+an amend where the branch is amended anyway, and otherwise in the squash
+(`/btclib-pr`'s *Landing*).
 
 ## Before starting
 
@@ -392,9 +392,8 @@ does it before briefing anybody.
   reused, reinstalling the build first (a flagged build may be in its
   `.venv`).
 - **Look at the machine.** `uptime`, and `ps -eo pid,etime,pcpu,command |
-  sort -k3 -rn | head`. Kill only what this session started. Report to
-  the human anything else that looks orphaned: no process listing
-  proves its session gone.
+  sort -k3 -rn | head`. Report to the human anything that looks orphaned
+  (*The machine is shared*).
 - **Look at the free disk** before cloning, building or adding a
   worktree: `df -g <scratchpad>`. Under 30 GB available, stop and tell
   the human.
@@ -406,14 +405,13 @@ The writer's section; the reviewer judges its result.
 **Before handing over, every item holds:**
 
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
-      `HEAD` (on an open pull request, a fix waits for the rounds of
-      *Local review* to end)
+      `HEAD`, except a fix on an open pull request (*Committing and
+      rebasing*)
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
 - [ ] every gate the tree names ran on this tip, committed, with exit
-      code `0`, under the gate lock, with the load and the memory
-      pressure recorded at the run
+      code `0`, under the gate lock (*The gates*)
 - [ ] `git status --porcelain` is empty in the worktree, checked after
       the last gate
 - [ ] the subject that lands carries the right citation, and the body
@@ -421,7 +419,20 @@ The writer's section; the reviewer judges its result.
 - [ ] the commit message was re-read, not carried by `--no-edit`
 - [ ] every claim in prose that lands was measured
 - [ ] collateral filed, by number
+- [ ] where the change touches a rule the tree states, the inventory of
+      *A rule stated more than once* is in the report
 - [ ] the report says what was **not** checked, and why
+
+### A rule stated more than once
+
+**Before writing, list every sentence that states the rule you change.**
+Grep the tree for the rule's key words (*`grep` reads lines, and prose
+wraps*), and write down each hit as `file:line` with what you do with
+it. Change them all in one round. A restatement becomes a pointer to the
+section that holds the rule (*Write plainly*). The list goes in your
+report. The reviewer checks it is complete: its own grep finds no
+sentence the list missed, and it reads the files where the rule is
+stated.
 
 ### What the prose that lands may say
 
@@ -439,8 +450,7 @@ The writer's section; the reviewer judges its result.
 - **Say what is true now.** No "was", "has always", "is now". The
   exception is the defect being corrected, and that "before" is measured
   against a snapshot.
-- **One sentence per fact.** A clause whose removal loses nothing
-  checkable is decoration. Do not restate the code in a comment.
+- **Do not restate the code in a comment.**
 - **A second reason gets its own paragraph.** A clause grafted into a
   standing paragraph inherits its subject, and every later sentence
   becomes false of it.
@@ -507,6 +517,8 @@ the orchestrator in the pull request.
   out load first; measure the rate on a quiet machine, then open an
   issue. A branch that fails differently on every run cannot land,
   whatever the last run says.
+- **Every worker that gates reports the load and the memory pressure at
+  each run**, a reviewer running the gates itself included.
 - **Wait for normal memory pressure before `gate_take`**, in the same
   background call:
 
@@ -517,7 +529,7 @@ the orchestrator in the pull request.
   ```
 
   macOS answers `1` for normal, `2` for warn and `4` for critical. The
-  level is read again at each gate run and reported beside the load.
+  level is read again at each gate run.
   Where the read fails, as off macOS, the loop does not wait.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
   worktree, the same name on every run of that branch. A teardown
@@ -568,7 +580,7 @@ the orchestrator in the pull request.
   gone. The one first in line waits for a 1-minute load under
   `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
   decimal comma, and then takes the lock. `gate_take` waits for the load and
-  for the holder with no bound, and the report gives the load. A timeout on
+  for the holder with no bound. A timeout on
   the background call covers the gates, not `gate_take`. A holder that never
   finishes keeps everyone waiting; `<scratchpad>/gate.lock/owner` names it.
   A load generator is killed by the PID you recorded, and `ps` shows it gone
@@ -594,14 +606,13 @@ the orchestrator in the pull request.
     origin HEAD:refs/heads/<branch>
   ```
 
-  Never a bare `--force`, never another branch. Amending or rebasing a
-  pushed commit, and this push after it, are granted (*The force-push
-  grant*), and your brief says so. Where the classifier refuses
-  the push under the grant, push the rewritten, gated commit without
-  force to `<branch>-r2` and report both names; the orchestrator opens
-  the pull request from it and closes the old one. This is the one route
-  around a refusal the process sanctions. The old branch is deleted once
-  its replacement has landed on `main`.
+  Never a bare `--force`, never another branch. *The force-push grant*
+  covers it. Where the classifier refuses the push under the grant, push
+  the rewritten, gated commit without force to `<branch>-r2` and report
+  both names; the orchestrator opens the pull request from it and closes
+  the old one. This is the one route around a refusal the process
+  sanctions. The old branch is deleted once its replacement has landed
+  on `main`.
 - **A claim holds a pull request's branch.** Before every push to an
   open pull request's branch, read the claim that stands on it, made by
   a login other than its author's:
@@ -699,8 +710,8 @@ branch, or a text to be posted.
   to decide*): another round, the branch as it stands, or a cut-back,
   with the writer's and the reviewer's positions. The rounds wait for
   the answer.
-- A non-blocking finding waits for the next change (*Which prose is
-  worth a round*).
+- A non-blocking finding waits for the next change; *Which prose is
+  worth a round* says which prose blocks.
 
 ### A pull request's rounds
 
@@ -725,8 +736,8 @@ run and another bot run.
   pull request's head. Where no pull request is open, the commit
   message stands for the title and description. Whatever the bot's
   prompt says about gates, the fresh reviewer follows *The gates are the
-  writer's* instead. It posts nothing; its verdict is `CLEARED <sha>` or
-  `CHANGES REQUESTED`, not an ACK.
+  writer's* instead. It posts nothing; its verdict is as *The verdict*
+  says.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 
@@ -739,7 +750,8 @@ run and another bot run.
 - [ ] which gate case you were in, and whose runs you rely on
 - [ ] every finding carries its measurement, and its weight (*Which
       prose is worth a round*)
-- [ ] unclear or needlessly long text named, with the shorter version
+- [ ] where the change touches a rule the tree states, the writer's
+      inventory is complete (*A rule stated more than once*)
 - [ ] what the verdict does not cover
 - [ ] `git status --porcelain` empty in the tree reviewed and in the
       primary checkout
@@ -750,13 +762,14 @@ run and another bot run.
   *The gates are the evidence*. Where no run on this sha is on the
   record, you run them yourself, as *The gates* says, lock included, and
   say so. A rebase or amend since the run voids it. A branch that fails
-  differently on every run is not cleared, whatever the last run says.
+  differently on every run is not cleared (*A failure that does not
+  reproduce is measured*).
 - **A branch with a commit its author did not sign off is not
   cleared**, measured as *Signed and signed off* says.
 - **Look for the finding in the fix itself**, not only in what it
   replaced. A compound condition can be covered operand by operand and
   never in the combination that matters.
-- **Before blocking on prose, look for the landed precedent** (`git
+- **Before a wording finding, look for the landed precedent** (`git
   log`): the organization may use the same wording on purpose.
 - **Your verdict is `CLEARED <sha>`, not an ACK.** The ack of record is
   `claude-review.yml`'s. This is a gate the session imposes on itself.
@@ -848,13 +861,11 @@ Rebase, run the gates, and push.
 
 - **Dispatching a writer**: this file's path
   (`~/.claude/process/btclib-common.md`), the command's, and the
-  sections of both that are its role's — the agents are generic and know
-  no process of their own — the issue or pull request, the repository,
-  the worktree and scratch paths, the force-push grant, and
+  sections of both that are its role's, the issue or pull request, the
+  repository, the worktree and scratch paths, the force-push grant, and
   the claims you measured. The same for a reviewer.
 - **Before dispatching, ask whether the issue is collateral of a pull
-  request this session worked.** Then it goes to that pull request's
-  pair.
+  request this session worked** (*Collateral*).
 - **The role map binds the brief.** A writer does not open pull requests;
   do not ask it to. The one exception, stated as such in the brief, is a
   one-line fix to a red `main`.
@@ -896,11 +907,10 @@ Rebase, run the gates, and push.
   for the disagreement.
 - **Reuse.** A writer takes a new, unrelated pull request only after
   `/compact`; its own deferred half and its own collateral it takes
-  uncompacted. The writer is the same worker for all of a pull request's
-  rounds. The dedicated reviewer is the same worker for its
-  rounds, and comes back only for that pull request's collateral. Each
-  fresh reviewer of *Local review* is a new worker. Resuming a worker is
-  `SendMessage` to its id; `Agent` always starts a new one.
+  uncompacted. *The rounds* says which worker stays for which rounds;
+  the dedicated reviewer comes back only for its pull request's
+  collateral. Resuming a worker is `SendMessage` to its id; `Agent`
+  always starts a new one.
 - **Models**: the writer runs on Sonnet, which its agent definition
   sets. Where the work is likely to take decisions — a design, or a
   decision its issue reserved — the orchestrator starts the writer on
@@ -908,14 +918,11 @@ Rebase, run the gates, and push.
   The orchestrator may run on Opus.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
-- **Writing runs in parallel; gating does not.** Every worker that gates
-  — a reviewer running gates itself included, whose brief then names
-  *The gates* — uses the gate lock, and reports the load and the memory
-  pressure at the run.
+- **Writing runs in parallel; gating does not** (*The machine is
+  shared*). A reviewer that runs the gates itself is briefed with *The
+  gates*.
 - **A writer that has reported is sent nothing further until its
   reviewer has answered.**
-- **Check the primary checkout between rounds**:
-  `git -C <checkout> status --porcelain`.
 - **A session that runs long re-reads what can arrive meanwhile**
   between rounds: new pull requests, new reviews and comments on the
   ones it works.
@@ -948,14 +955,12 @@ the human has to decide*) is a hold, not an item. A branch taking a
 reserved decision is opened, not landed, and its cut-back is one of the
 decision's alternatives.
 
-- **Record each item as a hold is recorded** (*When the human has to
-  decide*): a comment carrying the item, in the shape *When the human
-  has to decide* gives, on the issue or pull request it concerns, and
-  the `decision` label where the repository has one. None is created at
-  night. An item that belongs to no issue or pull request (a permission
-  refused outside any issue's work, a dirty primary checkout not
-  provably the session's), and any question about an outside
-  contributor's pull request, which they read, go in the report only.
+- **Record each item as a hold**, its comment in the shape *When the
+  human has to decide* gives; a missing label is not created at night.
+  An item that belongs to no issue or pull request (a permission refused
+  outside any issue's work, a dirty primary checkout not provably the
+  session's), and any question about an outside contributor's pull
+  request, which they read, go in the report only.
 - **Never resolve a deferred item by default**, nor by taking your own
   recommendation. The recommendation goes in the report. The one
   exception is which pull requests `/btclib-pr`'s *The sweep* works.
@@ -966,10 +971,8 @@ decision's alternatives.
 - **When nothing left can advance without an answer, the work stops
   and waits**, still in night mode. Nothing is left running: no worker
   mid-turn, no background job. A lock left by a worker you stopped is
-  stale, and the next `gate_take` removes it. Nobody removes one by
-  hand. Worktrees of branches waiting on an answer stay standing. The
-  morning report may be given then. No question is asked until the
-  human turns night mode off.
+  stale (*The gate lock*). Worktrees of branches waiting on an answer
+  stay standing. The morning report may be given then.
 
 **The morning report** is a message to the human. A copy in
 `<scratchpad>/night-report-<date>.md` is a convenience, since the
@@ -980,16 +983,14 @@ the comments on the issues. It holds:
   verification;
 - what is open and ready, and what it waits on;
 - the deferred items, each in the shape *When the human has to decide*
-  gives, with the link where it is also recorded. The report asks none
-  of them;
+  gives, with the link where it is also recorded;
 - the collateral filed, by number, each with its pull request, in review,
   or excepted with its reason;
 - *Wrap-up*'s report, where the session ends with the night.
 
 ## Wrap-up
 
-Before the wrap-up, every collateral issue the session opened has its
-pull request or is named with its exception (*Collateral*).
+Before the wrap-up, *Collateral*'s last bullet holds.
 
 **Release every pull request the session claimed** (*A claim holds a
 pull request's branch*).

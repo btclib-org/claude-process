@@ -6,20 +6,15 @@ argument-hint: [--night] [--land] [pull request URLs or numbers]
 # From a pull request to main
 
 Take the open pull requests named in $ARGUMENTS, in repositories of
-`btclib-org`, to the point where only the decision to approve is left.
-Every review, thread, suggestion and comment is answered, and CI is
-green. The branch is rebased when it heads its repository's landing
-queue, or when it conflicts. Where the approval is obvious, approve and
-land; where the human gave `--land` for their own, land it. Otherwise,
-put the decision to the human. With no argument, start from *The
-sweep*.
+`btclib-org`, to the decision to approve and to `main`, through *What
+was raised*, *Answering it*, *Rebase and CI*, *The decision* and
+*Landing*. With no argument, start from *The sweep*.
 
-**First read `~/.claude/process/btclib-common.md`, whole.** It binds
-this command, names the roles, and holds every rule the two commands
-share. This file holds only what is this command's own.
+**First read `~/.claude/process/btclib-common.md`, whole.** Its opening
+says what it holds and what this file holds. What the session writes,
+and this file, follow its *Write plainly*.
 
-A pull request URL or `<owner>/<repo>#<n>` names the repository; a bare
-number does not, and the shared *Where you work* asks.
+The shared *Where you work* says how the repository is named.
 
 **Which sections are yours**, beyond the shared file's map:
 
@@ -57,10 +52,9 @@ Show the human one table, grouped:
 Each row is a `PR` link and what it waits on. A draft is listed and not
 worked. Then put one decision (the shared *When the human has to
 decide*): which to work, and in what order, the recommended order first
-with its reason. Within one repository with no merge
-queue the order is `CONTRIBUTING.md`'s *The landing queue*: one pull
-request carried to the default branch at a time, the cheapest and least
-contended first. At night, work the recommendation.
+with its reason. Within one repository with no merge queue the order is
+`CONTRIBUTING.md`'s *The landing queue*. At night, work the
+recommendation.
 
 ## Whose pull request it is
 
@@ -76,9 +70,8 @@ isCrossRepository,maintainerCanModify,headRefName,headRefOid,baseRefName
 Then the shared *Before starting*, on the pull request. Which case it
 is:
 
-- **The human's.** The session works it as its author. GitHub refuses an
-  author's own approval, so the session ends it at *The human's own pull
-  request*.
+- **The human's.** The session works it as its author, and ends it at
+  *The human's own pull request*.
 - **Another person's, on a branch of the repository.** The session
   works it as its reviewer, and changes it as *Another person's branch*
   says.
@@ -279,21 +272,21 @@ on. Where the branch moved, they are working: stop and ask.
 
 ## The decision
 
-**The session approves as the human.** It acts through their `gh` login
-(`gh api user --jq .login`), so its approval is theirs. Their standing
-instruction covers an obvious approval, as defined below, and nothing
-else. Every other approval is theirs to give.
+**The session's approval is the human's** (the shared file's *Three
+roles this file names*). Their standing instruction covers an obvious
+approval, as defined below, and nothing else. Every other approval is
+theirs to give.
 
 **GitHub refuses an approval from a pull request's author.** On the
 human's own pull request the session never approves: *The human's own
 pull request* says what it does instead.
 
 **Where the repository has no merge queue (*Rebase and CI*), decide only
-the head of its landing queue.** A push dismisses an approval, and every
-other pull request will be rebased before it lands. The others wait,
-answered and green, for their turn (`CONTRIBUTING.md`'s *The landing
-queue*). Where the repository has a merge queue, each pull request is
-decided once it is ready.
+the head of its landing queue** (`CONTRIBUTING.md`'s *The landing
+queue*). Every other pull request will be rebased before it lands, and
+*Landing*'s first bullet says what a push does to an approval. Where the
+repository has a merge queue, each pull request is decided once it is
+ready.
 
 **The approval is obvious where every item holds**, each measured on the
 head `<sha>`. The diff is read once, by two commands that must each
@@ -433,17 +426,16 @@ shared *When the human has to decide*). Its context is the `PR` link,
 the head sha, and each failed item with its measurement. The
 alternatives are: approve as it is; ask the author for changes, naming
 them; wait, naming on what or whom; close, where that is an option.
-Record it as a hold on the pull request, with the `decision` label. On
+Record it as a hold (the shared *When the human has to decide*). On
 "approve", approve as above, with a body saying it follows the human's
-decision. At night it is a deferred item (the shared *Night mode*), and
-the obvious approvals go on.
+decision. At night it is a deferred item (the shared *Night mode*).
 
 ### The human's own pull request
 
-The session cannot approve it. Where `--land` covers it (*Landing*), the
-session lands it once every item above holds but the first and the last
-four, as *Landing* qualifies them. Without `--land`, another owner
-decides; once the same items hold:
+Where `--land` covers it (*Landing*), the session lands it once every
+item above holds but the first and the last four, as *Landing*
+qualifies them. Without `--land`, another owner decides; once the same
+items hold:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
@@ -457,7 +449,7 @@ decides; once the same items hold:
 - arm the landing, so that their approval lands it (*Landing*);
 - report whom it waits on.
 
-A push dismisses their approval: request it again on the new head.
+After a push, request the review again on the new head (*Landing*).
 
 A pull request that changes `claude-review.yml` gets no review from the
 bot. The action refuses to run where its workflow differs from the
@@ -592,9 +584,8 @@ human.
   `~/.claude/` are symlinks into it, so until then every session reads
   the old process. Then read a landed line back through the symlink of
   the file it changed.
-- **The collateral goes back now** to that pull request's
-  writer/reviewer pair (the shared *Collateral*), before anything new
-  starts.
+- **The collateral goes back now** (the shared *Collateral*), before
+  anything new starts.
 - **Remove the worktrees** — yours, and tell the writer to remove its
   own.
 

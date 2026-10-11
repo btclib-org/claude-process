@@ -20,12 +20,11 @@ and the rows of the root-files table marked for that tier.
 ## Architecture
 
 `process/btclib-common.md`, `commands/btclib-iss.md` and
-`commands/btclib-pr.md` are the process and the single source of it: the
-first is what both commands share, and each command holds only its own.
-`agents/writer.md` and `agents/reviewer.md` are generic: the brief a
-session gives them names the sections they read, so a rule is changed
-in the process and not in an agent. `.claude/commands/review.md`
-is a different file with a similar name: it is the `/review` command of
+`commands/btclib-pr.md` are the process; `agents/writer.md` and
+`agents/reviewer.md` are the agents a session briefs with it. The
+opening of `process/btclib-common.md` says how they divide the rules,
+and where a rule is changed. `.claude/commands/review.md` is a
+different file with a similar name: it is the `/review` command of
 *this* repository's own pull requests, not part of the process shipped.
 
 ## The primary checkout is the maintainer's
