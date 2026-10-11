@@ -319,12 +319,11 @@ and the orchestrator asks it.
 **Where the human is not the maintainer, a decision on what a change
 does goes to the maintainer**: its design, its scope, a decision its
 issue reserved, a disagreement on its pull request that survives a
-second exchange. `GOVERNANCE.md` gives the maintainer the decisions the
-written rules leave open. Such a decision is not put to the human: it is
-recorded as a hold whose comment @-mentions the maintainer. Every other
-decision stays the human's: which pull requests to work, an approval,
-the session's own review rounds (*The rounds*), a finding its reviewer
-still holds included.
+second exchange. Such a decision is not put to the human: it is
+recorded as a hold whose comment @-mentions the maintainer. These stay
+the human's: which pull requests to work, an approval, the session's own
+review rounds (*The rounds*), a finding its reviewer still holds
+included.
 
 **At night nothing is asked** (*Night mode*). Each deferred item is
 written in this shape, and asked once night mode is off.
@@ -614,13 +613,15 @@ the orchestrator in the pull request.
     | last // empty | select(.body | startswith("Claimed")) | .author.login'
   ```
 
-  Where it prints a login other than the human's, push nothing and
-  report it. Where it prints nothing and the branch is another person's
-  (`/btclib-pr`'s *Another person's branch*), nothing is pushed until
-  the orchestrator has claimed it (*Before starting*). The claim stands
-  until the pull request lands, or until the claiming session posts a
-  comment starting `Released`: once it hands the pull request over to
-  whom it waits on, and at the latest before it ends.
+  Where it prints a login other than the human's
+  (`gh api user --jq .login`), push nothing and report it. Where it
+  prints nothing and the branch is another person's (`/btclib-pr`'s
+  *Another person's branch*), nothing is pushed until the orchestrator
+  has claimed it (*Before starting*). The claim stands until the pull
+  request lands, or until the claiming session posts a comment starting
+  `Released`: once it hands the pull request over to whom it waits on,
+  and at the latest before it ends. A claim whose
+  session no longer runs (*Before starting*) is released by its human.
 - **One git write per Bash call, nothing chained to it.** A commit, an
   amend, a rebase or a push chained with `cp`, `rm`, a gate or another
   git write is refused as a whole. Run each in its own call.
@@ -990,8 +991,8 @@ the comments on the issues. It holds:
 Before the wrap-up, every collateral issue the session opened has its
 pull request or is named with its exception (*Collateral*).
 
-**Release every claim the session holds** (*A claim holds a pull
-request's branch*).
+**Release every pull request the session claimed** (*A claim holds a
+pull request's branch*).
 
 **Remove what the session created**: its clean worktrees, build
 directories, and caches in its scratch directories. A worktree with
