@@ -1,6 +1,7 @@
 #!/bin/sh
-# Two sessions, each with a scratchpad of its own, take the gate lock at
-# once. The lock holds if the second takes only after the first releases:
+# Two sessions, each with a scratchpad of its own, take the gate lock, the
+# second while the first holds it. The lock holds if the second takes only
+# after the first releases:
 #
 #   sh scripts/test-gate-lock.sh [<gate-lock.sh>]
 #
@@ -27,7 +28,12 @@ session() { # <name> <scratchpad> <seconds held>
 }
 
 session A "$tmp/scratchpad-A" 3 &
-sleep 1
+i=0
+until grep -q 'A taken' "$tmp/events" 2>/dev/null; do
+  i=$((i + 1))
+  [ "$i" -le 30 ] || { wait; echo "FAIL: A never took the lock"; exit 1; }
+  sleep 1
+done
 session B "$tmp/scratchpad-B" 0 &
 wait
 

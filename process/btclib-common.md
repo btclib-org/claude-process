@@ -552,13 +552,11 @@ the orchestrator in the pull request.
   `os-macos.yml` where macOS is in question. Which sweeps a tree has,
   and what its pull requests already cover, is read from
   `.github/workflows/` on `origin/main`.
-- **The gate lock.** One worker gates at a time, on the whole machine:
-  the suite, the hooks, the docs build and any load generator. The lock
-  and its queue sit in one directory, `$GATE_LOCK_DIR`, by default
-  `/tmp/claude-<uid>/gate`, shared by every session, so jobs from
-  different sessions queue in one place. Wait for the load, then take
-  the lock — so that nobody holds it while only waiting — and release it
-  the moment the gates finish. The lock is taken and released only
+- **The gate lock.** One worker gates at a time: the suite, the hooks,
+  the docs build and any load generator. The lock and its queue sit in
+  one directory shared by every session, `$GATE_LOCK_DIR`, by default
+  `/tmp/claude-<uid>/gate`. Release the lock the moment the gates
+  finish. The lock is taken and released only
   through `~/.claude/scripts/gate-lock.sh`, sourced in the same
   background shell call as the gates (*Long jobs run in the background*),
   never by a hand-written `mkdir` or `rmdir`:
@@ -584,7 +582,8 @@ the orchestrator in the pull request.
   that directory; any waiter removes a ticket whose process is gone. The
   one first in line waits for a 1-minute load under
   `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
-  decimal comma, and then takes the lock. `gate_take` waits for the load and
+  decimal comma, and then takes the lock, so that nobody holds it while
+  only waiting. `gate_take` waits for the load and
   for the holder with no bound. A timeout on
   the background call covers the gates, not `gate_take`. A holder that never
   finishes keeps everyone waiting; `gate.lock/owner` in that directory
