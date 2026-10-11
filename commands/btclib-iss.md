@@ -65,6 +65,22 @@ while IFS='|' read -r sha subj; do
 done
 ```
 
+An issue labelled `upstream-dependent` is taken only once its wait is
+over; taking it removes `upstream-dependent`, and `blocked` where the
+wait was its reason. The wait is what the issue names, in its body or a
+later comment: an upstream issue, pull request, release or draft. Read
+its state there.
+
+```shell
+gh issue edit <n> --repo <owner>/<repo> --remove-label upstream-dependent
+```
+
+Where `blocked` waited on the same thing:
+
+```shell
+gh issue edit <n> --repo <owner>/<repo> --remove-label blocked
+```
+
 ## Opening the pull request
 
 The orchestrator's. **Before opening, and the last item once it is

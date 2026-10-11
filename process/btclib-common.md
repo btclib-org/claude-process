@@ -94,9 +94,6 @@ These bind the writer, the reviewer and the orchestrator alike.
   named none, ask **before any tracker is read**. A worker gets it in
   its brief; where the brief's tree and the issue do not belong together,
   stop and report.
-- **Then the force-push grant, in the same message** — *The force-push
-  grant* has it. It is the orchestrator's to ask; a writer or reviewer
-  that finds it unanswered says so rather than assuming.
 - **Your own worktree, from origin/main, from the first edit**, named
   **`wt-<tracker>-<issue>-<repo>-<role>`**, most general part first:
   `tracker` because an issue number is unique only within one tracker;
@@ -178,16 +175,14 @@ These bind the writer, the reviewer and the orchestrator alike.
 
 ### The force-push grant
 
-**Ask at the start, with the repository question where there is one,
-whether amends of pushed commits,
-rebases of pushed branches and the lease pushes after them are
-authorized** on the branches the session works. Review sends branches
-back after they are pushed, and every rebase rewrites a pushed branch;
-without a grant on record the classifier has refused those pushes. A yes
-given after a refusal does not lift it (*A denied permission is a
-stop*). The answer covers the session: it is not re-asked within it; a
-conversation interrupted and resumed is the same session; a new
-conversation asks again. The grant lives in the session, not in memory.
+**Amends of pushed commits, rebases of pushed branches and the lease
+pushes after them are always authorized** on the branches the session
+works (the human, 2026-10-11). Nobody asks for it. Review sends branches
+back after they are pushed, and every rebase rewrites a pushed branch.
+Every brief states the grant, because the classifier has refused those
+pushes where none was on record. A refusal is still a stop (*A denied
+permission is a stop*), with the `-r2` fallback in *Committing and
+rebasing*.
 
 ### Issues left to newcomers
 
@@ -550,9 +545,8 @@ the orchestrator in the pull request.
   ```
 
   Never a bare `--force`, never another branch. Amending or rebasing a
-  pushed commit, and this push after it, need the human's grant (*The
-  force-push grant*), which your brief carries. Without it, do not
-  rewrite a pushed commit: stop and report. Where the classifier refuses
+  pushed commit, and this push after it, are granted (*The force-push
+  grant*), and your brief says so. Where the classifier refuses
   the push under the grant, push the rewritten, gated commit without
   force to `<branch>-r2` and report both names; the orchestrator opens
   the pull request from it and closes the old one. This is the one route
@@ -604,6 +598,8 @@ context, never the author on itself.
 These rounds hold wherever a process sends work to a reviewer: a
 branch, or a text to be posted.
 
+- **The writer is the same worker throughout.** One per pull request or
+  text, it writes the first version and every fix, for every reviewer.
 - **The dedicated reviewer reads it first.** One per pull request or
   text, it reads the first version and each fix answering a review on
   GitHub.
@@ -618,13 +614,18 @@ branch, or a text to be posted.
   finding, the fix goes back to that reviewer. Where they decline it,
   their answer stands in for that reviewer's `CLEARED`.
 - **Then a fresh reviewer reads the whole of it.** It is a new worker,
-  started once the dedicated reviewer has cleared. Where its first
-  verdict is `CLEARED`, the rounds end. Where it is `CHANGES
-  REQUESTED`, it stays until it clears, as above, and then a further
-  fresh reviewer reads the whole of it.
-- **The third fresh reviewer is the last.** Counted since the dedicated
-  reviewer last cleared, or since a rebase that changed the branch's
-  lines, it stays until it clears, and the rounds then end.
+  started once the reviewer before it has cleared. Where its first
+  verdict is `CHANGES REQUESTED`, it stays until it clears, as above,
+  and then a further fresh reviewer reads the whole of it.
+- **The rounds end when a fresh reviewer's first verdict is `CLEARED`,
+  and only then.**
+- **The orchestrator checks that the rounds converge.** It keeps each
+  verdict's findings, each marked open or closed, in a file in its
+  scratch directory. The rounds do not converge where a closed finding
+  comes back, from any reviewer, or where a fix leaves the reviewer that
+  asked for it with as many findings as before, or more. Then the
+  orchestrator puts the writer's and the reviewer's positions to the
+  human, and the rounds wait for the answer.
 - A non-blocking finding waits for the next change (*Which prose is
   worth a round*).
 
@@ -776,7 +777,7 @@ Rebase, run the gates, and push.
   (`~/.claude/process/btclib-common.md`), the command's, and the
   sections of both that are its role's — the agents are generic and know
   no process of their own — the issue or pull request, the repository,
-  the worktree and scratch paths, whether force-pushes are granted, and
+  the worktree and scratch paths, the force-push grant, and
   the claims you measured. The same for a reviewer.
 - **Before dispatching, ask whether the issue is collateral of a pull
   request this session worked.** Then it goes to that pull request's
@@ -821,12 +822,16 @@ Rebase, run the gates, and push.
   for the disagreement.
 - **Reuse.** A writer takes a new, unrelated pull request only after
   `/compact`; its own deferred half and its own collateral it takes
-  uncompacted. The dedicated reviewer is the same worker for its
+  uncompacted. The writer is the same worker for all of a pull request's
+  rounds. The dedicated reviewer is the same worker for its
   rounds, and comes back only for that pull request's collateral. Each
   fresh reviewer of *Local review* is a new worker. Resuming a worker is
   `SendMessage` to its id; `Agent` always starts a new one.
-- **Models**: the writer runs on Sonnet (its agent definition pins it);
-  the orchestrator may run on Opus.
+- **Models**: the writer runs on Sonnet, which its agent definition
+  sets. Where the work is likely to take decisions — a design, or a
+  decision its issue reserved — the orchestrator starts the writer on
+  Opus: the `Agent` tool's `model` parameter overrides the definition.
+  The orchestrator may run on Opus.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
 - **Writing runs in parallel; gating does not.** Every worker that gates
@@ -849,10 +854,9 @@ otherwise lasts until the session ends.
 
 **At activation, and only then, ask what shapes the night** — only what
 the session has not already settled: the repository where the command
-needs one, the force-push grant where no answer stands yet, and a
-ceiling on time if they want one. Where they leave before answering, the
-repository question stops the night before it starts, and no force-push
-is granted.
+needs one, and a ceiling on time if they want one. Where they leave
+before answering, the repository question stops the night before it
+starts.
 
 **Turning it off** ends the night at once: the work in flight goes on
 under the ordinary rules, the morning report is given as the next
