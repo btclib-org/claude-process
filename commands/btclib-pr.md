@@ -159,8 +159,8 @@ answered one of three ways:
   not with GitHub's button, so the gates run on it.
 - **decline**: with the measurement that refutes it.
 - **decision**: a choice the tree does not settle — design, scope, a
-  reserved decision. It goes to the human, as the shared *When the human
-  has to decide* says.
+  reserved decision. It goes to the human or the maintainer, as the
+  shared *When the human has to decide* says.
 
 **Every thread gets a reply, and is then resolved.** An accepted one
 names the commit that fixes it; a declined one carries its measurement.
@@ -201,10 +201,16 @@ A substantial item is posted to the author as a review comment, with a
 suggestion where it is a few lines and what would settle it otherwise.
 The pull request then waits on them, recorded as a hold.
 
-Before pushing to another person's branch, the shared *Before starting*
-says no session of theirs is live on it, and the push is the lease push
-of the shared *Committing and rebasing*, on the sha you built on. Where the branch
-moved, they are working: stop and ask.
+**On the maintainer's pull request, worked by another owner,
+substantial changes are the session's too** (the maintainer,
+2026-10-11). A change that takes a decision goes to the maintainer, as
+the shared *When the human has to decide* says. The owners are those
+*The human's own pull request* lists.
+
+Before pushing to another person's branch, the session claims it (the
+shared *A claim holds a pull request's branch*), and the push is the
+lease push of the shared *Committing and rebasing*, on the sha you built
+on. Where the branch moved, they are working: stop and ask.
 
 ## Rebase and CI
 

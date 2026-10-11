@@ -316,6 +316,16 @@ still asked on its own.
 **A writer or reviewer puts a decision in its report**, in this shape,
 and the orchestrator asks it.
 
+**Where the human is not the maintainer, a decision on what a change
+does goes to the maintainer**: its design, its scope, a decision its
+issue reserved, a disagreement on its pull request that survives a
+second exchange. `GOVERNANCE.md` gives the maintainer the decisions the
+written rules leave open. Such a decision is not put to the human: it is
+recorded as a hold whose comment @-mentions the maintainer. Every other
+decision stays the human's: which pull requests to work, an approval,
+the session's own review rounds (*The rounds*), a finding its reviewer
+still holds included.
+
 **At night nothing is asked** (*Night mode*). Each deferred item is
 written in this shape, and asked once night mode is off.
 
@@ -591,6 +601,24 @@ the orchestrator in the pull request.
   the pull request from it and closes the old one. This is the one route
   around a refusal the process sanctions. The old branch is deleted once
   its replacement has landed on `main`.
+- **A claim holds a pull request's branch.** Before every push to an
+  open pull request's branch, read the claim that stands on it, made by
+  a login other than its author's:
+
+  ```shell
+  gh pr view <n> --repo <owner>/<repo> --json author,comments --jq '
+    .author.login as $a | [.comments[] | select(.author.login != $a)
+    | select(.body | startswith("Claimed") or startswith("Released"))]
+    | last // empty | select(.body | startswith("Claimed")) | .author.login'
+  ```
+
+  Where it prints a login other than the human's, push nothing and
+  report it. Where it prints nothing and the branch is another person's
+  (`/btclib-pr`'s *Another person's branch*), nothing is pushed until
+  the orchestrator has commented a claim, a comment starting `Claimed`.
+  The claim stands until the pull request lands, or until a comment
+  starting `Released` ends it, which the claiming session posts once it
+  is done with the branch.
 - **One git write per Bash call, nothing chained to it.** A commit, an
   amend, a rebase or a push chained with `cp`, `rm`, a gate or another
   git write is refused as a whole. Run each in its own call.
@@ -912,8 +940,10 @@ a dirty primary checkout that is not provably the session's, an
 approval that is not obvious, a
 session whose state is uncertain, a branch that takes a decision its
 issue reserved — becomes an item of the morning report, and the work that
-depends on it stops there. A branch taking a reserved decision is opened,
-not landed, and its cut-back is one of the item's alternatives.
+depends on it stops there. A decision that goes to the maintainer (*When
+the human has to decide*) is a hold, not an item. A branch taking a
+reserved decision is opened, not landed, and its cut-back is one of the
+decision's alternatives.
 
 - **Record each item as a hold is recorded** (*When the human has to
   decide*): a comment carrying the item, in the shape *When the human
