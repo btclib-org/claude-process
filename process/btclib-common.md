@@ -316,6 +316,15 @@ still asked on its own.
 **A writer or reviewer puts a decision in its report**, in this shape,
 and the orchestrator asks it.
 
+**Where the human is not the maintainer, a decision on what a change
+does goes to the maintainer**: its design, its scope, a decision its
+issue reserved, a disagreement on its pull request that survives a
+second exchange. Such a decision is not put to the human: it is
+recorded as a hold whose comment @-mentions the maintainer. These stay
+the human's: which pull requests to work, an approval, the session's own
+review rounds (*The rounds*), a finding its reviewer still holds
+included.
+
 **At night nothing is asked** (*Night mode*). Each deferred item is
 written in this shape, and asked once night mode is off.
 
@@ -367,8 +376,10 @@ does it before briefing anybody.
   ```
 
 - **Claim it before work starts.** The orchestrator comments on the
-  issue or pull request that a session is taking it; that comment is
-  what the next session's check reads.
+  issue or pull request that a session is taking it, in a comment
+  starting `Claimed`; that comment is what the next session's check
+  reads. On another person's pull request it also holds the branch
+  (*A claim holds a pull request's branch*).
 - **A branch left by a session that no longer runs is unreviewed work in
   progress**, however finished it looks. No process listing proves a
   session gone — an idle live session shows its id in no command line.
@@ -591,6 +602,26 @@ the orchestrator in the pull request.
   the pull request from it and closes the old one. This is the one route
   around a refusal the process sanctions. The old branch is deleted once
   its replacement has landed on `main`.
+- **A claim holds a pull request's branch.** Before every push to an
+  open pull request's branch, read the claim that stands on it, made by
+  a login other than its author's:
+
+  ```shell
+  gh pr view <n> --repo <owner>/<repo> --json author,comments --jq '
+    .author.login as $a | [.comments[] | select(.author.login != $a)
+    | select(.body | startswith("Claimed") or startswith("Released"))]
+    | last // empty | select(.body | startswith("Claimed")) | .author.login'
+  ```
+
+  Where it prints a login other than the human's
+  (`gh api user --jq .login`), push nothing and report it. Where it
+  prints nothing and the branch is another person's (`/btclib-pr`'s
+  *Another person's branch*), nothing is pushed until the orchestrator
+  has claimed it (*Before starting*). The claim stands until the pull
+  request lands, or until the claiming session posts a comment starting
+  `Released`: once it hands the pull request over to whom it waits on,
+  and at the latest before it ends. A claim whose
+  session no longer runs (*Before starting*) is released by its human.
 - **One git write per Bash call, nothing chained to it.** A commit, an
   amend, a rebase or a push chained with `cp`, `rm`, a gate or another
   git write is refused as a whole. Run each in its own call.
@@ -912,8 +943,10 @@ a dirty primary checkout that is not provably the session's, an
 approval that is not obvious, a
 session whose state is uncertain, a branch that takes a decision its
 issue reserved — becomes an item of the morning report, and the work that
-depends on it stops there. A branch taking a reserved decision is opened,
-not landed, and its cut-back is one of the item's alternatives.
+depends on it stops there. A decision that goes to the maintainer (*When
+the human has to decide*) is a hold, not an item. A branch taking a
+reserved decision is opened, not landed, and its cut-back is one of the
+decision's alternatives.
 
 - **Record each item as a hold is recorded** (*When the human has to
   decide*): a comment carrying the item, in the shape *When the human
@@ -957,6 +990,9 @@ the comments on the issues. It holds:
 
 Before the wrap-up, every collateral issue the session opened has its
 pull request or is named with its exception (*Collateral*).
+
+**Release every pull request the session claimed** (*A claim holds a
+pull request's branch*).
 
 **Remove what the session created**: its clean worktrees, build
 directories, and caches in its scratch directories. A worktree with
