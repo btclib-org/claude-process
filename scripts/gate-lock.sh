@@ -1,7 +1,7 @@
 # shellcheck shell=sh
-# The gate lock, one per machine and shared by every worker of every
-# session. POSIX sh, sourced in the same shell call that runs the gates, so
-# that `$$` is the holder:
+# The gate lock, by default one per user, shared by every worker of every
+# session that user runs. POSIX sh, sourced in the same shell call that
+# runs the gates, so that `$$` is the holder:
 #
 #   . ~/.claude/scripts/gate-lock.sh
 #   gate_take [<worktree>] && { <gates>; gate_release; }
@@ -16,7 +16,9 @@
 # until its ticket is the oldest one whose process is alive. Then it waits
 # for the load to fall under GATE_LOCK_LOAD and takes the lock. Neither
 # wait has a bound: a holder that never finishes keeps every waiter
-# waiting, and `cat $GATE_LOCK_DIR/gate.lock/owner` names it.
+# waiting, and this names it:
+#
+#   cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}/gate.lock/owner"
 #
 # To check, from the repository root in a fresh sh, with a directory of
 # your own so as not to wait on a real gate:

@@ -576,18 +576,28 @@ the orchestrator in the pull request.
   lock any other way: a failed `mkdir` or an old lock says nothing
   about whose it is. A lock with no owner file — a hand `mkdir`, or one
   a waiter killed mid-reclaim left with only a `stale.<pid>` in it — is
-  never reclaimed: the human removes it with `rm -r` of `gate.lock`
-  alone, after checking that no gate runs. The script is POSIX `sh`.
-  Waiters queue in arrival order, each with a ticket in `gate.queue` in
-  that directory; any waiter removes a ticket whose process is gone. The
-  one first in line waits for a 1-minute load under
+  never reclaimed. The human removes it, after checking that no gate
+  runs:
+
+  ```shell
+  rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}/gate.lock"
+  ```
+
+  The script is POSIX `sh`. Waiters queue in arrival order, each with a
+  ticket in `$GATE_LOCK_DIR/gate.queue`; any waiter removes a ticket whose
+  process is gone. The one first in line waits for a 1-minute load under
   `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
   decimal comma, and then takes the lock, so that nobody holds it while
   only waiting. `gate_take` waits for the load and
   for the holder with no bound. A timeout on
   the background call covers the gates, not `gate_take`. A holder that never
-  finishes keeps everyone waiting; `gate.lock/owner` in that directory
-  names it. A load generator is killed by the PID you recorded, and `ps`
+  finishes keeps everyone waiting, and this names it:
+
+  ```shell
+  cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}/gate.lock/owner"
+  ```
+
+  A load generator is killed by the PID you recorded, and `ps`
   shows it gone before the lock is released.
 
 ### Committing and rebasing
