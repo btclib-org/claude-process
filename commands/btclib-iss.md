@@ -65,6 +65,10 @@ while IFS='|' read -r sha subj; do
 done
 ```
 
+An issue labelled `upstream-dependent` is taken only once its wait is
+over; taking it removes `upstream-dependent`, and `blocked` where the
+wait was its reason.
+
 ## Opening the pull request
 
 The orchestrator's. **Before opening, and the last item once it is
