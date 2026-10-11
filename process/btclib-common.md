@@ -10,8 +10,9 @@ Two commands carry work in every repository of `btclib-org`:
 `/btclib-pr`'s *The decision* and *Landing* say when a pull request is
 approved and when it lands.
 
-This file binds both and holds every rule they share. Each command
-opens by having it read whole, and holds only what is its own. The
+This file binds both and holds the rules they share, except those
+`/btclib-iss`'s *Following it* reads in `/btclib-pr`. Each command opens
+by having it read whole, and holds only what is its own. The
 `writer` and `reviewer` agents are generic: the brief names this file
 and the command, and they read the sections the maps give them. Change
 a rule here or in the command where it fires, not in an agent.
@@ -341,12 +342,12 @@ the work.
 
 ### Which prose is worth a round
 
-**A reviewer blocks on a false sentence in the tree's own files, not on
-one that could be worded better.** The tree's own files are every
-tracked file, docstrings and comments included; a false sentence there
-blocks like a code defect. A wording finding — text that breaks *Write
-plainly* — is still made, with the shorter text, and is fixed with the
-next change to the branch. It does not send a branch back.
+**A reviewer blocks on a false sentence in the tree's own files, as on a
+code defect, not on one that could be worded better.** The tree's own
+files are every tracked file, docstrings and comments included. A
+wording finding — text that breaks *Write plainly* — is still made, with
+the shorter text, and is fixed with the next change to the branch. It
+does not send a branch back.
 
 **A false sentence anywhere else does not send a cleared branch back**:
 pull request bodies, issues, comments, reports, the commit message.
@@ -756,9 +757,9 @@ run and another bot run.
   commands and exit codes, is relied on and attributed — `REVIEWING.md`'s
   *The gates are the evidence*. Where no run on this sha is on the
   record, you run them yourself, as *The gates* says, lock included, and
-  say so. A rebase or amend since the run voids it. A branch that cannot
-  land under *A failure that does not reproduce is measured* is not
-  cleared.
+  say so. A rebase or amend since the run voids it. A branch that fails
+  differently on every run is not cleared (*A failure that does not
+  reproduce is measured*).
 - **A branch with a commit its author did not sign off is not
   cleared**, measured as *Signed and signed off* says.
 - **Look for the finding in the fix itself**, not only in what it

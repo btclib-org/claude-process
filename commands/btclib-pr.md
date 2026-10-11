@@ -449,7 +449,7 @@ items hold:
 - arm the landing, so that their approval lands it (*Landing*);
 - report whom it waits on.
 
-After a push, request it again on the new head (*Landing*).
+After a push, request the review again on the new head (*Landing*).
 
 A pull request that changes `claude-review.yml` gets no review from the
 bot. The action refuses to run where its workflow differs from the

@@ -106,8 +106,8 @@ answers what the reviewers raised, gets CI green, and takes them to the
 decision to approve and to `main`. With no argument it sweeps the
 organization's open pull requests and proposes which to work.
 
-Both work in every repository of `btclib-org`. A bare number makes the
-session ask which repository it is in. `/btclib-pr`'s *The decision*
+Both work in every repository of `btclib-org`; the shared *Where you
+work* says how the repository is named. `/btclib-pr`'s *The decision*
 and *Landing* say when a session approves and when it lands, `--land`
 included.
 
