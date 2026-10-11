@@ -297,8 +297,8 @@ on. Where the branch moved, they are working: stop and ask.
             then "passed" else "pending" end)"'
       ```
 
-      Where it lists more than one, keep the lowest number and close
-      each other one as its duplicate:
+      Where it lists more than one with the same reset, keep the lowest
+      number and close each other one as its duplicate:
 
       ```shell
       kept=<lowest number>
@@ -308,8 +308,8 @@ on. Where the branch moved, they are working: stop and ask.
       gh issue close --repo btclib-org/.github --duplicate-of "${kept:?}" <number>
       ```
 
-      Where it lists none, open it with the reset the log gives, as
-      `2026-10-10T11:00`:
+      Where it lists none `pending`, open one with the reset the log
+      gives, as `2026-10-10T11:00`:
 
       ```shell
       reset=<reset>
@@ -327,11 +327,11 @@ on. Where the branch moved, they are working: stop and ask.
       gh issue pin <url>
       ```
 
-      A pull request whose only red check is this one waits on that
-      issue: its hold comment links the issue, and it takes no `blocked`
-      label. Whether it lands before the reset is decided as *The
-      decision* and *Landing* say. Whoever sees `passed` closes the
-      issue:
+      A pull request whose only red check is this one waits on the
+      `pending` issue: its hold comment links that issue, and it takes
+      no `blocked` label. Whether it lands before the reset is decided
+      as *The decision* and *Landing* say. Whoever sees an issue
+      `passed` closes it:
 
       ```shell
       gh issue close --repo btclib-org/.github --comment 'Quota reset.' <number>
