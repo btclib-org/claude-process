@@ -67,7 +67,15 @@ done
 
 An issue labelled `upstream-dependent` is taken only once its wait is
 over; taking it removes `upstream-dependent`, and `blocked` where the
-wait was its reason.
+wait was its reason. The wait is what the issue names, in its body or a
+later comment: an upstream issue, pull request, release or draft. Read
+its state there.
+
+```shell
+gh issue edit <n> --repo <owner>/<repo> --remove-label upstream-dependent
+gh issue edit <n> --repo <owner>/<repo> \
+  --remove-label upstream-dependent,blocked
+```
 
 ## Opening the pull request
 

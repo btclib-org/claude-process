@@ -619,11 +619,13 @@ branch, or a text to be posted.
   and then a further fresh reviewer reads the whole of it.
 - **The rounds end when a fresh reviewer's first verdict is `CLEARED`,
   and only then.**
-- **The orchestrator checks that the rounds converge.** They do not
-  where a closed finding comes back, from any reviewer, or where a fix
-  leaves the reviewer that asked for it with as many findings as before,
-  or more. Then the orchestrator puts the writer's and the reviewer's
-  positions to the human, and the rounds wait for the answer.
+- **The orchestrator checks that the rounds converge.** It keeps each
+  verdict's findings, each marked open or closed, in a file in its
+  scratch directory. The rounds do not converge where a closed finding
+  comes back, from any reviewer, or where a fix leaves the reviewer that
+  asked for it with as many findings as before, or more. Then the
+  orchestrator puts the writer's and the reviewer's positions to the
+  human, and the rounds wait for the answer.
 - A non-blocking finding waits for the next change (*Which prose is
   worth a round*).
 
