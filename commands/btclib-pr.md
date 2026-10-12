@@ -278,9 +278,6 @@ on. Where the branch moved, they are working: stop and ask.
         grep -E 'api_error_status 429|hit your .* limit'
       ```
 
-      The quota is the organization's, so it is held once, not pull
-      request by pull request: one open issue in `btclib-org/.github`,
-      pinned, titled `Review quota exhausted, resets <date>T<hour> UTC`.
       The log gives the reset as `resets Oct 10, 11am (UTC)`, or as
       `resets 11am (UTC)` when it is less than a day away. Where it gives
       no date, the reset is the first such hour after the log line's
@@ -297,49 +294,32 @@ on. Where the branch moved, they are working: stop and ask.
         echo ahead || echo passed
       ```
 
-      Where it prints `passed`, the run is stale. Re-run it, and its
-      result stands:
+      Where it prints `passed`, the session following the pull request
+      re-runs the failed run, and its result stands. This holds for a
+      429 read after its reset and for a pull request held until it:
 
       ```shell
       gh run rerun --repo <owner>/<repo> --failed <run id>
       ```
 
-      Where it prints `ahead`, the quota is held. The title carries the
-      date so that a later reader can tell whether the reset has passed.
-      Look for the issue. This prints each open one's number, its reset,
-      and `passed` where the reset is at or before the current UTC time,
-      `pending` otherwise:
+      Where it prints `ahead`, the quota is held. The quota is the
+      organization's, so it is held once, in one open, pinned issue in
+      `btclib-org/.github` titled
+      `Review quota exhausted, resets <reset> UTC`. The title carries
+      the reset so that a reader can tell whether it has passed. Look
+      for the issue:
 
       ```shell
       gh issue list --repo btclib-org/.github --state open \
-        --search 'in:title "Review quota exhausted"' --json number,title \
-        --jq '.[] | (.title | capture("resets (?<r>[^ ]+) UTC").r) as $r
-          | "\(.number) \($r) \(if $r <= (now | strftime("%Y-%m-%dT%H:%M"))
-            then "passed" else "pending" end)"'
+        --search 'in:title "Review quota exhausted"' --json number,title
       ```
 
-      Where it lists more than one with the same reset, keep the lowest
-      number. Unpin each other one, since closing does not unpin, and
-      close it as its duplicate:
-
-      ```shell
-      gh issue unpin --repo btclib-org/.github <number>
-      ```
-
-      ```shell
-      kept=<lowest number>
-      ```
-
-      ```shell
-      gh issue close --repo btclib-org/.github --duplicate-of "${kept:?}" <number>
-      ```
-
-      Where it lists none `pending`, open one with the log's reset:
+      Where it lists none, open it:
 
       ```shell
       gh issue create --repo btclib-org/.github \
         --title "Review quota exhausted, resets ${reset:?} UTC" \
-        --body 'Claude review fails with 429 in every repository until the reset.'
+        --body 'Claude review fails with 429 until the reset in the title.'
       ```
 
       Pin it, with the URL that command printed:
@@ -348,57 +328,19 @@ on. Where the branch moved, they are working: stop and ask.
       gh issue pin <url>
       ```
 
-      A pull request whose only red check is this one waits on the
-      `pending` issue: its hold comment links that issue, and it takes
-      no `blocked` label. Whether it lands before the reset is decided
-      as *The decision* and *Landing* say. Whoever sees an issue
-      `passed` unpins and closes it:
+      Where it lists one whose title gives another reset, update the
+      title:
 
       ```shell
-      gh issue unpin --repo btclib-org/.github <number>
+      gh issue edit --repo btclib-org/.github \
+        --title "Review quota exhausted, resets ${reset:?} UTC" <number>
       ```
 
-      ```shell
-      gh issue close --repo btclib-org/.github --comment 'Quota reset.' <number>
-      ```
-
-      and re-runs `Claude review` on each open pull request that linked
-      it or one of its duplicates. Their timelines list every
-      cross-reference, issues and closed pull requests included. This
-      reads every issue titled with that reset, keeps the open pull
-      requests, and prints the repository and the failed `Claude review`
-      run of each:
-
-      ```shell
-      reset=<reset>
-      ```
-
-      ```shell
-      gh issue list --repo btclib-org/.github --state all --limit 100 \
-        --search 'in:title "Review quota exhausted"' --json number,title \
-        --jq ".[] | select(.title
-          == \"Review quota exhausted, resets ${reset:?} UTC\") | .number" |
-        while read -r number; do
-          gh api --paginate \
-            "repos/btclib-org/.github/issues/${number}/timeline" \
-            --jq '.[] | select(.event == "cross-referenced"
-              and .source.issue.pull_request != null
-              and .source.issue.state == "open") | .source.issue.html_url'
-        done | sort -u |
-        while read -r pr; do
-          gh pr checks "$pr" --json name,link,bucket --jq '.[]
-            | select(.bucket == "fail" and (.name | endswith("Claude review")))
-            | .link
-            | capture("github.com/(?<r>[^/]+/[^/]+)/actions/runs/(?<id>[0-9]+)")
-            | "\(.r) \(.id)"'
-        done
-      ```
-
-      Re-run each line it prints:
-
-      ```shell
-      gh run rerun --repo <owner>/<repo> --failed <run id>
-      ```
+      The issue stays open and pinned from one quota to the next. A pull
+      request whose only red check is this one waits on it: its hold
+      comment links the issue, and it takes no `blocked` label. Whether
+      it lands before the reset is decided as *The decision* and
+      *Landing* say. After the reset, the check above prints `passed`.
 
 - **The bot's review is answered like any other**, iterating to an ACK
   that names the current head.
