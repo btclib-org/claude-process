@@ -316,7 +316,7 @@ checkout the worktree was made from, so one session installing it
 installs it for every other. Run the gate by hand before committing.
 
 **What the gate does not reach is whether the process works.** The hooks
-read prose, yaml and one shell script; none of them follows the
+read prose, yaml and the shell scripts; none of them follows the
 process through an issue. A rule that changes what a session does is
 verified by the command the sentence claims, which the pull request's
 body records.

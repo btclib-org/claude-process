@@ -3,7 +3,7 @@
 # commands, the file they share, the two agents and the files around
 # them -- so the hooks below
 # are the ones with a subject here: the markdown, the yaml of the
-# workflows and of the issue forms, the one shell script, and the text
+# workflows and of the issue forms, the shell scripts, and the text
 # every file is made of.
 #
 # What is absent is absent for a measured reason rather than an
