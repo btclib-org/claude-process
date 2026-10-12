@@ -55,8 +55,9 @@ gh api repos/btclib-org/claude-process/branches/main/protection \
 ```
 
 **`lint.yml` runs on every pull request, and a red `Lint`, `Dependency
-review` or `Sign-off` job stops a merge by anyone but the maintainer, and
-the queue merges nothing that is red.**
+review` or `Sign-off` job stops a merge, and the queue merges nothing
+that is red.** A merge through the maintainer's bypass waits for none of
+these checks, as `CONTRIBUTING.md`'s *Landing it* says.
 `strict` is off: a pull request need not be up to date with `main`. The
 merge queue below tests it on `main`'s tip instead. This departs from
 section 11, which makes `main` strict: it is the trial of a merge queue
