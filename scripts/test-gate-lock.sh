@@ -1,14 +1,14 @@
 #!/bin/sh
-# Two sessions, each with a scratchpad of its own, take the gate lock, the
-# second while the first holds it. The lock holds if the second takes only
-# after the first releases:
+# Two sessions, each with a scratchpad of its own, ask for the gate lock,
+# the second while the first holds it. The lock holds if the second takes
+# it only after the first releases:
 #
 #   sh scripts/test-gate-lock.sh [<gate-lock.sh>]
 #
 # Each session is a `sh` of its own, since the holder is its PID, and
 # calls `gate_take <scratchpad> <worktree>`. gate-lock.sh ignores the
 # scratchpad; a script that keeps one lock per scratchpad fails the test.
-# Each session writes "<name> done" once gate_release returns. The test
+# Each session writes "<name> done" once gate_release succeeds. The test
 # polls for A's take, and then for both "done" lines, once a second up to
 # 30 times each. Past either, it kills the sessions it started and their
 # children, and exits 1. Otherwise it exits 0 when the takes serialize, and
@@ -29,7 +29,7 @@ session() { # <name> <scratchpad> <seconds held>
     echo "$(date +%s) $2 taken" >> "$4"
     sleep "$5"
     echo "$(date +%s) $2 released" >> "$4"
-    gate_release "$3" >/dev/null
+    gate_release "$3" >/dev/null || exit 1
     echo "$(date +%s) $2 done" >> "$4"
   ' sh "$script" "$1" "$2" "$tmp/events" "$3"
 }

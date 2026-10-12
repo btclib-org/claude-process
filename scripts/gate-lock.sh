@@ -82,7 +82,6 @@ gate_take() {
   _gl_wt=${2:-${1:-}}
   _gl_lock="$_gl_d/gate.lock"
   _gl_queue="$_gl_d/gate.queue"
-  mkdir -p "$_gl_queue"
   _gl_start=$(_gl_started $$)
   [ -n "$_gl_start" ] || {
     echo "gate_take: ps -o lstart= prints nothing for pid $$"
