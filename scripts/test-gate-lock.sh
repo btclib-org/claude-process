@@ -8,8 +8,11 @@
 # Each session is a `sh` of its own, since the holder is its PID, and
 # calls `gate_take <scratchpad> <worktree>`. gate-lock.sh ignores the
 # scratchpad; a script that keeps one lock per scratchpad fails the test.
-# Exits 0 when the takes serialize, and 1 otherwise, within about a minute
-# even where a session hangs.
+# Each session writes "<name> done" once gate_release returns. The test
+# polls for A's take, and then for both "done" lines, once a second up to
+# 30 times each. Past either, it kills the sessions it started and their
+# children, and exits 1. Otherwise it exits 0 when the takes serialize, and
+# 1 when they do not.
 
 script=${1:-$(dirname "$0")/gate-lock.sh}
 tmp=$(mktemp -d) || exit 1
@@ -27,12 +30,18 @@ session() { # <name> <scratchpad> <seconds held>
     sleep "$5"
     echo "$(date +%s) $2 released" >> "$4"
     gate_release "$3" >/dev/null
+    echo "$(date +%s) $2 done" >> "$4"
   ' sh "$script" "$1" "$2" "$tmp/events" "$3"
 }
 
-fail() { # <reason>: stop the sessions started, so that nothing hangs
+fail() { # <reason>: stop the sessions started and their children
   for pid in "$pid_a" "$pid_b"; do
-    [ -n "$pid" ] && kill "$pid" 2>/dev/null
+    [ -n "$pid" ] || continue
+    # stopped first, so that it starts no child between the two kills
+    kill -STOP "$pid" 2>/dev/null
+    pkill -P "$pid" 2>/dev/null
+    kill "$pid" 2>/dev/null
+    kill -CONT "$pid" 2>/dev/null
   done
   wait
   cat "$tmp/events"
@@ -56,11 +65,11 @@ pid_a=$!
 await 'A taken' 1 "A never took the lock"
 session B "$tmp/scratchpad-B" 0 &
 pid_b=$!
-await 'released' 2 "a session never released the lock"
+await ' done$' 2 "a session never finished"
 wait
 
 cat "$tmp/events"
-order=$(cut -d' ' -f2- "$tmp/events" | tr '\n' ',')
+order=$(grep -v ' done$' "$tmp/events" | cut -d' ' -f2- | tr '\n' ',')
 [ "$order" = "A taken,A released,B taken,B released," ] || {
   echo "FAIL: the takes did not serialize"
   exit 1
