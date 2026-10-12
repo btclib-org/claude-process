@@ -177,11 +177,11 @@ has which is which, and `REVIEWING.md` has how each is written. A
 disagreement that survives a second exchange goes to the maintainer
 instead of into a third round.
 
-**Every pull request, the maintainer's included, lands with an
-approving review from somebody other than its author.** The ack of
-record is a bot's review of type COMMENT ([the standard's *Review*][s-rev]
-says whose), so it is not that approval. The maintainer's bypass below
-is for emergencies only ([ISS 1362][i1362]).
+**The ack of record is not the approval *Landing it* asks for**: it is
+a bot's review of type COMMENT ([the standard's *Review*][s-rev] says
+whose). The maintainer's bypass is everyday practice until the review
+bot posts under an identity other than the author's, such as a GitHub
+App ([ISS 1362][i1362]).
 
 ### Landing it
 
@@ -204,8 +204,8 @@ gh pr merge <n> --squash --match-head-commit <the head the checks ran on>
 With `--auto` added, GitHub runs the same merge once the approval and
 the checks are in.
 
-**In an emergency the maintainer lands without that approval, through
-the bypass.** `--admin` turns off `gh`'s own refusal, and GitHub applies
+**The maintainer lands without that approval, through the bypass.**
+`--admin` turns off `gh`'s own refusal, and GitHub applies
 the bypass to the merge. `enforce_admins` is off, so it waits for no
 required check either:
 
@@ -255,7 +255,7 @@ settings and why they are what they are.
 [s-title]: https://github.com/btclib-org/.github#what-a-pull-request-says-it-is
 [s-rev]: https://github.com/btclib-org/.github#review
 [s-sigs]: https://github.com/btclib-org/.github#signatures
-[i1362]: https://github.com/btclib-org/.github/issues/1362#issuecomment-5969383609
+[i1362]: https://github.com/btclib-org/.github/issues/1362#issuecomment-6110475722
 [dco]: https://developercertificate.org/
 [governance]: https://github.com/btclib-org/.github/blob/main/GOVERNANCE.md
 [roadmap]: https://github.com/btclib-org/.github/blob/main/ROADMAP.md
@@ -342,9 +342,9 @@ opinion for you to weigh. Neither belongs in a branch rule.
 
 The merge queue is on and `main` is not strict (`REPOSITORY.md`), so
 *The landing queue*, and *Landing it*'s rebase onto `main`'s tip, do not
-apply here. Each pull request is reviewed, approved and queued as it is
-ready, and is rebased only for a conflict. `/btclib-pr`'s *Landing*
-says when the maintainer's own lands through the bypass instead.
+apply here. A pull request is queued as it is ready, unless the
+maintainer lands it through the bypass below, and is rebased only for a
+conflict.
 
 `lint.yml` also runs on `merge_group`. The checks are read on the head,
 and the queue runs `Lint` again on `main`'s tip before it merges.
@@ -358,6 +358,8 @@ the queue takes it once it is approved (gh 2.102.0's
 `--admin` bypasses the queue and merges directly. Only the maintainer's
 account (`fametrano`) has that bypass, in pull-request mode, as
 `main-self-merge` has; `REPOSITORY.md` has the command that reads it.
+[`GOVERNANCE.md`][governance]'s *How a decision is made* says when the
+maintainer uses it.
 
 ### A version, and no release
 
