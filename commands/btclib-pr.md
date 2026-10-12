@@ -266,7 +266,82 @@ on. Where the branch moved, they are working: stop and ask.
     - **not reproducing**: the shared *A failure that does not reproduce
       is measured*. One re-run measures it (`gh run rerun <run id>
       --repo <owner>/<repo> --failed`); two different answers are an
-      issue, not a green.
+      issue, not a green;
+    - **review quota exhausted**: the log of `Claude review` holds the
+      line `api_error_status 429` (match with that, not with
+      `api_error_status` alone: the log also echoes the workflow's own
+      source) followed by a line such as `You've hit your weekly limit ·
+      resets 11am (UTC)`.
+
+      ```shell
+      gh run view <run id> --repo <owner>/<repo> --log-failed |
+        grep -E 'api_error_status 429|hit your .* limit'
+      ```
+
+      The log gives the reset as `resets Oct 10, 11am (UTC)`, or as
+      `resets 11am (UTC)` when it is less than a day away. Where it gives
+      no date, the reset is the first such hour after the log line's
+      timestamp. Write it as `2026-10-10T11:00`:
+
+      ```shell
+      reset=<reset>
+      ```
+
+      This prints `ahead` or `passed`:
+
+      ```shell
+      expr "${reset:?}" \> "$(date -u +%Y-%m-%dT%H:%M)" > /dev/null &&
+        echo ahead || echo passed
+      ```
+
+      Where it prints `passed`, the session following the pull request
+      re-runs the failed run, and its result stands. This holds for a
+      429 read after its reset and for a pull request held until it:
+
+      ```shell
+      gh run rerun --repo <owner>/<repo> --failed <run id>
+      ```
+
+      Where it prints `ahead`, the quota is held. The quota is the
+      organization's, so it is held once, in one open, pinned issue in
+      `btclib-org/.github` titled
+      `Review quota exhausted, resets <reset> UTC`. The title carries
+      the reset so that a reader can tell whether it has passed. Look
+      for the issue:
+
+      ```shell
+      gh issue list --repo btclib-org/.github --state open \
+        --search 'in:title "Review quota exhausted"' --json number,title
+      ```
+
+      Where it lists none, open it:
+
+      ```shell
+      gh issue create --repo btclib-org/.github \
+        --title "Review quota exhausted, resets ${reset:?} UTC" \
+        --body 'Claude review fails with 429 until the reset in the title.'
+      ```
+
+      Pin it, with the URL that command printed:
+
+      ```shell
+      gh issue pin <url>
+      ```
+
+      Where it lists one whose title gives another reset, update the
+      title:
+
+      ```shell
+      gh issue edit --repo btclib-org/.github \
+        --title "Review quota exhausted, resets ${reset:?} UTC" <number>
+      ```
+
+      The issue stays open and pinned from one quota to the next. A pull
+      request whose only red check is this one waits on it: its hold
+      comment links the issue, and it takes no `blocked` label. Whether
+      it lands before the reset is decided as *The decision* and
+      *Landing* say. After the reset, the check above prints `passed`.
+
 - **The bot's review is answered like any other**, iterating to an ACK
   that names the current head.
 
