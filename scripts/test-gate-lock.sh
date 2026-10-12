@@ -7,12 +7,16 @@
 #
 # Each session is a `sh` of its own, since the holder is its PID, and
 # calls `gate_take <scratchpad> <worktree>`. gate-lock.sh ignores the
-# scratchpad; a script that keeps one lock per scratchpad fails the test.
-# Each session writes "<name> done" once gate_release succeeds. The test
-# polls for A's take, and then for both "done" lines, once a second up to
-# 30 times each. Past either, it kills the sessions it started and their
-# children, and exits 1. Otherwise it exits 0 when the takes serialize, and
-# 1 when they do not.
+# scratchpad. A script that keeps one lock per scratchpad fails the test,
+# unless its gate_take for B is slow enough to return after A's 3-second
+# hold: no order of events tells that apart from a lock.
+# Each session writes "<name> asks" before gate_take, "<name> taken" and
+# "<name> released" around its hold, and "<name> done" once gate_release
+# succeeds. The test polls for A's take, and then for both "done" lines,
+# once a second up to 30 times each. Past either, it kills the sessions it
+# started and their children, and exits 1. Otherwise it exits 0 when the
+# other lines read A asks, A taken, B asks, A released, B taken, B
+# released, in that order, and 1 when they do not.
 
 script=${1:-$(dirname "$0")/gate-lock.sh}
 tmp=$(mktemp -d) || exit 1
@@ -25,6 +29,7 @@ mkdir "$tmp/scratchpad-A" "$tmp/scratchpad-B"
 session() { # <name> <scratchpad> <seconds held>
   exec sh -c '
     . "$1"
+    echo "$(date +%s) $2 asks" >> "$4"
     gate_take "$3" "wt-$2" >/dev/null || exit 1
     echo "$(date +%s) $2 taken" >> "$4"
     sleep "$5"
@@ -70,8 +75,8 @@ wait
 
 cat "$tmp/events"
 order=$(grep -v ' done$' "$tmp/events" | cut -d' ' -f2- | tr '\n' ',')
-[ "$order" = "A taken,A released,B taken,B released," ] || {
-  echo "FAIL: the takes did not serialize"
+[ "$order" = "A asks,A taken,B asks,A released,B taken,B released," ] || {
+  echo "FAIL: the events are not in the order of one lock"
   exit 1
 }
-echo "ok: B took only after A released"
+echo "ok: B asked while A held the lock, and took it only after A released"
