@@ -55,15 +55,11 @@ gh api repos/btclib-org/claude-process/branches/main/protection \
 ```
 
 **`lint.yml` runs on every pull request, and a red `Lint`, `Dependency
-review` or `Sign-off` job stops a merge, and the queue merges nothing
-that is red.** A merge through the maintainer's bypass waits for none of
-these checks, as `CONTRIBUTING.md`'s *Landing it* says.
-`strict` is off: a pull request need not be up to date with `main`. The
-merge queue below tests it on `main`'s tip instead. This departs from
-section 11, which makes `main` strict: it is the trial of a merge queue
-in place of strict (btclib-org/.github#1619), ahead of any change to
-section 11. All three contexts are bound to `15368`, the Actions app, so
-nothing else can report one.
+review` or `Sign-off` job stops a merge.** A merge through the
+maintainer's bypass waits for none of these checks, as
+`CONTRIBUTING.md`'s *Landing it* says. `strict` is off: a pull request
+need not be up to date with `main`. All three contexts are bound to
+`15368`, the Actions app, so nothing else can report one.
 
 | Check | Produced by |
 | --- | --- |
@@ -129,9 +125,6 @@ gh api repos/btclib-org/claude-process/rulesets --jq '.[].id' \
 #  "rules":["required_signatures","required_linear_history",
 #           "non_fast_forward","deletion"],"target":"branch"}
 # {"bypass":["pull_request"],"enforcement":"active",
-#  "name":"main-merge-queue","refs":["~DEFAULT_BRANCH"],
-#  "rules":["merge_queue"],"target":"branch"}
-# {"bypass":["pull_request"],"enforcement":"active",
 #  "name":"main-self-merge","refs":["refs/heads/main"],
 #  "rules":["pull_request"],"target":"branch"}
 # {"bypass":[],"enforcement":"active","name":"tag-integrity",
@@ -146,11 +139,6 @@ gh api repos/btclib-org/claude-process/rulesets --jq '.[].id' \
   merge method it accepts — bypassed by the maintainer in
   **`pull_request` mode**, which excuses its holder while merging a pull
   request and at no other time.
-- `main-merge-queue` — a merge queue on the default branch, bypassed by
-  the maintainer (`fametrano`) in **`pull_request` mode**, as
-  `main-self-merge` is. A pull request that meets the requirements is queued,
-  built on `main`'s tip as a temporary branch, and squashed into `main`
-  if the checks pass. `lint.yml` runs on `merge_group` for that build.
 - `tag-integrity` — required signatures and nothing else, over
   `refs/tags/v*` rather than over a branch, with **no bypass actor**.
 
@@ -169,18 +157,7 @@ gh api repos/btclib-org/claude-process/rulesets --jq '.[].id' \
 ```
 
 ```shell
-gh api repos/btclib-org/claude-process/rulesets --jq '.[].id' \
-  | xargs -I{} gh api \
-    repos/btclib-org/claude-process/rulesets/{} \
-    --jq '.rules[] | select(.type=="merge_queue") | .parameters'
-# {"check_response_timeout_minutes":60,"grouping_strategy":"ALLGREEN",
-#  "max_entries_to_build":5,"max_entries_to_merge":5,
-#  "merge_method":"SQUASH","min_entries_to_merge":1,
-#  "min_entries_to_merge_wait_minutes":5}
-```
-
-```shell
-gh api repos/btclib-org/claude-process/rulesets/24664165 \
+gh api repos/btclib-org/claude-process/rulesets/24293514 \
   --jq '.bypass_actors'
 # [{"actor_id":3296421,"actor_type":"User","bypass_mode":"pull_request"}]
 ```

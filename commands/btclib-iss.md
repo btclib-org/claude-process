@@ -86,8 +86,9 @@ open:**
 - [ ] the latest fresh reviewer's `CLEARED` (the shared *Local review*)
       names the branch's content, or *A rebase and the clearance*
       carries it to the rebased branch
-- [ ] rebased onto `origin/main`; where it moved, gates re-run (the
-      shared *A rebase and the clearance*)
+- [ ] no conflict with `origin/main` (`/btclib-pr`'s *Rebase and CI*);
+      where there was one, rebased and the gates re-run (the shared *A
+      rebase and the clearance*)
 - [ ] the subject that lands carries the right citation (the shared
       *Citations and closing keywords*)
 - [ ] the body carries one closing keyword per line, and the sweep finds
@@ -111,9 +112,8 @@ open:**
 Once a pull request is open, the session follows it as its author.
 `~/.claude/commands/btclib-pr.md` holds the rules, read there and not
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
-*The human's own pull request* and *Landing*'s first three bullets. Where
-the repository has no merge queue, the landing queue holds here too.
-Under `--land`, all of *Landing* applies.
+*The human's own pull request*, and *Landing*'s first four bullets and
+its *Check what landed*. Under `--land`, all of *Landing* applies.
 
 - **The collateral has numbers, and goes back now** (the shared
   *Collateral*), before anything new starts.
@@ -122,7 +122,7 @@ Under `--land`, all of *Landing* applies.
   writer to remove its own.
 - **Report to the human** each pull request as a `PR` link, what it
   closes, and whom it waits on or that it landed. What arrives after
-  the session ends — a review, its turn in the landing queue — is
+  the session ends — a review, a conflict with `main` — is
   `/btclib-pr`'s.
 
 Then the shared *Wrap-up*.
