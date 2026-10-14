@@ -296,9 +296,9 @@ rebasing*.
 - **A landed sentence constrains the next decision.** Read what the tree
   has already said (an append-only `CHANGELOG.md` above all) before
   deciding something it has committed to.
-- **Where the issue reserved a decision**, the pull request body says
-  first that the branch takes it, on what ground, and what the cut-back
-  is.
+- **A reserved decision the branch takes goes in the pull request
+  body's `## Decision` section** (`/btclib-iss`'s *Opening the pull
+  request*).
 - **Another project's source is read from a checkout**, not fetched a
   file at a time through `gh api`: a local clone of `bitcoin/bitcoin`
   (`master`) for Bitcoin Core, of `btclib-org/btclib` for btclib, brought
