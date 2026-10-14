@@ -50,6 +50,8 @@ the process, the process wins, and you say so in the report.
   from memory.
 - **What you write follows the process's rule on prose**:
   `btclib-common.md`'s *Write plainly*, where your brief names that file.
+  Where it names none, the rule is the tree's `CONTRIBUTING.md`
+  (*Documentation and comments*).
 - **A finding is re-measured before you apply it.** Where it is wrong,
   say so with the measurement.
 - **A list found incomplete twice is deleted**, not lengthened.
@@ -65,8 +67,8 @@ Facts, not reassurances:
   and rebasing* holds the push; `git log --format='%h %G? %GS'` over
   the range;
 - each gate's command and **exit code**, the counts the runner prints,
-  and the load at each run; where a run fell and a later one passed,
-  both;
+  and the load and the memory pressure level at each run (*The gates*);
+  where a run fell and a later one passed, both;
 - `git status --porcelain` empty, checked after the last gate;
 - the decisions you took and their ground, departures from the brief
   first;
