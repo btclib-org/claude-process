@@ -49,10 +49,7 @@ repos:
         entry: '^ *rev: "?v?([0-9]+|[0-9][0-9.]*(a|b|rc|dev)[0-9]+)"?$'
         files: ^\.pre-commit-config\.yaml$
   # the shell scripts in the tree, which is a question for
-  # `git ls-files '*.sh'` rather than a list written here. Pinned to the
-  # shellcheck-py version; the rev is a git tag, which upstream re-cuts
-  # with a -N suffix for a packaging change, whereas the PyPI version a
-  # re-cut leaves alone
+  # `git ls-files '*.sh'` rather than a list written here.
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1-1
     hooks:
@@ -120,11 +117,8 @@ repos:
         args: [--baseline, .secrets.baseline]
   # check-changelog runs ahead of markdownlint-cli2 below: that hook's
   # `--fix` repairs the very seam its blank-line check exists to name.
-  # The rev is a commit sha, which detect-secrets' hex-entropy plugin
-  # reports: the pragma survives autoupdate, which keeps a trailing
-  # comment, where a baseline entry would match only the one sha
   - repo: https://github.com/btclib-org/.github
-    rev: 9e89a1daa5e9cc59bd22bd8664eb20b621e15fc5 # pragma: allowlist secret
+    rev: 9e89a1daa5e9cc59bd22bd8664eb20b621e15fc5
     hooks:
       - id: check-changelog
         args: [--grandfathered, "0"]
@@ -247,9 +241,6 @@ repos:
   # fails prettier until a commit restores the one-space form. A local
   # `pre-commit autoupdate` without `--freeze` writes the tag name instead
   # and drops the comment.
-  # The sha is what detect-secrets' hex-entropy plugin reports, so the
-  # pragma follows the frozen comment, and a bump that rewrites that
-  # comment drops it, which fails detect-secrets until it is restored.
   # The hook is `language: golang`, so pre-commit builds it with a go
   # toolchain. `actionlint-shellcheck` installs a Go build of shellcheck
   # beside actionlint in the hook's environment: actionlint hands the body
@@ -258,7 +249,7 @@ repos:
   # `shell: python` step, so the pyflakes it also delegates to is not
   # declared.
   - repo: https://github.com/kjanat/actionlint
-    rev: 2da2ceb4af2c7ecc48f5b9311d85080c3971b5f0 # frozen: v1.17.0 # pragma: allowlist secret
+    rev: 2da2ceb4af2c7ecc48f5b9311d85080c3971b5f0 # frozen: v1.17.0
     hooks:
       - id: actionlint-shellcheck
         name: actionlint (github workflows)
