@@ -778,8 +778,8 @@ run and another bot run.
 - The bot's commands are `gh pr view`, `gh pr diff` and `gh issue view`,
   and what the tree's `claude-review.yml` adds as `extra-allowed-tools`.
   It answers `NO VERDICT` where a decision rests on a query the diff
-  adds that none of them runs. The body of a pull request that adds one holds runs the bot can
-  repeat with `gh pr view`.
+  adds that none of them runs. The body of a pull request that adds one
+  holds runs the bot can repeat with `gh pr view`.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 
