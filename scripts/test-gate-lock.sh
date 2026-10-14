@@ -34,6 +34,13 @@
 #   write are 4 seconds or more apart.
 # - Zsh. A zsh session takes the first slot with no other slot present, and
 #   releases it. Skipped where there is no zsh.
+# - Load generators. Under each of sh, bash, zsh and dash, two sessions ask
+#   at once for every slot with gate_take_all. Both finish, and their holds
+#   do not overlap.
+# - gate_release_all called by a shell that holds nothing fails, and leaves
+#   the gate.generator and the slots of another shell as they were.
+# - A generator killed with SIGKILL while it holds every slot. The next
+#   generator reclaims gate.generator and the slots, and finishes.
 # - Defaults. Sourced with no GATE_LOCK_LOAD, GATE_LOCK_SLOTS or
 #   GATE_LOCK_WORKERS and a core count stubbed, the script sets the load to
 #   1.5 times the cores, and the workers to the cores divided by the slots,
@@ -226,7 +233,7 @@ GATE_LOCK_STAGGER=0
 # Under zsh, which stops at a glob with no match, a session takes the first
 # slot, with no gate.lock.2 or gate.lock.3 beside it, and releases it.
 if command -v zsh > /dev/null; then
-  rm -rf "$GATE_LOCK_DIR"
+  rm -rf "${GATE_LOCK_DIR:?}"
   zsh -c '
     . "$1"
     load=$3
@@ -242,6 +249,133 @@ if command -v zsh > /dev/null; then
 else
   echo "skipped: no zsh to run the release case under"
 fi
+
+# Load generators. Two generators ask at once for every slot, each in a shell
+# of the kind named. Both finish, one after the other: a generator holds
+# every slot, as its own owner file says, so the two do not split them and
+# wait for ever.
+generator() { # <shell> <name>
+  exec "$1" -c '
+    . "$1"
+    load=$4/load
+    eval "$5"
+    echo "$(date +%s) $2 asks" >> "$3"
+    gate_take_all "wt-$2" > /dev/null || exit 1
+    # every slot has this shell as its owner
+    for slot in gate.lock gate.lock.2 gate.lock.3; do
+      owner=""
+      read -r owner _ 2>/dev/null < "$GATE_LOCK_DIR/$slot/owner"
+      [ "$owner" = "$$" ] || { echo "$2 does not hold $slot" >> "$3"; exit 1; }
+    done
+    echo "$(date +%s) $2 taken" >> "$3"
+    sleep 2
+    echo "$(date +%s) $2 released" >> "$3"
+    gate_release_all > /dev/null || exit 1
+    echo "$(date +%s) $2 done" >> "$3"
+  ' "$1" "$script" "$2" "$tmp/events" "$tmp" "$stubs"
+}
+GATE_LOCK_SLOTS=3
+for shell in sh bash zsh dash; do
+  command -v "$shell" > /dev/null || { echo "skipped: no $shell for the generators"; continue; }
+  rm -rf "${GATE_LOCK_DIR:?}"
+  : > "$tmp/events"
+  pids=""
+  for n in P Q; do
+    generator "$shell" "$n" &
+    pids="$pids $!"
+  done
+  await ' done$' 2 "under $shell, the two generators did not both finish"
+  wait
+  order=$(grep -v -e ' asks$' -e ' done$' "$tmp/events" | cut -d' ' -f2- | tr '\n' ',')
+  case $order in
+    "P taken,P released,Q taken,Q released," | "Q taken,Q released,P taken,P released,") ;;
+    *) cat "$tmp/events"; fail "under $shell, the generators overlapped: $order" ;;
+  esac
+  [ ! -e "$GATE_LOCK_DIR/gate.generator" ] && [ ! -e "$GATE_LOCK_DIR/gate.lock" ] &&
+    [ ! -e "$GATE_LOCK_DIR/gate.lock.2" ] && [ ! -e "$GATE_LOCK_DIR/gate.lock.3" ] ||
+    fail "under $shell, a slot or gate.generator is left after the release"
+  "$shell" -c '. "$1"; gate_release_all > /dev/null' "$shell" "$script" &&
+    fail "under $shell, gate_release_all released nothing and succeeded"
+  echo "ok: under $shell, two generators took every slot one after the other"
+done
+
+# gate_release_all releases only what its own shell holds: called by another
+# shell while a generator holds gate.generator and the slots, it fails and
+# leaves all of them, and the owner file, as they were.
+rm -rf "${GATE_LOCK_DIR:?}"
+sh -c '
+  . "$1"
+  load=$3
+  eval "$4"
+  gate_take_all wt-H > /dev/null || exit 1
+  : > "$2/held-H"
+  exec sleep 300
+' sh "$script" "$tmp" "$tmp/load" "$stubs" &
+pids=$!
+i=0
+until [ -f "$tmp/held-H" ]; do
+  i=$((i + 1))
+  [ "$i" -le 30 ] || fail "the generator H never held every slot"
+  sleep 1
+done
+before=$(cat "$GATE_LOCK_DIR/gate.generator/owner")
+sh -c '. "$1"; gate_release_all' sh "$script" > /dev/null 2>&1 &&
+  fail "gate_release_all succeeded in a shell that held nothing"
+[ "$(cat "$GATE_LOCK_DIR/gate.generator/owner" 2>/dev/null)" = "$before" ] ||
+  fail "another shell's gate_release_all changed gate.generator"
+[ -d "$GATE_LOCK_DIR/gate.lock" ] || fail "another shell's gate_release_all released gate.lock"
+kill "$pids"
+wait "$pids" 2>/dev/null
+echo "ok: gate_release_all left the gate.generator of another shell alone"
+
+# A generator killed with SIGKILL while it holds gate.generator and every slot
+# leaves them behind. The next generator finds all of them stale, removes
+# them and finishes.
+rm -rf "${GATE_LOCK_DIR:?}"
+: > "$tmp/events"
+sh -c '
+  . "$1"
+  load=$3
+  eval "$4"
+  gate_take_all wt-X > /dev/null || exit 1
+  : > "$2/held-X"
+  exec sleep 300
+' sh "$script" "$tmp" "$tmp/load" "$stubs" &
+pids=$!
+i=0
+until [ -f "$tmp/held-X" ]; do
+  i=$((i + 1))
+  [ "$i" -le 30 ] || fail "the generator X never held every slot"
+  sleep 1
+done
+kill -KILL "$pids"
+wait "$pids" 2>/dev/null
+sh -c '
+  . "$1"
+  load=$3
+  eval "$4"
+  gate_take_all wt-R || exit 1
+  gate_release_all
+' sh "$script" "$tmp" "$tmp/load" "$stubs" > "$tmp/out-R" 2>&1 &
+pids=$!
+await_pid() { # <pid> <reason>: wait up to 30 seconds for the process to end
+  i=0
+  while kill -0 "$1" 2>/dev/null; do
+    i=$((i + 1))
+    [ "$i" -le 30 ] || fail "$2"
+    sleep 1
+  done
+}
+await_pid "$pids" "a generator never took the leftovers of the killed one"
+wait "$pids" || fail "the generator R failed"
+cat "$tmp/out-R"
+grep -q 'gate.generator of pid .* is stale' "$tmp/out-R" ||
+  fail "the generator did not reclaim the stale gate.generator"
+[ ! -e "$GATE_LOCK_DIR/gate.generator" ] && [ ! -e "$GATE_LOCK_DIR/gate.lock" ] &&
+  [ ! -e "$GATE_LOCK_DIR/gate.lock.2" ] && [ ! -e "$GATE_LOCK_DIR/gate.lock.3" ] ||
+  fail "gate.generator or a slot is left after the release"
+echo "ok: a generator reclaimed the gate.generator and the slots of one killed while it held them"
+GATE_LOCK_SLOTS=1
 
 # Defaults: the core count is stubbed, once by sysctl and once by getconf.
 # The values are printed by a subshell that has none of the settings.
