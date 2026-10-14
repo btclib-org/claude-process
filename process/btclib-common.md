@@ -522,20 +522,19 @@ the orchestrator in the pull request.
   out load first; measure the rate on a quiet machine, then open an
   issue. A branch that fails differently on every run cannot land,
   whatever the last run says.
-- **Every worker that gates reports the load and the memory pressure at
-  each run**, a reviewer running the gates itself included.
-- **Wait for normal memory pressure before `gate_take`**, in the same
-  background call:
-
-  ```shell
-  while [ "$(sysctl -n kern.memorystatus_vm_pressure_level)" -gt 1 ]; do
-    sleep 30
-  done
-  ```
-
-  macOS answers `1` for normal, `2` for warn and `4` for critical. The
-  level is read again at each gate run.
-  Where the read fails, as off macOS, the loop does not wait.
+- **Every worker that gates reports the load, the memory pressure level
+  and the percentage of memory free at each run**, a reviewer running the
+  gates itself included.
+- **Call `gate_wait` before each heavy gate**: the suite, the hooks and
+  the docs build, inside the lock (*The gate lock*). `gate_take` waits
+  once, at the start, and the load and the memory move while a
+  worker holds the lock. `gate_wait` returns once the 1-minute load is
+  under `GATE_LOCK_LOAD` (20) and memory is admissible: pressure level 1,
+  or level 2 with `GATE_LOCK_FREE` (30) percent or more of memory free,
+  never level 4 (macOS answers `1` normal, `2` warn, `4` critical).
+  Where a read fails, as off macOS, it does not wait on that read. It
+  prints the load, the level and the percentage free, which the report
+  copies.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
   worktree, the same name on every run of that branch. A teardown
   `OSError` or `FileNotFoundError` on `popen-gw*` is a neighbour's run on
@@ -567,7 +566,8 @@ the orchestrator in the pull request.
   ```shell
   . ~/.claude/scripts/gate-lock.sh
   gate_take <worktree> && {
-    # … the gates …
+    gate_wait; # … a gate …
+    gate_wait; # … the next gate …
     gate_release
   }
   ```
@@ -588,11 +588,11 @@ the orchestrator in the pull request.
 
   The script is POSIX `sh`. Waiters queue in arrival order, each with a
   ticket in `$GATE_LOCK_DIR/gate.queue`; any waiter removes a ticket whose
-  process is gone. The one first in line waits for a 1-minute load under
-  `GATE_LOCK_LOAD` (20), read under `LC_ALL=C` because some locales print a
-  decimal comma, and then takes the lock, so that nobody holds it while
-  only waiting. `gate_take` waits for the load and
-  for the holder with no bound. A timeout on
+  process is gone. The one first in line waits as `gate_wait` does
+  (*Call `gate_wait` before each heavy gate*; the load is read under
+  `LC_ALL=C` because some locales print a decimal comma) and then takes
+  the lock, so that nobody holds it while only waiting. `gate_take` waits
+  for the load, the memory and the holder with no bound. A timeout on
   the background call covers the gates, not `gate_take`. A holder that never
   finishes keeps everyone waiting, and this names it:
 

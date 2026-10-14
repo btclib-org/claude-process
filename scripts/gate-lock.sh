@@ -4,7 +4,7 @@
 # runs the gates, so that `$$` is the holder:
 #
 #   . ~/.claude/scripts/gate-lock.sh
-#   gate_take [<worktree>] && { <gates>; gate_release; }
+#   gate_take [<worktree>] && { gate_wait; <a gate>; gate_wait; <a gate>; gate_release; }
 #
 # The lock and its queue sit in $GATE_LOCK_DIR, by default
 # /tmp/claude-<uid>/gate. `gate_take <scratchpad> <worktree>` and
@@ -13,8 +13,12 @@
 #
 # Waiters queue in arrival order. gate_take writes a ticket into
 # $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
-# until its ticket is the oldest one whose process is alive. Then it waits
-# for the load to fall under GATE_LOCK_LOAD and takes the lock. Neither
+# until its ticket is the oldest one whose process is alive. Then it waits,
+# as gate_wait does, and takes the lock. gate_wait waits until the
+# 1-minute load is under GATE_LOCK_LOAD and memory is admissible: pressure
+# level 1, or level 2 with GATE_LOCK_FREE percent of memory or more free,
+# never level 4. Where a read fails, as off macOS, it does not wait on that
+# read. It prints the load, the level and the percentage free. Neither
 # wait has a bound: a holder that never finishes keeps every waiter
 # waiting, and this names it:
 #
@@ -47,6 +51,7 @@
 # with no owner, which the human removes.
 
 GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-20}
+GATE_LOCK_FREE=${GATE_LOCK_FREE:-30}
 GATE_LOCK_POLL=${GATE_LOCK_POLL:-5}
 
 _gl_dir() {
@@ -77,6 +82,23 @@ _gl_load() {
   else LC_ALL=C sysctl -n vm.loadavg | cut -d' ' -f2; fi
 }
 
+_gl_level() { sysctl -n kern.memorystatus_vm_pressure_level 2>/dev/null; }
+_gl_free() { sysctl -n kern.memorystatus_level 2>/dev/null; }
+
+# Reads load, level and free into _gl_l, _gl_p and _gl_f; succeeds when
+# all three admit a gate. An empty read admits.
+_gl_admit() {
+  _gl_l=$(_gl_load 2>/dev/null) _gl_p=$(_gl_level) _gl_f=$(_gl_free)
+  [ -z "${_gl_l%.*}" ] || [ "${_gl_l%.*}" -lt "$GATE_LOCK_LOAD" ] || return 1
+  [ -z "$_gl_p" ] || [ "$_gl_p" -le 1 ] && return 0
+  [ "$_gl_p" -eq 2 ] && { [ -z "$_gl_f" ] || [ "$_gl_f" -ge "$GATE_LOCK_FREE" ]; }
+}
+
+gate_wait() {
+  until _gl_admit; do sleep "$GATE_LOCK_POLL"; done
+  echo "gate_wait: load $_gl_l, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free"
+}
+
 gate_take() {
   _gl_dir || return 1
   _gl_wt=${2:-${1:-}}
@@ -103,12 +125,11 @@ gate_take() {
       rm -f "$_gl_t"
     done
     [ "$_gl_head" = "$_gl_ticket" ] || { sleep "$GATE_LOCK_POLL"; continue; }
-    _gl_l=$(_gl_load)
-    [ "${_gl_l%.*}" -lt "$GATE_LOCK_LOAD" ] || { sleep "$GATE_LOCK_POLL"; continue; }
+    _gl_admit || { sleep "$GATE_LOCK_POLL"; continue; }
     if mkdir "$_gl_lock" 2>/dev/null; then
       echo "$$ $(date +%s) $_gl_wt" > "$_gl_lock/owner"
       rm -f "$_gl_ticket"
-      echo "gate.lock taken by $$ at load $_gl_l"
+      echo "gate.lock taken by $$ at load $_gl_l, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free"
       return 0
     fi
     _gl_pid=""
