@@ -279,8 +279,8 @@ them.
       ```
 
       Where it prints `ahead`, a pull request whose only red check is
-      this one is not held by it and takes no `blocked` label. *The
-      decision*'s ACK item says what the missing ACK means.
+      this one takes no `blocked` label. *The decision*'s ACK item says
+      what the missing ACK means.
 
 - **The bot's review is answered like any other**, iterating to an ACK
   that names the current head.
@@ -332,8 +332,10 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       select(.author.login == "claude" and .body != "")] | last |
       .body'`. While the bot is out of quota (a 429 with its reset
       ahead, read as *Rebase and CI* says), this item and the checks
-      item fail, and the approval goes to the human (*Where it is not
-      obvious*). The missing ACK does not stop their approval.
+      item fail, and the human decides (*Where it is not obvious*); on
+      the human's own pull request, another owner or `--land` does (*The
+      human's own pull request*). The missing ACK does not stop the
+      approval.
 - [ ] no review thread is unresolved, every page read (*What was
       raised*)
 - [ ] every item of *What was raised* is answered
@@ -441,8 +443,7 @@ the head sha, and each failed item with its measurement. The
 alternatives are: approve as it is; ask the author for changes, naming
 them, where the session cannot push to the branch; wait, naming on what
 or whom; close, where that is an option. Where only the bot's quota
-fails the items, the human may run a Claude review locally where they judge
-it useful.
+fails the items, the human may run a Claude review locally.
 Record it as a hold (the shared *When the human has to decide*). On
 "approve", approve as above, with a body saying it follows the human's
 decision. At night it is a deferred item (the shared *Night mode*).
@@ -452,7 +453,7 @@ decision. At night it is a deferred item (the shared *Night mode*).
 Where `--land` covers it (*Landing*), the session lands it once every
 item above holds but the first and the last four, as *Landing*
 qualifies them. Without `--land`, another owner decides; once the same
-items hold, the two a 429 fails excepted:
+items hold, except the two a 429 fails:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
