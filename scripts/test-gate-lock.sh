@@ -39,7 +39,8 @@ mkdir "$tmp/scratchpad-A" "$tmp/scratchpad-B"
 session() { # <name> <scratchpad> <seconds held>
   exec sh -c '
     . "$1"
-    _gl_load() { cat "$6"; }
+    load=$6
+    _gl_load() { cat "$load"; }
     _gl_level() { echo 1; }
     _gl_free() { echo 50; }
     echo "$(date +%s) $2 asks" >> "$4"

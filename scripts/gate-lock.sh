@@ -96,7 +96,7 @@ _gl_admit() {
 
 gate_wait() {
   until _gl_admit; do sleep "$GATE_LOCK_POLL"; done
-  echo "gate_wait: load $_gl_l, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free"
+  echo "gate_wait: load ${_gl_l:-?}, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free"
 }
 
 gate_take() {
@@ -129,7 +129,7 @@ gate_take() {
     if mkdir "$_gl_lock" 2>/dev/null; then
       echo "$$ $(date +%s) $_gl_wt" > "$_gl_lock/owner"
       rm -f "$_gl_ticket"
-      echo "gate.lock taken by $$ at load $_gl_l, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free"
+      echo "gate.lock taken by $$ at load ${_gl_l:-?}, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free"
       return 0
     fi
     _gl_pid=""
