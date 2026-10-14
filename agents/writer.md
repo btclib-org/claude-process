@@ -67,10 +67,8 @@ Facts, not reassurances:
   and rebasing* holds the push; `git log --format='%h %G? %GS'` over
   the range;
 - each gate's command and **exit code**, the counts the runner prints,
-  and the load, the memory pressure level and the percentage of memory
-  free at each run (`sysctl -n kern.memorystatus_vm_pressure_level
-  kern.memorystatus_level`); where a run fell and a later one passed,
-  both;
+  and the load and the memory pressure level at each run (*The gates*);
+  where a run fell and a later one passed, both;
 - `git status --porcelain` empty, checked after the last gate;
 - the decisions you took and their ground, departures from the brief
   first;

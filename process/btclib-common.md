@@ -450,10 +450,10 @@ stated.
 **A pointer keeps every condition of the text it replaces**: the target
 states each one, or the condition stays where it was.
 
-**The organization's copies are in the list.** The files section 14 of
-`btclib-org/.github`'s `README.md` lists as copied verbatim state rules
-too. A copy the change cannot touch is filed there as collateral
-(*Collateral*).
+**The organization's copies are in the list.** Section 14 of
+`btclib-org/.github`'s `README.md` lists the files copied verbatim into
+every tree, and their rules count too. A copy the change cannot touch is
+filed there as collateral (*Collateral*).
 
 ### What the prose that lands may say
 
@@ -775,9 +775,10 @@ run and another bot run.
   prompt says about gates, the fresh reviewer follows *The gates are the
   writer's* instead. It posts nothing; its verdict is as *The verdict*
   says.
-- The bot runs only `gh pr view`, `gh pr diff` and `gh issue view`, so
-  it answers `NO VERDICT` where a decision rests on a query the diff
-  adds. The body of a pull request that adds one holds runs the bot can
+- The bot's commands are `gh pr view`, `gh pr diff` and `gh issue view`,
+  and what the tree's `claude-review.yml` adds as `extra-allowed-tools`.
+  It answers `NO VERDICT` where a decision rests on a query the diff
+  adds that none of them runs. The body of a pull request that adds one holds runs the bot can
   repeat with `gh pr view`.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
