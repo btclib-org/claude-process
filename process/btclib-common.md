@@ -99,11 +99,13 @@ These bind the writer, the reviewer and the orchestrator alike.
   reviewers run side by side, within the machine's CPU load, memory
   pressure and free disk (*The gates*, *Before starting*).
 - **The machine is shared.** Heavy local work — a suite, the hooks, a
-  docs build — runs one gate at a time, under the gate lock, as *The
-  gates* says. Everything else runs in parallel while one worker gates.
-  Targeted test runs use `-n 0` or `-n 2`, never `-n auto`; the whole
-  suite runs as the tree's gate says. Other sessions' processes are not
-  yours to kill.
+  docs build — runs under the gate lock, up to three workers at once, as
+  *The gate lock* says. Everything else runs in parallel with the gates.
+  Targeted test runs use `-n 0` or `-n 2`, never `-n auto`. The whole
+  suite runs as the tree's gate says; where the tree runs it under
+  pytest-xdist, with `-n "$GATE_LOCK_WORKERS"` (*The gate lock*), which
+  overrides an `-n auto` in its `addopts`. Other sessions' processes are
+  not yours to kill.
 
 ### Where you work
 
@@ -409,7 +411,8 @@ does it before briefing anybody.
   killing it is not yours (*The machine is shared*).
 - **Look at the free disk** before cloning, building or adding a
   worktree: `df -g <scratchpad>`. Under 30 GB available, stop and tell
-  the human.
+  the human: work not yet started needs room to clone and build. A gate
+  on work already started runs down to `GATE_LOCK_DISK`, 20 GB.
 
 ## Writing work
 
@@ -542,19 +545,20 @@ the orchestrator in the pull request.
   out load first; measure the rate on a quiet machine, then open an
   issue. A branch that fails differently on every run cannot land,
   whatever the last run says.
-- **Every worker that gates reports the load, the memory pressure level
-  and the percentage of memory free at each run**, a reviewer running the
-  gates itself included.
+- **Every worker that gates reports the load, the memory pressure level,
+  the percentage of memory free and the disk free at each run**, a
+  reviewer running the gates itself included.
 - **Call `gate_wait` before each heavy gate**: the suite, the hooks and
   the docs build, inside the lock (*The gate lock*). `gate_take` waits
-  once, at the start, and the load and the memory move while a
-  worker holds the lock. `gate_wait` returns once the 1-minute load is
-  under `GATE_LOCK_LOAD` (20) and memory is admissible: pressure level 1,
-  or level 2 with `GATE_LOCK_FREE` (30) percent or more of memory free,
-  never level 4 (macOS answers `1` normal, `2` warn, `4` critical).
-  Where a read fails, as off macOS, it does not wait on that read. It
-  prints the load, the level and the percentage free, which the report
-  copies.
+  once, at the start, and the load, the memory and the disk move while a
+  worker holds a slot. `gate_wait` returns once the 1-minute load is
+  under `GATE_LOCK_LOAD`, `GATE_LOCK_DISK` GB or more of disk is free
+  where `$GATE_LOCK_DIR` sits (*Before starting*), and memory is
+  admissible: pressure level 1, or level 2 with `GATE_LOCK_FREE` (30)
+  percent or more of memory free, never level 4 (macOS answers `1`
+  normal, `2` warn, `4` critical). Where a read fails, as off macOS, it does not
+  wait on that read. It prints the load, the level, the percentage free
+  and the disk free, which the report copies.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
   worktree, the same name on every run of that branch. A teardown
   `OSError` or `FileNotFoundError` on `popen-gw*` is a neighbour's run on
@@ -574,14 +578,21 @@ the orchestrator in the pull request.
   `os-macos.yml` where macOS is in question. Which sweeps a tree has,
   and what its pull requests already cover, is read from
   `.github/workflows/` on `origin/main`.
-- **The gate lock.** One worker gates at a time: the suite, the hooks,
-  the docs build and any load generator. The lock and its queue sit in
-  one directory shared by every session, `$GATE_LOCK_DIR`, by default
-  `/tmp/claude-<uid>/gate`. Release the lock the moment the gates
-  finish. The lock is taken and released only
-  through `~/.claude/scripts/gate-lock.sh`, sourced in the same
-  background shell call as the gates (*Long jobs run in the background*),
-  never by a hand-written `mkdir` or `rmdir`:
+- **The gate lock.** Up to three workers gate at once, each holding one
+  of the lock's slots, while it runs the suite, the hooks, the docs
+  build or a load generator. `GATE_LOCK_SLOTS` sets how many, 3 by
+  default. The defaults follow the core count, so that the rule holds
+  on another machine: `GATE_LOCK_LOAD` is 1.5 times the cores (15 on
+  10), and `GATE_LOCK_WORKERS`, the `-n` of a suite, is the cores
+  divided by the slots (3 on 10). The slots and their queue sit in one
+  directory shared by every session, `$GATE_LOCK_DIR`, by default
+  `/tmp/claude-<uid>/gate`.
+  The first slot is the directory `gate.lock`, the others `gate.lock.2`,
+  `gate.lock.3` and so on. Release the slot the moment the gates finish.
+  A slot is taken and released only through
+  `~/.claude/scripts/gate-lock.sh`, sourced in the same background shell
+  call as the gates (*Long jobs run in the background*), never by a
+  hand-written `mkdir` or `rmdir`:
 
   ```shell
   . ~/.claude/scripts/gate-lock.sh
@@ -592,18 +603,18 @@ the orchestrator in the pull request.
   }
   ```
 
-  `gate_take` writes its shell's PID into the lock, and `gate_release`
-  removes only a lock holding that PID. A lock whose holder's process is
-  gone is stale, and `gate_take` removes it itself, by renaming the owner
-  file first, which only one waiter wins. No session removes a
-  lock any other way: a failed `mkdir` or an old lock says nothing
-  about whose it is. A lock with no owner file — a hand `mkdir`, or one
+  `gate_take` writes its shell's PID into the slot, and `gate_release`
+  removes only the slot holding that PID. A slot whose holder's process
+  is gone is stale, and `gate_take` removes it itself, by renaming the
+  owner file first, which only one waiter wins. No session removes a
+  slot any other way: a failed `mkdir` or an old slot says nothing
+  about whose it is. A slot with no owner file — a hand `mkdir`, or one
   a waiter killed mid-reclaim left with only a `stale.<pid>` in it — is
-  never reclaimed. The human removes it, after checking that no gate
-  runs:
+  never reclaimed. The human removes it by its directory name, after
+  checking that no gate runs in it:
 
   ```shell
-  rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}/gate.lock"
+  rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/<slot>
   ```
 
   The script is POSIX `sh`. Waiters queue in arrival order, each with a
@@ -611,17 +622,21 @@ the orchestrator in the pull request.
   process is gone. The one first in line waits as `gate_wait` does
   (*Call `gate_wait` before each heavy gate*; the load is read under
   `LC_ALL=C` because some locales print a decimal comma) and then takes
-  the lock, so that nobody holds it while only waiting. `gate_take` waits
-  for the load, the memory and the holder with no bound. A timeout on
-  the background call covers the gates, not `gate_take`. A holder that never
-  finishes keeps everyone waiting, and this names it:
+  the first free slot, so that nobody holds one while only waiting. It
+  takes none within `GATE_LOCK_STAGGER` (60) seconds of the last take
+  recorded in `gate.last`, so that the 1-minute load shows the gate just
+  started.
+  `gate_take` waits for the stagger, the load, the memory, the disk and
+  a free slot with no bound. A timeout on the background call covers the
+  gates, not `gate_take`. Holders that never finish keep everyone
+  waiting, and this names them:
 
   ```shell
-  cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}/gate.lock/owner"
+  cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.lock*/owner
   ```
 
   A load generator is killed by the PID you recorded, and `ps`
-  shows it gone before the lock is released.
+  shows it gone before the slot is released.
 
 ### Committing and rebasing
 
@@ -969,9 +984,9 @@ Rebase, run the gates, and push.
   The orchestrator may run on Opus.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
-- **Writing runs in parallel; gating does not** (*The machine is
-  shared*). A reviewer that runs the gates itself is briefed with *The
-  gates*.
+- **Writing runs in parallel; gating runs under the gate lock** (*The
+  machine is shared*). A reviewer that runs the gates itself is briefed
+  with *The gates*.
 - **A writer that has reported is sent nothing further until its
   reviewer has answered.**
 - **A session that runs long re-reads what can arrive meanwhile**
@@ -1022,7 +1037,7 @@ decision's alternatives.
   before the night or during it (`/btclib-pr`'s *Landing*).
 - **When nothing left can advance without an answer, the work stops
   and waits**, still in night mode. Nothing is left running: no worker
-  mid-turn, no background job. A lock left by a worker you stopped is
+  mid-turn, no background job. A slot left by a worker you stopped is
   stale (*The gate lock*). Worktrees of branches waiting on an answer
   stay standing. The morning report may be given then.
 

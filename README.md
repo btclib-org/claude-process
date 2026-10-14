@@ -24,8 +24,9 @@ The process the btclib-org maintainers follow with
 - `agents/reviewer.md` — the agent that reviews it at fresh context;
 - `scripts/gate-lock.sh` — the gate lock every worker of every session
   takes before its heavy gates;
-- `scripts/test-gate-lock.sh` — `sh scripts/test-gate-lock.sh` shows two
-  sessions taking that lock one after the other.
+- `scripts/test-gate-lock.sh` — `sh scripts/test-gate-lock.sh` shows
+  sessions taking that lock's slots, and waiting while every slot is
+  held.
 
 `process/btclib-common.md`'s opening says how these files divide the
 process.
