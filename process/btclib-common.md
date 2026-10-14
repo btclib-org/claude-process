@@ -799,11 +799,13 @@ run and another bot run.
   prompt says about gates, the fresh reviewer follows *The gates are the
   writer's* instead. It posts nothing; its verdict is as *The verdict*
   says.
-- The bot's commands are `gh pr view`, `gh pr diff` and `gh issue view`,
-  and what the tree's `claude-review.yml` adds as `extra-allowed-tools`.
-  It answers `NO VERDICT` where a decision rests on a query the diff
-  adds that none of them runs. The body of a pull request that adds one
-  holds runs the bot can repeat with `gh pr view`.
+- The bot's commands are `gh pr view`, `gh pr diff`, `gh issue view`,
+  `gh-get` (which reads a blob or a file from GitHub), and what the
+  tree's `claude-review.yml` adds as `extra-allowed-tools`. Where a
+  decision rests on a query the diff adds that none of them runs,
+  `REVIEWING.md`'s *The verdict* says what the bot answers. The body of
+  a pull request that adds one holds runs the bot can repeat with
+  `gh pr view`.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 
