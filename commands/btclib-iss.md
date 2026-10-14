@@ -98,13 +98,20 @@ open:**
       *Citations and closing keywords*)
 - [ ] the body carries one closing keyword per line, and the sweep finds
       no other
-- [ ] a reserved decision, if any, is the body's first paragraph
+- [ ] the body has the shape below: two short paragraphs, `## Evidence`,
+      and `## Decision` where a decision was reserved
 - [ ] `closingIssuesReferences` counts what you meant to close
 
 - **A change to `claude-review.yml` is its own pull request**: the bot
   does not review it (`/btclib-pr`'s *The human's own pull request*).
-- **The body also says which gates ran on the head**, with their exit
-  codes, and which rebase case the clearance is in.
+- **The body is two short paragraphs, then sections.** The paragraphs
+  say what the change does and why. The sections do not count against
+  the two-paragraph limit, and each stays short.
+- **`## Evidence` is a short table or list**: the gates that ran on the
+  head, with their exit codes; the rebase case the clearance is in; the
+  review.
+- **`## Decision` is there only where the issue reserved one**: it says
+  that the branch takes it, on what ground, and what the cut-back is.
 - **Count what GitHub will close**:
   `gh pr view <n> --json closingIssuesReferences --jq
   '.closingIssuesReferences | length'`. The field lags creation by
