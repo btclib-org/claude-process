@@ -748,19 +748,23 @@ branch, or a text to be posted.
   reviewer's `CLEARED`.
 - **Then a fresh reviewer reads the whole of it.** It is a new worker,
   started once the reviewer before it has cleared. Where its first
-  verdict is `CHANGES REQUESTED`, it stays until it clears, as above,
-  and then a further fresh reviewer reads the whole of it, unless every
-  fix since its first verdict changed only prose read by few.
-- **Prose read by few** is a comment in code, in a test, in a workflow
-  or in a config file, and a commit message. A docstring is not, nor is
-  any line of a Markdown file or of the documentation `docs/` builds:
-  those are read by everyone. A comment a tool reads (`noqa`,
-  `type: ignore`, `pragma`, `shellcheck`, `zizmor: ignore`, a pin
-  comment) is not prose. The orchestrator reads every added and removed line of
+  verdict is `CHANGES REQUESTED`, it stays until it clears, as above.
+  Where every fix since its first verdict is a prose-only fix, its
+  `CLEARED` ends the rounds; otherwise a further fresh reviewer reads
+  the whole of it.
+- **A prose-only fix** changes nothing but the commit message and, in
+  files that do not give instructions or rules (`/btclib-pr`'s *The
+  decision*), docstrings, comments, Markdown and the reStructuredText
+  pages `docs/` builds. A test's docstring is a docstring. A comment a
+  tool reads (`noqa`, `type: ignore`, `pragma`, `shellcheck`,
+  `zizmor: ignore`, a pin comment) is code. A doctest, in a docstring
+  or a docs page, is code. So is everything else, a test's code
+  included. The orchestrator reads every added and removed line of
   `git diff <sha of the first verdict> <cleared sha>`, or, where a
-  rebase came between, the `range-diff` of *A rebase and the clearance*.
+  rebase came between, the `range-diff` of *A rebase and the
+  clearance*, to check that each fix is a prose-only fix.
 - **The rounds end when a fresh reviewer's first verdict is `CLEARED`**,
-  or at the `CLEARED` that the exception above lets end them.
+  or at the `CLEARED` that the fresh-reviewer bullet above lets end them.
 - **The orchestrator checks that the rounds converge.** It keeps each
   verdict's findings, each marked open or closed, in a file in its
   scratch directory. The rounds do not converge where a closed finding
