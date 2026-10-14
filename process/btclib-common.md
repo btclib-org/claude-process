@@ -623,8 +623,8 @@ the orchestrator in the pull request.
   (*Call `gate_wait` before each heavy gate*; the load is read under
   `LC_ALL=C` because some locales print a decimal comma) and then takes
   the first free slot, so that nobody holds one while only waiting. It
-  takes none within `GATE_LOCK_STAGGER` (60) seconds of the last take by
-  a worker of this script, so that the 1-minute load shows the gate just
+  takes none within `GATE_LOCK_STAGGER` (60) seconds of the last take
+  recorded in `gate.last`, so that the 1-minute load shows the gate just
   started.
   `gate_take` waits for the stagger, the load, the memory, the disk and
   a free slot with no bound. A timeout on the background call covers the

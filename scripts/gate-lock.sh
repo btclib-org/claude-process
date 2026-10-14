@@ -21,9 +21,9 @@
 # $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
 # until its ticket is the oldest one whose process is alive. Then it waits,
 # as gate_wait does, and takes the first free slot, but not within
-# GATE_LOCK_STAGGER seconds of the last take by a worker of this script, so
-# that the 1-minute load shows the gate just started. The time of the last
-# take is the file gate.last in $GATE_LOCK_DIR, written aside and renamed. gate_wait waits
+# GATE_LOCK_STAGGER seconds of the last take recorded in gate.last, so that
+# the 1-minute load shows the gate just started. gate.last sits in
+# $GATE_LOCK_DIR and is written aside and renamed. gate_wait waits
 # until the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or more of
 # disk is free where $GATE_LOCK_DIR sits (/tmp when it is unset), and
 # memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
