@@ -333,9 +333,9 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       .body'`. While the bot is out of quota (a 429 with its reset
       ahead, read as *Rebase and CI* says), this item and the checks
       item fail, and the human decides (*Where it is not obvious*); on
-      the human's own pull request, another owner or `--land` does (*The
-      human's own pull request*). The missing ACK does not stop the
-      approval.
+      the human's own pull request, another owner or the session under
+      `--land` does (*The human's own pull request*). The missing ACK
+      does not stop the approval.
 - [ ] no review thread is unresolved, every page read (*What was
       raised*)
 - [ ] every item of *What was raised* is answered
