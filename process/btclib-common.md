@@ -36,6 +36,14 @@ session acts through their `gh` login and their signing key. *The
 author* of a pull request is the login that opened it. *The maintainer*
 is the one `btclib-org/.github`'s `GOVERNANCE.md` names, who takes the
 decisions the written rules leave open. They may be the same person.
+The maintainer's login is read from the repository's bypass actor:
+
+```shell
+gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
+  | xargs -I{} gh api repos/<owner>/<repo>/rulesets/{} \
+    --jq '.bypass_actors[]? | select(.actor_type=="User") | .actor_id' \
+  | sort -u | xargs -I{} gh api user/{} --jq .login
+```
 
 ## How an issue and a pull request are named
 
@@ -132,8 +140,8 @@ These bind the writer, the reviewer and the orchestrator alike.
   difference of one byte, a staged or committed change — is reported and
   left for the human.
 - **Every command that writes carries an explicit absolute path.** Shell
-  state does not survive between calls either (*Never open a command
-  with `cd`*), so `WT=…` in one call is empty in the next. A fresh
+  state does not survive between calls (*Never open a command with
+  `cd`*), so `WT=…` in one call is empty in the next. A fresh
   worktree and the checkout are byte-identical, so reads look right and
   only the write shows it. Use `git -C <abs>`, `env -C <abs>`, absolute
   paths in every edit, an explicit target for `git clone`; never a
@@ -397,8 +405,8 @@ does it before briefing anybody.
   reused, reinstalling the build first (a flagged build may be in its
   `.venv`).
 - **Look at the machine.** `uptime`, and `ps -eo pid,etime,pcpu,command |
-  sort -k3 -rn | head`. Report to the human anything that looks orphaned
-  (*The machine is shared*).
+  sort -k3 -rn | head`. Report to the human anything that looks orphaned;
+  killing it is not yours (*The machine is shared*).
 - **Look at the free disk** before cloning, building or adding a
   worktree: `df -g <scratchpad>`. Under 30 GB available, stop and tell
   the human.
@@ -438,6 +446,14 @@ section that holds the rule (*Write plainly*). The list goes in your
 report. The reviewer checks it is complete: its own grep finds no
 sentence the list missed, and it reads the files where the rule is
 stated.
+
+**A pointer keeps every condition of the text it replaces**: the target
+states each one, or the condition stays where it was.
+
+**The organization's copies are in the list.** The files section 14 of
+`btclib-org/.github`'s `README.md` lists as copied verbatim state rules
+too. A copy the change cannot touch is filed there as collateral
+(*Collateral*).
 
 ### What the prose that lands may say
 
@@ -481,6 +497,10 @@ the orchestrator in the pull request.
   issue by hand once it lands, with a comment listing every landing and
   the trees that needed nothing. Where the last tree goes back to review
   anyway, switch it in the same amend.
+- **An issue several pull requests of one repository advance is closed by
+  the one that meets its *Done when*.** That pull request carries
+  `(closes #N)`, even where each earlier one carried `(issue #N)`. Read
+  the *Done when* against the branch before choosing the word.
 - **GitHub reads a word, not a sentence.** Close, closes, closed, fix,
   fixes, fixed, resolve, resolves and resolved all arm the reference
   adjacent to them, adjective included, and "this does not close #N"
@@ -755,6 +775,10 @@ run and another bot run.
   prompt says about gates, the fresh reviewer follows *The gates are the
   writer's* instead. It posts nothing; its verdict is as *The verdict*
   says.
+- The bot runs only `gh pr view`, `gh pr diff` and `gh issue view`, so
+  it answers `NO VERDICT` where a decision rests on a query the diff
+  adds. The body of a pull request that adds one holds runs the bot can
+  repeat with `gh pr view`.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 

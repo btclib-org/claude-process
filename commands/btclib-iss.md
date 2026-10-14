@@ -14,6 +14,11 @@ author (*Following it*).
 says what it holds and what this file holds. What the session writes,
 and this file, follow its *Write plainly*.
 
+**Where $ARGUMENTS names no issue, ask the human which, before reading
+anything**: no tracker, no checkout, and no earlier context stands in for
+the answer. Where the repository is not named either, that question comes
+first (the shared *Where you work*).
+
 GitHub numbers issues and pull requests together, so `gh pr view <n>`
 says which a number is. A pull request among the arguments is
 `/btclib-pr`'s: skip it and tell the human.
@@ -115,11 +120,9 @@ restated here: *What was raised*, *Answering it*, *Rebase and CI*,
 *The human's own pull request*, and *Landing*'s first four bullets and
 its *Check what landed*. Under `--land`, all of *Landing* applies.
 
-- **The collateral has numbers, and goes back now** (the shared
-  *Collateral*), before anything new starts.
-- **Remove the worktrees once the pull request has landed, or once the
-  session hands it over to whom it waits on** — yours, and tell the
-  writer to remove its own.
+- **The `/btclib-pr` *Landing* bullets on the collateral and on the
+  worktrees hold here**, and the worktrees are also removed once the
+  session hands the pull request over to whom it waits on.
 - **Report to the human** each pull request as a `PR` link, what it
   closes, and whom it waits on or that it landed. What arrives after
   the session ends — a review, a conflict with `main` — is
