@@ -179,30 +179,26 @@ pull request, item by item.
 
 ### Another person's branch
 
-**On another person's pull request, minor changes are the session's and
-substantial ones are the author's.**
+**Where the session can push to the pull request's branch, it makes
+every fix the approval needs itself**, blocking findings and nits alike
+(the maintainer, 2026-10-14). There is no split between minor and
+substantial changes. A reviewer's suggestion is applied the same way.
 
-- **Minor**: the rebase, a reviewer's suggestion
-  applied as written, a typo, a lint or format fix, a red check whose fix
-  changes no behaviour, a few lines that take no decision.
-- **Substantial**: anything that changes behaviour, an interface, the
-  design, or what the pull request says it does — and anything the
-  session is not sure is minor.
+The fixes are new signed, signed-off commits on top (the shared
+*Committing and rebasing*). A fresh reviewer's `CLEARED` on the new head
+comes before the decision. A choice the tree does not settle — design,
+scope, a reserved decision — goes to the human or the maintainer, as the
+shared *When the human has to decide* says.
 
-A substantial item is posted to the author as a review comment, with a
-suggestion where it is a few lines and what would settle it otherwise.
-The pull request then waits on them, recorded as a hold.
+Before pushing, the session claims the branch (the shared *A claim holds
+a pull request's branch*), and pushes with the lease of the shared
+*Committing and rebasing*, on the sha it built on. A branch claimed by
+another session is not pushed to. Where the branch moved, the author is
+working: stop and ask.
 
-**On the maintainer's pull request, worked by another owner,
-substantial changes are the session's too** (the maintainer,
-2026-10-11). A change that takes a decision goes to the maintainer, as
-the shared *When the human has to decide* says. The owners are those
-*The human's own pull request* lists.
-
-Before pushing to another person's branch, the session claims it (the
-shared *A claim holds a pull request's branch*), and the push is the
-lease push of the shared *Committing and rebasing*, on the sha you built
-on. Where the branch moved, they are working: stop and ask.
+Where the session cannot push, the findings are posted to the author as
+a review comment, with a suggestion where the fix is a few lines. The
+pull request then waits on them, recorded as a hold.
 
 ## Rebase and CI
 
@@ -521,11 +517,10 @@ reviews it against `REVIEWING.md`; the orchestrator delivers the
 findings on the pull request, warmly: thanks first, what is right before
 what is missing, a one-click suggestion where the fix is a few lines.
 
-**It is completed in place where that is useful and possible**, on the
-maintainer's standing instruction: useful where what is missing is small
-enough that finishing it beats another round trip; possible where
-`maintainerCanModify` is `true`. Otherwise the findings are delivered
-and the session waits. Where a branch of ours must land first and
+**It is completed in place where `maintainerCanModify` is `true`**,
+every fix the approval needs, as *Another person's branch* says (the
+maintainer, 2026-10-14). Otherwise the findings are delivered and the
+session waits. Where a branch of ours must land first and
 touches their lines, the maintainer decides the order, and the
 contributor is told on their pull request what moved and how to resolve
 it. Completing it:
