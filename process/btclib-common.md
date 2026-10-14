@@ -752,17 +752,20 @@ branch, or a text to be posted.
   Where every fix since its first verdict is a prose-only fix, its
   `CLEARED` ends the rounds; otherwise a further fresh reviewer reads
   the whole of it.
-- **A prose-only fix** changes nothing but the commit message and, in
-  files that do not give instructions or rules (`/btclib-pr`'s *The
-  decision*), docstrings, comments, Markdown and the reStructuredText
-  pages `docs/` builds. A test's docstring is a docstring. A comment a
-  tool reads (`noqa`, `type: ignore`, `pragma`, `shellcheck`,
-  `zizmor: ignore`, a pin comment) is code. A doctest, in a docstring
-  or a docs page, is code. So is everything else, a test's code
-  included. The orchestrator reads every added and removed line of
-  `git diff <sha of the first verdict> <cleared sha>`, or, where a
-  rebase came between, the `range-diff` of *A rebase and the
-  clearance*, to check that each fix is a prose-only fix.
+- **A prose-only fix** changes nothing but the commit message, a text
+  to be posted (a comment, a pull request body, a reply) and, in files
+  that do not give instructions or rules as the checklist of
+  `/btclib-pr`'s *The decision* measures it, docstrings, comments,
+  Markdown and the reStructuredText pages `docs/` builds. The readme a
+  package publishes is prose here, though that checklist flags it. Every
+  file under `.github/` is code. A test's docstring is a docstring. A
+  comment a tool reads (`noqa`, `type: ignore`, `pragma`, `shellcheck`,
+  `zizmor: ignore`, a pin comment) is code. A doctest, in a docstring or
+  a docs page, is code. So is everything else, a test's code included.
+  The orchestrator reads every added and removed line of `git diff <sha
+  of the first verdict> <cleared sha>`, or, where a rebase came between,
+  the `range-diff` of *A rebase and the clearance*, to check that each
+  fix is a prose-only fix.
 - **The rounds end when a fresh reviewer's first verdict is `CLEARED`**,
   or at the `CLEARED` that the fresh-reviewer bullet above lets end them.
 - **The orchestrator checks that the rounds converge.** It keeps each
