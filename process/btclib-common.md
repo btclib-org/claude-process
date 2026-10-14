@@ -339,9 +339,11 @@ the repository has it. A question put to the human or the maintainer
 takes `decision`; an external impediment that keeps it from landing,
 named in the comment, takes `blocked`; a pause the human decided takes
 `on-hold`. An awaited review takes no label: the review request shows
-it. A wait on an exhausted review quota is recorded as `/btclib-pr`'s
-*Rebase and CI* says. A hold kept only in the session's context does
-not exist, and another session will take the work.
+it. A wait on the author's changes takes none either: the review that
+asked for them shows it. A wait on an exhausted review quota is
+recorded as `/btclib-pr`'s *Rebase and CI* says. A hold kept only in
+the session's context does not exist, and another session will take the
+work.
 
 ### Which prose is worth a round
 
