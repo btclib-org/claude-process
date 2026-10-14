@@ -290,45 +290,11 @@ on. Where the branch moved, they are working: stop and ask.
       gh run rerun --repo <owner>/<repo> --failed <run id>
       ```
 
-      Where it prints `ahead`, the quota is held. The quota is the
-      organization's, so it is held once, in one open, pinned issue in
-      `btclib-org/.github` titled
-      `Review quota exhausted, resets <reset> UTC`. The title carries
-      the reset so that a reader can tell whether it has passed. Look
-      for the issue:
-
-      ```shell
-      gh issue list --repo btclib-org/.github --state open \
-        --search 'in:title "Review quota exhausted"' --json number,title
-      ```
-
-      Where it lists none, open it:
-
-      ```shell
-      gh issue create --repo btclib-org/.github \
-        --title "Review quota exhausted, resets ${reset:?} UTC" \
-        --body 'Claude review fails with 429 until the reset in the title.'
-      ```
-
-      Pin it, with the URL that command printed:
-
-      ```shell
-      gh issue pin <url>
-      ```
-
-      Where it lists one whose title gives another reset, update the
-      title:
-
-      ```shell
-      gh issue edit --repo btclib-org/.github \
-        --title "Review quota exhausted, resets ${reset:?} UTC" <number>
-      ```
-
-      The issue stays open and pinned from one quota to the next. A pull
-      request whose only red check is this one waits on it: its hold
-      comment links the issue, and it takes no `blocked` label. Whether
-      it lands before the reset is decided as *The decision* and
-      *Landing* say. After the reset, the check above prints `passed`.
+      Where it prints `ahead`, a pull request whose only red check is
+      this one waits for the reset, and takes no `blocked` label. Its
+      hold comment names the reset. Whether it lands before then is
+      decided as *The decision* and *Landing* say; after the reset, the
+      check above prints `passed`.
 
 - **The bot's review is answered like any other**, iterating to an ACK
   that names the current head.
