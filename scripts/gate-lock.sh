@@ -202,11 +202,16 @@ gate_take() {
         sleep 1
     }
     _gl_head=""
-    for _gl_t in "$_gl_queue"/*; do
+    # listed rather than globbed: zsh stops at a glob with no match. The
+    # names are digits and a dot, so each line is one whole name.
+    while read -r _gl_t; do
+      _gl_t="$_gl_queue/$_gl_t"
       [ -f "$_gl_t" ] || continue
       if _gl_alive "$_gl_t"; then _gl_head=$_gl_t; break; fi
       rm -f "$_gl_t"
-    done
+    done <<EOF
+$(ls "$_gl_queue" 2>/dev/null)
+EOF
     [ "$_gl_head" = "$_gl_ticket" ] || { sleep "$GATE_LOCK_POLL"; continue; }
     if ! { _gl_spaced && _gl_admit; }; then sleep "$GATE_LOCK_POLL"; continue; fi
     _gl_i=1 _gl_freed=""
@@ -232,8 +237,11 @@ gate_release() {
   while [ "$_gl_i" -lt 5 ]; do
     # a slot with no owner file may be ours, its file renamed by a waiter
     # that is about to put it back
-    _gl_unowned=""
-    for _gl_s in "$_gl_d"/gate.lock "$_gl_d"/gate.lock.*; do
+    _gl_unowned="" _gl_n=1
+    # counted rather than globbed: zsh stops at a glob with no match
+    while [ "$_gl_n" -le "$GATE_LOCK_SLOTS" ]; do
+      _gl_slot "$_gl_n"
+      _gl_n=$((_gl_n + 1))
       [ -d "$_gl_s" ] || continue
       _gl_pid=""
       [ -r "$_gl_s/owner" ] && read -r _gl_pid _ < "$_gl_s/owner"
