@@ -181,24 +181,17 @@ pull request, item by item.
 
 **Where the session can push to the pull request's branch, it makes
 every fix the approval needs itself**, blocking findings and nits alike
-(the maintainer, 2026-10-14). There is no split between minor and
-substantial changes. A reviewer's suggestion is applied the same way.
-
-The fixes are new signed, signed-off commits on top (the shared
-*Committing and rebasing*). A fresh reviewer's `CLEARED` on the new head
-comes before the decision. A choice the tree does not settle — design,
-scope, a reserved decision — goes to the human or the maintainer, as the
-shared *When the human has to decide* says.
+(the maintainer, 2026-10-14): every item is answered as *Answering it*
+says, with no split between minor and substantial changes.
 
 Before pushing, the session claims the branch (the shared *A claim holds
-a pull request's branch*), and pushes with the lease of the shared
-*Committing and rebasing*, on the sha it built on. A branch claimed by
-another session is not pushed to. Where the branch moved, the author is
-working: stop and ask.
+a pull request's branch*) and pushes with the lease of the shared
+*Committing and rebasing*, on the sha it built on. Where the branch
+moved, they are working: stop and ask.
 
-Where the session cannot push, the findings are posted to the author as
-a review comment, with a suggestion where the fix is a few lines. The
-pull request then waits on them, recorded as a hold.
+Where the session has no write access to the branch, the findings are
+posted to the author as a review comment, and the pull request waits on
+them.
 
 ## Rebase and CI
 
@@ -479,7 +472,8 @@ the branch, and report whom it waits on.
 shared *When the human has to decide*). Its context is the `PR` link,
 the head sha, and each failed item with its measurement. The
 alternatives are: approve as it is; ask the author for changes, naming
-them; wait, naming on what or whom; close, where that is an option.
+them, where the session cannot push to the branch; wait, naming on what
+or whom; close, where that is an option.
 Record it as a hold (the shared *When the human has to decide*). On
 "approve", approve as above, with a body saying it follows the human's
 decision. At night it is a deferred item (the shared *Night mode*).
@@ -513,17 +507,17 @@ the landing is armed without the bot's ACK, every other check green.
 ## Outside contributors
 
 Its issue stays theirs, and no competing branch is opened. The reviewer
-reviews it against `REVIEWING.md`; the orchestrator delivers the
-findings on the pull request, warmly: thanks first, what is right before
-what is missing, a one-click suggestion where the fix is a few lines.
+reviews it against `REVIEWING.md`.
 
 **It is completed in place where `maintainerCanModify` is `true`**,
-every fix the approval needs, as *Another person's branch* says (the
-maintainer, 2026-10-14). Otherwise the findings are delivered and the
-session waits. Where a branch of ours must land first and
-touches their lines, the maintainer decides the order, and the
-contributor is told on their pull request what moved and how to resolve
-it. Completing it:
+with every fix the approval needs, blocking findings and nits alike
+(the maintainer, 2026-10-14), as the bullets below say. Otherwise the
+orchestrator delivers the findings on the pull request, warmly: thanks
+first, what is right before what is missing, a one-click suggestion
+where the fix is a few lines. The session then waits. Where a branch of
+ours must land first and touches their lines, the maintainer decides the
+order, and the contributor is told on their pull request what moved and
+how to resolve it. Completing it:
 
 - **Add, never rewrite.** Their commits stay byte for byte. `main` comes
   in by a signed merge, not a rebase. The fixes are a
