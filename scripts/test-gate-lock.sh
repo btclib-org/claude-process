@@ -30,8 +30,8 @@
 #   calls gate_wait, and must return from it only after the test lowers
 #   the load.
 # - Spacing. With GATE_LOCK_STAGGER at 4 seconds, two sessions ask at once
-#   with a slot free for each. The second takes its slot 4 seconds or more
-#   after the first.
+#   with a slot free for each. The stamps in gate.last that the two takes
+#   write are 4 seconds or more apart.
 # - Defaults. Sourced with no GATE_LOCK_LOAD, GATE_LOCK_SLOTS or
 #   GATE_LOCK_WORKERS and a core count stubbed, the script sets the load to
 #   1.5 times the cores, and the workers to the cores divided by the slots,
@@ -86,6 +86,7 @@ holder() {
     echo $$ > "$4/pid-$2"
     echo "$(date +%s) $2 asks" >> "$3"
     gate_take "wt-$2" > "$4/out-$2" || exit 1
+    cp "$GATE_LOCK_DIR/gate.last" "$4/last-$2" 2>/dev/null
     echo "$(date +%s) $2 taken" >> "$3"
     until [ -f "$4/go-$2" ]; do sleep 1; done
     gate_release >/dev/null || exit 1
@@ -209,8 +210,10 @@ sleep 1
 [ "$(grep -c ' taken$' "$tmp/events")" -eq 1 ] ||
   fail "a second session took a slot within the stagger of the first"
 await ' taken$' 2 "the second session never took a slot"
-t1=$(grep ' taken$' "$tmp/events" | sed -n 1p | cut -d' ' -f1)
-t2=$(grep ' taken$' "$tmp/events" | sed -n 2p | cut -d' ' -f1)
+# the times the takes were stamped, which gate_take returns after
+t1=$(cat "$tmp/last-K")
+t2=$(cat "$tmp/last-L")
+[ "$t1" -le "$t2" ] || { t=$t1; t1=$t2; t2=$t; }
 [ $((t2 - t1)) -ge "$GATE_LOCK_STAGGER" ] ||
   fail "the takes were $((t2 - t1)) seconds apart, under the stagger of $GATE_LOCK_STAGGER"
 echo "ok: the second take came $((t2 - t1)) seconds after the first, the stagger being $GATE_LOCK_STAGGER"

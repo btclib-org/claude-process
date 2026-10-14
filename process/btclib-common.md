@@ -102,9 +102,10 @@ These bind the writer, the reviewer and the orchestrator alike.
   docs build — runs under the gate lock, up to three workers at once, as
   *The gate lock* says. Everything else runs in parallel with the gates.
   Targeted test runs use `-n 0` or `-n 2`, never `-n auto`. The whole
-  suite runs with `-n "$GATE_LOCK_WORKERS"` (*The gate lock*), which
-  replaces the `-n auto` that some trees' `addopts` hold. Other
-  sessions' processes are not yours to kill.
+  suite runs as the tree's gate says; where the tree runs it under
+  pytest-xdist, with `-n "$GATE_LOCK_WORKERS"` (*The gate lock*), which
+  overrides an `-n auto` in its `addopts`. Other sessions' processes are
+  not yours to kill.
 
 ### Where you work
 
@@ -410,9 +411,8 @@ does it before briefing anybody.
   killing it is not yours (*The machine is shared*).
 - **Look at the free disk** before cloning, building or adding a
   worktree: `df -g <scratchpad>`. Under 30 GB available, stop and tell
-  the human. Work not yet started needs room to clone and build, so it
-  stops at 30 GB; a gate on work already started runs down to
-  `GATE_LOCK_DISK`, 20 GB.
+  the human: work not yet started needs room to clone and build. A gate
+  on work already started runs down to `GATE_LOCK_DISK`, 20 GB.
 
 ## Writing work
 
@@ -552,12 +552,11 @@ the orchestrator in the pull request.
   the docs build, inside the lock (*The gate lock*). `gate_take` waits
   once, at the start, and the load, the memory and the disk move while a
   worker holds a slot. `gate_wait` returns once the 1-minute load is
-  under `GATE_LOCK_LOAD`, `GATE_LOCK_DISK` GB or more of disk
-  is free where `$GATE_LOCK_DIR` sits (*Before starting*), and memory is
-  admissible:
-  pressure level 1, or level 2 with `GATE_LOCK_FREE` (30) percent or
-  more of memory free, never level 4 (macOS answers `1` normal, `2`
-  warn, `4` critical). Where a read fails, as off macOS, it does not
+  under `GATE_LOCK_LOAD`, `GATE_LOCK_DISK` GB or more of disk is free
+  where `$GATE_LOCK_DIR` sits (*Before starting*), and memory is
+  admissible: pressure level 1, or level 2 with `GATE_LOCK_FREE` (30)
+  percent or more of memory free, never level 4 (macOS answers `1`
+  normal, `2` warn, `4` critical). Where a read fails, as off macOS, it does not
   wait on that read. It prints the load, the level, the percentage free
   and the disk free, which the report copies.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
@@ -625,11 +624,12 @@ the orchestrator in the pull request.
   `LC_ALL=C` because some locales print a decimal comma) and then takes
   the first free slot, so that nobody holds one while only waiting. It
   takes none within `GATE_LOCK_STAGGER` (60) seconds of the last take by
-  anyone, so that the 1-minute load shows the gate just started.
+  a worker of this script, so that the 1-minute load shows the gate just
+  started.
   `gate_take` waits for the stagger, the load, the memory, the disk and
   a free slot with no bound. A timeout on the background call covers the
-  gates, not `gate_take`. Holders that never finish keep everyone waiting, and this
-  names them:
+  gates, not `gate_take`. Holders that never finish keep everyone
+  waiting, and this names them:
 
   ```shell
   cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.lock*/owner

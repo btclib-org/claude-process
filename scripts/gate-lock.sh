@@ -21,9 +21,9 @@
 # $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
 # until its ticket is the oldest one whose process is alive. Then it waits,
 # as gate_wait does, and takes the first free slot, but not within
-# GATE_LOCK_STAGGER seconds of the last take by anyone, so that the 1-minute
-# load shows the gate just started. The time of the last take is the file
-# gate.last in $GATE_LOCK_DIR, written aside and renamed. gate_wait waits
+# GATE_LOCK_STAGGER seconds of the last take by a worker of this script, so
+# that the 1-minute load shows the gate just started. The time of the last
+# take is the file gate.last in $GATE_LOCK_DIR, written aside and renamed. gate_wait waits
 # until the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or more of
 # disk is free where $GATE_LOCK_DIR sits (/tmp when it is unset), and
 # memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
@@ -69,6 +69,7 @@ _gl_ncpu() {
 # The load and the workers follow the cores, so that they hold on any machine
 _gl_cpus=$(_gl_ncpu)
 GATE_LOCK_SLOTS=${GATE_LOCK_SLOTS:-3}
+[ "$GATE_LOCK_SLOTS" -ge 1 ] 2>/dev/null || GATE_LOCK_SLOTS=1
 GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-$((_gl_cpus * 3 / 2))}
 GATE_LOCK_WORKERS=${GATE_LOCK_WORKERS:-$((_gl_cpus / GATE_LOCK_SLOTS))}
 [ "$GATE_LOCK_WORKERS" -ge 1 ] || GATE_LOCK_WORKERS=1
@@ -141,15 +142,15 @@ _gl_spaced() {
   _gl_last=""
   [ -r "$_gl_d/gate.last" ] && read -r _gl_last < "$_gl_d/gate.last"
   case $_gl_last in
-    "" | *[!0-9]*) return 0 ;;
+    "" | *[!0-9]* | 0?* | ???????????*) return 0 ;;
   esac
   _gl_gap=$(($(date +%s) - _gl_last))
   [ "$_gl_gap" -lt 0 ] || [ "$_gl_gap" -ge "$GATE_LOCK_STAGGER" ]
 }
 
-# Records now as the time of the last take. Only the head of the queue
-# takes, so the writes do not race; the rename keeps a reader from a half
-# written file.
+# Records now as the time of the last take. It is written before the ticket
+# is removed, so that the next head reads it. The rename keeps a reader from
+# a half written file.
 _gl_stamp() {
   date +%s > "$_gl_d/.last.$$" && mv "$_gl_d/.last.$$" "$_gl_d/gate.last"
 }
@@ -194,7 +195,11 @@ gate_take() {
     [ -f "$_gl_ticket" ] || {
       mkdir -p "$_gl_queue" &&
       printf '%s\n%s\n%s\n' "$$" "$_gl_start" "$_gl_wt" > "$_gl_queue/.$$" &&
-        mv "$_gl_queue/.$$" "$_gl_ticket"
+        mv "$_gl_queue/.$$" "$_gl_ticket" &&
+        # long enough for a ticket written at the same moment to be seen
+        # by the first scan, so that two new waiters do not both find
+        # themselves at the head
+        sleep 1
     }
     _gl_head=""
     for _gl_t in "$_gl_queue"/*; do
