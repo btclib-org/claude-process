@@ -735,9 +735,18 @@ branch, or a text to be posted.
 - **Then a fresh reviewer reads the whole of it.** It is a new worker,
   started once the reviewer before it has cleared. Where its first
   verdict is `CHANGES REQUESTED`, it stays until it clears, as above,
-  and then a further fresh reviewer reads the whole of it.
-- **The rounds end when a fresh reviewer's first verdict is `CLEARED`,
-  and only then.**
+  and then a further fresh reviewer reads the whole of it, unless every
+  fix since its first verdict changed only prose read by few.
+- **Prose read by few** is a comment in code, in a test, in a workflow
+  or in a config file, and a commit message. A docstring is not, nor is
+  any line of a Markdown file or of the documentation `docs/` builds:
+  those are read by everyone. A comment a tool reads (`noqa`,
+  `type: ignore`, `pragma`, `shellcheck`, `zizmor: ignore`, a pin
+  comment) is not prose. The orchestrator reads every added and removed line of
+  `git diff <sha of the first verdict> <cleared sha>`, or, where a
+  rebase came between, the `range-diff` of *A rebase and the clearance*.
+- **The rounds end when a fresh reviewer's first verdict is `CLEARED`**,
+  or at the `CLEARED` that the exception above lets end them.
 - **The orchestrator checks that the rounds converge.** It keeps each
   verdict's findings, each marked open or closed, in a file in its
   scratch directory. The rounds do not converge where a closed finding
