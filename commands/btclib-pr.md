@@ -272,18 +272,15 @@ them.
       ```
 
       Where it prints `passed`, the session following the pull request
-      re-runs the failed run, and its result stands. This holds for a
-      429 read after its reset and for a pull request held until it:
+      re-runs the failed run, and its result stands:
 
       ```shell
       gh run rerun --repo <owner>/<repo> --failed <run id>
       ```
 
       Where it prints `ahead`, a pull request whose only red check is
-      this one waits for the reset, and takes no `blocked` label. Its
-      hold comment names the reset. Whether it lands before then is
-      decided as *The decision* and *Landing* say; after the reset, the
-      check above prints `passed`.
+      this one is not held by it and takes no `blocked` label. *The
+      decision*'s ACK item says what the missing ACK means.
 
 - **The bot's review is answered like any other**, iterating to an ACK
   that names the current head.
@@ -333,7 +330,10 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
-      .body'`
+      .body'`. While the bot is out of quota (a 429 with its reset
+      ahead, read as *Rebase and CI* says), this item and the checks
+      item fail, and the approval goes to the human (*Where it is not
+      obvious*). The missing ACK does not stop their approval.
 - [ ] no review thread is unresolved, every page read (*What was
       raised*)
 - [ ] every item of *What was raised* is answered
@@ -413,8 +413,9 @@ The body says, one line each:
 
 - the head it approves, `<sha>`;
 - the `CLEARED` it relies on, and the rebase case;
-- the bot's ACK, as a link;
-- that every check passed or was skipped;
+- the bot's ACK, as a link; during a 429, the 429 run, as a link, in
+  its place;
+- that every check passed or was skipped, the 429 run apart;
 - what was not checked.
 
 Then land it, pinned to the same `<sha>` (*Landing*).
@@ -439,7 +440,9 @@ shared *When the human has to decide*). Its context is the `PR` link,
 the head sha, and each failed item with its measurement. The
 alternatives are: approve as it is; ask the author for changes, naming
 them, where the session cannot push to the branch; wait, naming on what
-or whom; close, where that is an option.
+or whom; close, where that is an option. Where only the bot's quota
+fails the items, the human may run a Claude review locally where they judge
+it useful.
 Record it as a hold (the shared *When the human has to decide*). On
 "approve", approve as above, with a body saying it follows the human's
 decision. At night it is a deferred item (the shared *Night mode*).
@@ -449,7 +452,7 @@ decision. At night it is a deferred item (the shared *Night mode*).
 Where `--land` covers it (*Landing*), the session lands it once every
 item above holds but the first and the last four, as *Landing*
 qualifies them. Without `--land`, another owner decides; once the same
-items hold:
+items hold, the two a 429 fails excepted:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
@@ -569,7 +572,9 @@ human.
   too. The bypass then lands only the human's own pull request, once it
   has reached the point *The human's own pull request* names. A check
   that only reports and is red on `main` too does not hold it, and is
-  named in the report. In place of the command above:
+  named in the report. A 429 alone does not hold it either, once local
+  review has cleared and the other checks are green. In place of the
+  command above:
 
   ```shell
   gh pr merge <n> --repo <owner>/<repo> --squash --admin \
