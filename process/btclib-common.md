@@ -753,9 +753,9 @@ branch, or a text to be posted.
   `CLEARED` ends the rounds; otherwise a further fresh reviewer reads
   the whole of it.
 - **A prose-only fix** changes nothing but the commit message, a text
-  to be posted (a comment, a pull request body, a reply) and, in files
-  that do not give instructions or rules as the checklist of
-  `/btclib-pr`'s *The decision* measures it, docstrings, comments,
+  to be posted (a pull request body, a comment or reply on the forge)
+  and, in files the checklist of `/btclib-pr`'s *The decision* does not
+  flag as giving instructions or rules, docstrings, code comments,
   Markdown and the reStructuredText pages `docs/` builds. The readme a
   package publishes is prose here, though that checklist flags it. Every
   file under `.github/` is code. A test's docstring is a docstring. A
