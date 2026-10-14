@@ -43,8 +43,8 @@ Show the human one table, grouped:
 
 - waiting on the human's review;
 - the human's own, with something to do: a review or thread
-   unanswered, changes requested, a red or missing check, the branch
-   behind its base where the repository has no merge queue;
+   unanswered, changes requested, a red or missing check, a conflict
+   with its base;
 - bots';
 - outside contributors';
 - the rest, listed and not worked.
@@ -52,9 +52,8 @@ Show the human one table, grouped:
 Each row is a `PR` link and what it waits on. A draft is listed and not
 worked. Then put one decision (the shared *When the human has to
 decide*): which to work, and in what order, the recommended order first
-with its reason. Within one repository with no merge queue the order is
-`CONTRIBUTING.md`'s *The landing queue*. At night, work the
-recommendation.
+with its reason. In a repository whose `main` is red, its repair comes
+first (*Landing*'s first bullet). At night, work the recommendation.
 
 ## Whose pull request it is
 
@@ -82,9 +81,10 @@ is:
   diff moves what its title says and nothing else, and in which
   direction: Dependabot follows the default branch, so a submodule
   pinned off it is offered a rollback. Its branch is the bot's: where
-  the repository has no merge queue, or the branch conflicts, bring it
-  up to date with `gh pr update-branch` or the bot's own rebase command,
-  never a push but the one below.
+  it conflicts, or where `CONTRIBUTING.md`'s *Landing it* asks for a
+  rebase after a repair, the bot's own rebase command brings it up to
+  date, or `gh pr update-branch` for a bot with none, as pre-commit.ci
+  is. Never a push but the one below.
   Where the update is wrong, close it with the measurement.
 
   Where the tree's `CONTRIBUTING.md` says an owner commits a hook's
@@ -93,8 +93,7 @@ is:
   moves a second file, and the reviewer checks that it is the hook's
   output: the hook passes on the head. Dependabot stops rebasing a pull
   request once extra commits are pushed to it ([GitHub's
-  documentation][dependabot-rebase]), so from then on the branch is
-  brought up to date with `gh pr update-branch`. Where it conflicts,
+  documentation][dependabot-rebase]). Where it then needs a rebase,
   `@dependabot recreate` drops the commit, which is then made again.
 - **An outside contributor's**: *Outside contributors*.
 
@@ -210,22 +209,10 @@ on. Where the branch moved, they are working: stop and ask.
 - **The reviewer reads the delta** from the sha it last read, and the
   rebase case of the shared *A rebase and the clearance*. A fresh
   reviewer's first read is the whole diff from its parent.
-- **Where the repository has no merge queue, rebase onto the default
-  branch only the pull request that heads its repository's queue**
-  (`CONTRIBUTING.md`'s *The landing queue*). The others are answered and
-  wait, untouched otherwise. Where it has one, a pull request is rebased
-  only for a conflict or a retarget, because the merge queue tests it on
-  the tip of `main`. This prints the queue's parameters, or nothing where
-  there is none:
-
-  ```shell
-  gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
-    | xargs -I{} gh api repos/<owner>/<repo>/rulesets/{} \
-      --jq '.rules[] | select(.type=="merge_queue") | .parameters'
-  ```
-
-  An outside contributor's branch is never rebased: *Outside
-  contributors* brings `main` in by a merge.
+- **A pull request is rebased onto the default branch only where
+  `CONTRIBUTING.md`'s *Landing it* says, or for a retarget.** An outside
+  contributor's branch is never rebased: *Outside contributors* brings
+  `main` in by a merge.
 - **After a rebase or a merge of `main`, run the gates and push.** Ask
   the merge the forge will compute, locally:
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
@@ -261,8 +248,9 @@ on. Where the branch moved, they are working: stop and ask.
     - **red on the default branch too**, same check
       (`gh run list --repo <owner>/<repo> --branch main --workflow
       <file> --limit 5`): not this pull request's. Find or file its
-      issue. A required check holds the pull request, recorded as a
-      hold; one that only reports is named in the decision;
+      issue. A required check holds the pull request until the repair
+      lands, as *Landing*'s first bullet says. A check that only reports
+      is named in the decision;
     - **not reproducing**: the shared *A failure that does not reproduce
       is measured*. One re-run measures it (`gh run rerun <run id>
       --repo <owner>/<repo> --failed`); two different answers are an
@@ -356,12 +344,9 @@ theirs to give.
 human's own pull request the session never approves: *The human's own
 pull request* says what it does instead.
 
-**Where the repository has no merge queue (*Rebase and CI*), decide only
-the head of its landing queue** (`CONTRIBUTING.md`'s *The landing
-queue*). Every other pull request will be rebased before it lands, and
-*Landing*'s first bullet says what a push does to an approval. Where the
-repository has a merge queue, each pull request is decided once it is
-ready.
+**Before any approval, read `main` as *Landing*'s first bullet says.**
+An approval on an armed pull request merges it at once. Where `main` is
+red, only its repair is approved.
 
 **The approval is obvious where every item holds**, each measured on the
 head `<sha>`. The diff is read once, by two commands that must each
@@ -383,8 +368,6 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 
 - [ ] the author is not the human: `.author.login` differs from
       `gh api user --jq .login`
-- [ ] where the repository has no merge queue, the pull request heads
-      its landing queue, and `mergeStateStatus` is not `BEHIND`
 - [ ] the latest fresh reviewer's `CLEARED` names `<sha>`, or *A rebase
       and the clearance* carries it to `<sha>`
 - [ ] every check passed or was skipped, required or not:
@@ -581,14 +564,30 @@ human.
 
 ## Landing
 
+- **Before approving, arming `--auto` or merging, read `main`'s latest
+  push runs**: `gh run list --repo <owner>/<repo> --branch main --event
+  push`. `main` is red where a required check failed in the latest run
+  of its workflow. A cancelled check is not a failure, and a check that
+  only reports does not count (the maintainer, 2026-10-14). While `main`
+  is red, only its repair lands (`CONTRIBUTING.md`'s *Landing it*).
+  Every other armed `--auto` in the repository is disabled and recorded
+  as a hold (the shared *When the human has to decide*). `gh pr list
+  --repo <owner>/<repo> --json number,autoMergeRequest` lists them, and
+  this disables one:
+
+  ```shell
+  gh pr merge --repo <owner>/<repo> --disable-auto <n>
+  ```
+
+  Once `main` is green, each held pull request is decided again (*The
+  decision*) and armed again.
+
 - **What gates a merge on GitHub** is the repository's own
   `REPOSITORY.md`, read from `origin/main`: typically an approval from
   somebody other than the author, `required_signatures`, every review
   thread resolved, and the required status checks. The bot's ACK is a
   comment, not an approval. A push dismisses an approval already given.
-- **Squash, with the head pinned, by auto-merge.** Where the repository
-  has a merge queue, `--auto` queues the pull request once the
-  requirements are met. The branch carries
+- **Squash, with the head pinned, by auto-merge.** The branch carries
   several commits once review has added any, so the subject and the
   message are written, not inherited:
 
@@ -603,10 +602,7 @@ human.
   subject. The message says what the change
   does, and keeps every `Signed-off-by:` and `Co-authored-by:` line of
   the commits it squashes. A finding that lives only in the commit
-  message is fixed here, with no new round. Where the repository has a merge
-  queue, whether it keeps `--subject` and `--body-file` is unmeasured
-  (btclib-org/.github#1619): read the landed subject and message back,
-  and record what landed on that issue.
+  message is fixed here, with no new round.
 
   Never land through the maintainer's bypass (`--admin`, or any other
   route to it) unless the human has instructed it for that pull request.
@@ -626,12 +622,7 @@ human.
     --subject "<title> (closes #<issue>) (#<n>)" --body-file <message>
   ```
 
-  Where the repository has a merge queue, `--admin` merges directly,
-  past the queue and its checks on `main`'s tip (`gh pr merge --help`).
 - **The pin is the head as last pushed**, not the sha a verdict named.
-  Where `main` is strict, an armed pull request that falls `BEHIND` its
-  base (`gh pr view <n> --json mergeStateStatus`) is rebased, gated,
-  decided again on the new head (*The decision*), and armed again.
 - **A stacked pull request lands like any other**: once its base has
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
   opened as soon as it is written* says, gated, decided again on the new
@@ -640,19 +631,25 @@ human.
   merge: repeat `gh pr view <n> --repo <owner>/<repo> --json
   state,mergeCommit,autoMergeRequest --jq '.state, .mergeCommit.oid,
   .autoMergeRequest'` until it answers `MERGED`, and `<sha>` is that
-  oid. Where it is `OPEN` with no `autoMergeRequest`, it may be in the
-  merge queue. Read its entry with the query below; only where that is
-  `null` was the merge cancelled, and then report it. Once it is
-  `MERGED`, `gh api repos/<owner>/<repo>/commits/<sha> --jq
-  .commit.verification` is `verified: true`, and each issue the pull
-  request declared closed is closed. What follows waits for this.
+  oid. Where it is `OPEN` with no `autoMergeRequest`, the merge was
+  cancelled: report it. Once it is `MERGED`, `gh api
+  repos/<owner>/<repo>/commits/<sha> --jq .commit.verification` is
+  `verified: true`, and each issue the pull request declared closed is
+  closed. What follows waits for this.
+
+  Then wait for `main`'s workflow runs on `<sha>`, with *Rebase and
+  CI*'s loop and this test in place of its own. A workflow run is
+  completed only once all its jobs are, including the jobs that wait on
+  others and have no check run before they start:
 
   ```shell
-  gh api graphql -F owner=<owner> -F repo=<repo> -F n=<n> -f query='
-    query($owner:String!,$repo:String!,$n:Int!){
-      repository(owner:$owner,name:$repo){
-        pullRequest(number:$n){mergeQueueEntry{state position}}}}'
+  [ "$(gh api --paginate \
+    "repos/<owner>/<repo>/actions/runs?head_sha=<sha>&event=push&per_page=100" \
+    --jq '.workflow_runs[].status' | sort -u)" = completed ]
   ```
+
+  Then run this section's first bullet again: a pull request armed
+  before the merge would otherwise land on a red `main`.
 
 - **A landing in `btclib-org/claude-process` brings its primary checkout
   forward at once**, by the shared fast-forward. The files under
