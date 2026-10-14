@@ -32,6 +32,8 @@
 # - Spacing. With GATE_LOCK_STAGGER at 4 seconds, two sessions ask at once
 #   with a slot free for each. The stamps in gate.last that the two takes
 #   write are 4 seconds or more apart.
+# - Zsh. A zsh session takes the first slot with no other slot present, and
+#   releases it. Skipped where there is no zsh.
 # - Defaults. Sourced with no GATE_LOCK_LOAD, GATE_LOCK_SLOTS or
 #   GATE_LOCK_WORKERS and a core count stubbed, the script sets the load to
 #   1.5 times the cores, and the workers to the cores divided by the slots,
@@ -220,6 +222,26 @@ echo "ok: the second take came $((t2 - t1)) seconds after the first, the stagger
 for n in K L; do touch "$tmp/go-$n"; done
 wait
 GATE_LOCK_STAGGER=0
+
+# Under zsh, which stops at a glob with no match, a session takes the first
+# slot, with no gate.lock.2 or gate.lock.3 beside it, and releases it.
+if command -v zsh > /dev/null; then
+  rm -rf "$GATE_LOCK_DIR"
+  zsh -c '
+    . "$1"
+    load=$3
+    eval "$4"
+    gate_take wt-Z > /dev/null || exit 1
+    gate_release
+  ' zsh "$script" "$tmp" "$tmp/load" "$stubs" > "$tmp/out-Z" 2>&1 ||
+    { cat "$tmp/out-Z"; fail "a zsh session did not release its slot"; }
+  grep -q 'gate.lock released by' "$tmp/out-Z" || { cat "$tmp/out-Z"; fail "zsh printed no release"; }
+  [ ! -e "$GATE_LOCK_DIR/gate.lock" ] || fail "gate.lock is still there after a zsh release"
+  cat "$tmp/out-Z"
+  echo "ok: under zsh, a session released gate.lock with no other slot present"
+else
+  echo "skipped: no zsh to run the release case under"
+fi
 
 # Defaults: the core count is stubbed, once by sysctl and once by getconf.
 # The values are printed by a subshell that has none of the settings.
