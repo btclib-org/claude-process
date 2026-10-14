@@ -978,8 +978,9 @@ mode has no ceiling and no duration**: it lasts until the human turns it
 off.
 
 **At activation, ask only for the repository**, where the command needs
-one and the session has not settled it. Where they leave before
-answering, the night does not start.
+one and the session has not settled it, and, for `/btclib-iss` with no
+issue named, the issues. Where they leave before answering, the night
+does not start.
 
 **Turning it off** ends the night at once. The work in flight goes on
 under the ordinary rules. The morning report is the next message, unless
