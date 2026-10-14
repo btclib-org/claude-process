@@ -29,6 +29,13 @@
 # - A session takes a slot at a low load, finds the load high when it
 #   calls gate_wait, and must return from it only after the test lowers
 #   the load.
+# - Spacing. With GATE_LOCK_STAGGER at 4 seconds, two sessions ask at once
+#   with a slot free for each. The second takes its slot 4 seconds or more
+#   after the first.
+# - Defaults. Sourced with no GATE_LOCK_LOAD, GATE_LOCK_SLOTS or
+#   GATE_LOCK_WORKERS and a core count stubbed, the script sets the load to
+#   1.5 times the cores, and the workers to the cores divided by the slots,
+#   at least 1.
 # - _gl_admit is called with each load, disk, level and free percentage
 #   in the tables below.
 
@@ -39,8 +46,8 @@ script=${1:-$(dirname "$0")/gate-lock.sh}
 tmp=$(mktemp -d) || exit 1
 trap 'rm -r "$tmp"' EXIT
 GATE_LOCK_DIR=$tmp/lock GATE_LOCK_POLL=1 GATE_LOCK_SLOTS=1
-GATE_LOCK_LOAD=15 GATE_LOCK_FREE=30 GATE_LOCK_DISK=20
-export GATE_LOCK_DIR GATE_LOCK_POLL GATE_LOCK_SLOTS
+GATE_LOCK_LOAD=15 GATE_LOCK_FREE=30 GATE_LOCK_DISK=20 GATE_LOCK_STAGGER=0
+export GATE_LOCK_DIR GATE_LOCK_POLL GATE_LOCK_SLOTS GATE_LOCK_STAGGER
 export GATE_LOCK_LOAD GATE_LOCK_FREE GATE_LOCK_DISK
 echo 5 > "$tmp/load"
 mkdir "$tmp/scratchpad-A" "$tmp/scratchpad-B"
@@ -187,6 +194,57 @@ grep -q 'gate.lock of pid' "$tmp"/out-[HIJ] ||
 echo "ok: a live gate.lock filled a slot, and was reclaimed once its holder was gone"
 for n in H I J; do touch "$tmp/go-$n"; done
 wait
+
+# Spacing: two sessions ask at once, and the second waits for the stagger.
+GATE_LOCK_STAGGER=4
+rm -f "$GATE_LOCK_DIR/gate.last"
+: > "$tmp/events"
+pids=""
+for n in K L; do
+  holder "$n" &
+  pids="$pids $!"
+done
+await ' taken$' 1 "no session took a slot"
+sleep 1
+[ "$(grep -c ' taken$' "$tmp/events")" -eq 1 ] ||
+  fail "a second session took a slot within the stagger of the first"
+await ' taken$' 2 "the second session never took a slot"
+t1=$(grep ' taken$' "$tmp/events" | sed -n 1p | cut -d' ' -f1)
+t2=$(grep ' taken$' "$tmp/events" | sed -n 2p | cut -d' ' -f1)
+[ $((t2 - t1)) -ge "$GATE_LOCK_STAGGER" ] ||
+  fail "the takes were $((t2 - t1)) seconds apart, under the stagger of $GATE_LOCK_STAGGER"
+echo "ok: the second take came $((t2 - t1)) seconds after the first, the stagger being $GATE_LOCK_STAGGER"
+for n in K L; do touch "$tmp/go-$n"; done
+wait
+GATE_LOCK_STAGGER=0
+
+# Defaults: the core count is stubbed, once by sysctl and once by getconf.
+# The values are printed by a subshell that has none of the settings.
+defaults() { # <ncpu> <sysctl or getconf>
+  (
+    unset GATE_LOCK_LOAD GATE_LOCK_SLOTS GATE_LOCK_WORKERS
+    n=$1
+    if [ "$2" = sysctl ]; then sysctl() { echo "$n"; }
+    else
+      sysctl() { return 1; }
+      getconf() { echo "$n"; }
+    fi
+    . "$script"
+    echo "$GATE_LOCK_LOAD $GATE_LOCK_SLOTS $GATE_LOCK_WORKERS"
+  )
+}
+bad=0
+while read -r ncpu via want; do
+  got=$(defaults "$ncpu" "$via")
+  [ "$got" = "$want" ] || { echo "FAIL: $ncpu cores by $via: '$got', want '$want'"; bad=1; }
+done <<'CASES'
+10 sysctl 15 3 3
+10 getconf 15 3 3
+8 sysctl 12 3 2
+2 getconf 3 3 1
+CASES
+[ "$bad" -eq 0 ] || exit 1
+echo "ok: load is 1.5 times the cores, workers the cores divided by the slots, at least 1"
 
 # A gate that finds the load high after the slot is taken waits for it.
 : > "$tmp/events"

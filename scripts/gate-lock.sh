@@ -2,7 +2,9 @@
 # The gate lock, by default one per user, shared by every worker of every
 # session that user runs. It has GATE_LOCK_SLOTS slots, 3 by default, so
 # that many workers gate at once. POSIX sh, sourced in the same shell call
-# that runs the gates, so that `$$` is the holder:
+# that runs the gates, so that `$$` is the holder. Sourcing sets
+# GATE_LOCK_WORKERS, the cores divided by the slots, for the `-n` of a
+# suite run in a slot:
 #
 #   . ~/.claude/scripts/gate-lock.sh
 #   gate_take [<worktree>] && { gate_wait; <a gate>; gate_wait; <a gate>; gate_release; }
@@ -18,8 +20,11 @@
 # Waiters queue in arrival order. gate_take writes a ticket into
 # $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
 # until its ticket is the oldest one whose process is alive. Then it waits,
-# as gate_wait does, and takes the first free slot. gate_wait waits until
-# the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or more of
+# as gate_wait does, and takes the first free slot, but not within
+# GATE_LOCK_STAGGER seconds of the last take by anyone, so that the 1-minute
+# load shows the gate just started. The time of the last take is the file
+# gate.last in $GATE_LOCK_DIR, written aside and renamed. gate_wait waits
+# until the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or more of
 # disk is free where $GATE_LOCK_DIR sits (/tmp when it is unset), and
 # memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
 # percent of memory or more free, never level 4. Where a read fails, as
@@ -55,10 +60,21 @@
 # killed while it holds the owner file renamed to stale.<pid> leaves a slot
 # with no owner, which the human removes.
 
+# The number of cores
+_gl_ncpu() {
+  sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null ||
+    nproc 2>/dev/null || echo 1
+}
+
+# The load and the workers follow the cores, so that they hold on any machine
+_gl_cpus=$(_gl_ncpu)
 GATE_LOCK_SLOTS=${GATE_LOCK_SLOTS:-3}
-GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-15}
+GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-$((_gl_cpus * 3 / 2))}
+GATE_LOCK_WORKERS=${GATE_LOCK_WORKERS:-$((_gl_cpus / GATE_LOCK_SLOTS))}
+[ "$GATE_LOCK_WORKERS" -ge 1 ] || GATE_LOCK_WORKERS=1
 GATE_LOCK_FREE=${GATE_LOCK_FREE:-30}
 GATE_LOCK_DISK=${GATE_LOCK_DISK:-20}
+GATE_LOCK_STAGGER=${GATE_LOCK_STAGGER:-60}
 GATE_LOCK_POLL=${GATE_LOCK_POLL:-5}
 
 _gl_dir() {
@@ -119,6 +135,25 @@ _gl_status() {
   echo "load ${_gl_l:-?}, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free, ${_gl_g:-?} GB disk free"
 }
 
+# Succeeds when GATE_LOCK_STAGGER seconds or more have passed since the last
+# take, or when the time of the last take is unreadable or in the future
+_gl_spaced() {
+  _gl_last=""
+  [ -r "$_gl_d/gate.last" ] && read -r _gl_last < "$_gl_d/gate.last"
+  case $_gl_last in
+    "" | *[!0-9]*) return 0 ;;
+  esac
+  _gl_gap=$(($(date +%s) - _gl_last))
+  [ "$_gl_gap" -lt 0 ] || [ "$_gl_gap" -ge "$GATE_LOCK_STAGGER" ]
+}
+
+# Records now as the time of the last take. Only the head of the queue
+# takes, so the writes do not race; the rename keeps a reader from a half
+# written file.
+_gl_stamp() {
+  date +%s > "$_gl_d/.last.$$" && mv "$_gl_d/.last.$$" "$_gl_d/gate.last"
+}
+
 gate_wait() {
   until _gl_admit; do sleep "$GATE_LOCK_POLL"; done
   echo "gate_wait: $(_gl_status)"
@@ -168,12 +203,13 @@ gate_take() {
       rm -f "$_gl_t"
     done
     [ "$_gl_head" = "$_gl_ticket" ] || { sleep "$GATE_LOCK_POLL"; continue; }
-    _gl_admit || { sleep "$GATE_LOCK_POLL"; continue; }
+    if ! { _gl_spaced && _gl_admit; }; then sleep "$GATE_LOCK_POLL"; continue; fi
     _gl_i=1 _gl_freed=""
     while [ "$_gl_i" -le "$GATE_LOCK_SLOTS" ]; do
       _gl_slot "$_gl_i"
       if mkdir "$_gl_s" 2>/dev/null; then
         echo "$$ $(date +%s) $_gl_wt" > "$_gl_s/owner"
+        _gl_stamp
         rm -f "$_gl_ticket"
         echo "${_gl_s##*/} taken by $$ at $(_gl_status)"
         return 0
