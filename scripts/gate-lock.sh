@@ -9,6 +9,9 @@
 #   . ~/.claude/scripts/gate-lock.sh
 #   gate_take [<worktree>] && { gate_wait; <a gate>; gate_wait; <a gate>; gate_release; }
 #
+# A load generator takes every slot with gate_take_all and releases them with
+# gate_release_all. One runs at a time.
+#
 # The slots and the queue sit in $GATE_LOCK_DIR, by default
 # /tmp/claude-<uid>/gate. The first slot is the directory gate.lock, the
 # others gate.lock.2, gate.lock.3 and so on. A script that knows one lock
@@ -29,10 +32,10 @@
 # memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
 # percent of memory or more free, never level 4. Where a read fails, as
 # off macOS, it does not wait on that read. It prints the load, the level,
-# the percentage free and the disk free. Neither wait has a bound: holders
-# that never finish keep every waiter waiting, and this names them:
-#
-#   cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.lock*/owner
+# the percentage free and the disk free. Neither wait has a bound, nor
+# has the wait for gate.generator: holders that never finish keep every
+# waiter waiting. btclib-common.md's "The gates" (the gate lock) gives the
+# command that names them.
 #
 # To check, from the repository root in a fresh sh, with a directory of
 # your own so as not to wait on a real gate:
@@ -258,4 +261,49 @@ gate_release() {
   done
   echo "no gate slot is held by $$: left alone"
   return 1
+}
+
+# A load generator takes every slot. Two generators that each took slots one
+# by one would split them and wait on each other for ever, so the generator
+# first takes gate.generator, a directory holding an owner file as a slot
+# does, and removed as a stale slot is. Then it takes every slot. While it
+# waits for the rest it holds the slots it has. btclib-common.md's "The gates"
+# says what that costs.
+gate_take_all() {
+  _gl_dir || return 1
+  _gl_gwt=${2:-${1:-}}
+  while :; do
+    _gl_s="$_gl_d/gate.generator"
+    if mkdir "$_gl_s" 2>/dev/null; then
+      echo "$$ $(date +%s) $_gl_gwt" > "$_gl_s/owner"
+      break
+    fi
+    _gl_reclaim || sleep "$GATE_LOCK_POLL"
+  done
+  _gl_gi=0
+  while [ "$_gl_gi" -lt "$GATE_LOCK_SLOTS" ]; do
+    gate_take "$_gl_gwt" || { gate_release_all >/dev/null; return 1; }
+    _gl_gi=$((_gl_gi + 1))
+  done
+}
+
+# Releases every slot this shell holds, then gate.generator; fails if it
+# released nothing
+gate_release_all() {
+  _gl_dir || return 1
+  _gl_gi=0 _gl_gn=0
+  while [ "$_gl_gi" -lt "$GATE_LOCK_SLOTS" ]; do
+    gate_release || break
+    _gl_gn=$((_gl_gn + 1))
+    _gl_gi=$((_gl_gi + 1))
+  done
+  _gl_s="$_gl_d/gate.generator"
+  _gl_pid=""
+  [ -r "$_gl_s/owner" ] && read -r _gl_pid _ < "$_gl_s/owner"
+  if [ "$_gl_pid" = "$$" ]; then
+    rm -f "$_gl_s/owner"
+    rmdir "$_gl_s" 2>/dev/null &&
+      { echo "gate.generator released by $$"; _gl_gn=$((_gl_gn + 1)); }
+  fi
+  [ "$_gl_gn" -gt 0 ]
 }

@@ -578,13 +578,14 @@ the orchestrator in the pull request.
   and what its pull requests already cover, is read from
   `.github/workflows/` on `origin/main`.
 - **The gate lock.** Up to three workers gate at once, each holding one
-  of the lock's slots, while it runs the suite, the hooks, the docs
-  build or a load generator. `GATE_LOCK_SLOTS` sets how many, 3 by
-  default. The defaults follow the core count, so that the rule holds
-  on another machine: `GATE_LOCK_LOAD` is 1.5 times the cores (15 on
-  10), and `GATE_LOCK_WORKERS`, the `-n` of a suite, is the cores
-  divided by the slots (3 on 10). The slots and their queue sit in one
-  directory shared by every session, `$GATE_LOCK_DIR`, by default
+  of the lock's slots, while it runs the suite, the hooks or the docs
+  build; a load generator holds all of them (*A load generator*, below).
+  `GATE_LOCK_SLOTS` sets how many, 3 by default. The defaults follow the
+  core count, so that the rule holds on another machine:
+  `GATE_LOCK_LOAD` is 1.5 times the cores (15 on 10), and
+  `GATE_LOCK_WORKERS`, the `-n` of a suite, is the cores divided by the
+  slots (3 on 10). The slots and their queue sit in one directory shared
+  by every session, `$GATE_LOCK_DIR`, by default
   `/tmp/claude-<uid>/gate`.
   The first slot is the directory `gate.lock`, the others `gate.lock.2`,
   `gate.lock.3` and so on. Release the slot the moment the gates finish.
@@ -607,10 +608,10 @@ the orchestrator in the pull request.
   is gone is stale, and `gate_take` removes it itself, by renaming the
   owner file first, which only one waiter wins. No session removes a
   slot any other way: a failed `mkdir` or an old slot says nothing
-  about whose it is. A slot with no owner file — a hand `mkdir`, or one
-  a waiter killed mid-reclaim left with only a `stale.<pid>` in it — is
-  never reclaimed. The human removes it by its directory name, after
-  checking that no gate runs in it:
+  about whose it is. A slot or `gate.generator` with no owner file — a
+  hand `mkdir`, or one a waiter killed mid-reclaim left with only a
+  `stale.<pid>` in it — is never reclaimed. The human removes it by its
+  directory name, after checking that no gate runs in it:
 
   ```shell
   rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/<slot>
@@ -621,10 +622,10 @@ the orchestrator in the pull request.
   process is gone. The one first in line waits as `gate_wait` does
   (*Call `gate_wait` before each heavy gate*; the load is read under
   `LC_ALL=C` because some locales print a decimal comma) and then takes
-  the first free slot, so that nobody holds one while only waiting. It
-  takes none within `GATE_LOCK_STAGGER` (60) seconds of the last take
-  recorded in `gate.last`, so that the 1-minute load shows the gate just
-  started.
+  the first free slot, so that nobody holds one while only waiting, a
+  load generator excepted. It takes none within `GATE_LOCK_STAGGER` (60)
+  seconds of the last take recorded in `gate.last`, so that the 1-minute
+  load shows the gate just started.
   `gate_take` waits for the stagger, the load, the memory, the disk and
   a free slot with no bound. A timeout on the background call covers the
   gates, not `gate_take`. Holders that never finish keep everyone
@@ -632,10 +633,62 @@ the orchestrator in the pull request.
 
   ```shell
   cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.lock*/owner
+  cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.generator/owner
   ```
 
-  A load generator is killed by the PID you recorded, and `ps`
-  shows it gone before the slot is released.
+  **A load generator** is anything run to raise the load for a timing
+  measurement, such as `yes`. It takes every slot, since other gates
+  spoil the measurement: `gate_take_all <worktree>` instead of
+  `gate_take`, and `gate_release_all` instead of `gate_release`. One
+  generator runs at a time, so that two do not split the slots and wait
+  on each other for ever: `gate_take_all` first takes the directory
+  `gate.generator`, which holds an `owner` file and is removed as a stale
+  slot is. It then takes the slots one by one, and holds
+  those it has while it waits for the rest. That wait is at least
+  (`GATE_LOCK_SLOTS` − 1) × `GATE_LOCK_STAGGER` seconds, 2 minutes by
+  default. Each take queues with a fresh ticket, so gates that queue
+  meanwhile take the next free slots before it, and it may hold the
+  slots it has for longer. The session that runs it starts at most one
+  single-threaded process per free core: the cores, minus the load on
+  the last line `gate_take_all` printed, rounded up, minus the workers of
+  the measured run. The measured run goes in the same shell call, inside
+  that hold, with no `gate_take` of its own. The session records the
+  PIDs, kills them within 15 minutes of the start of the measured run, as
+  the example's watchdog does, and checks with `ps` that they are gone
+  before `gate_release_all`:
+
+  ```shell
+  . ~/.claude/scripts/gate-lock.sh
+  out=<scratchpad>/gen.out pids=<scratchpad>/gen.pids workers=<n>
+  gate_take_all <worktree> > "$out" 2>&1 && {
+    load=$(tail -n 1 "$out" | sed 's/.* at load \([0-9]*\).*/\1/')
+    # the load is cut to an integer: the 1 rounds it up
+    free=$(( $(sysctl -n hw.ncpu) - load - 1 - workers ))
+    : > "$pids"
+    trap 'while read -r pid; do kill "$pid" 2>/dev/null; done < "$pids"' EXIT
+    trap 'exit 1' HUP INT TERM
+    while [ "$free" -gt 0 ]; do
+      yes > /dev/null & echo $! >> "$pids"
+      free=$(( free - 1 ))
+    done
+    # the measured run goes in the background so that a signal reaches
+    # the trap, and the watchdog kills it after 15 minutes (900 seconds)
+    <the measured run> & run=$!; echo "$run" >> "$pids"
+    ( sleep 900 & echo $! >> "$pids"; wait $!; kill "$run" ) 2>/dev/null &
+    echo $! >> "$pids"
+    wait "$run"
+    while read -r pid; do kill "$pid" 2>/dev/null; done < "$pids"
+    sleep 1
+    while read -r pid; do ! ps -p "$pid" > /dev/null || exit 1; done < "$pids"
+    trap - EXIT HUP INT TERM
+    gate_release_all
+  }
+  ```
+
+  The trap kills the processes when the shell exits or receives SIGHUP,
+  SIGINT or SIGTERM. A SIGKILL of the
+  shell leaves the processes, and the PID file is there to kill them by
+  hand.
 
 ### Committing and rebasing
 
