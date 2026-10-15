@@ -857,6 +857,13 @@ run and another bot run.
   prompt says about gates, the fresh reviewer follows *The gates are the
   writer's* instead. It posts nothing; its verdict is as *The verdict*
   says.
+- The bot's commands are `gh pr view`, `gh pr diff`, `gh issue view`,
+  `gh-get` (which reads a blob or a file from GitHub), and what the
+  tree's `claude-review.yml` adds as `extra-allowed-tools`. Where a
+  decision rests on a query the diff adds that none of them runs,
+  `REVIEWING.md`'s *The verdict* says what the bot answers. The body of
+  a pull request that adds one holds runs the bot can repeat with
+  `gh pr view`.
 - **Every reviewer reads the prose a branch adds as it will read on
   `main`.** The squash lands on `origin/main`, which may have moved past
   the branch's base. A sentence true at the base can be false there.
@@ -874,15 +881,9 @@ run and another bot run.
   ```
 
   A sentence true only at the base is a finding, weighed as *Which prose
-  is worth a round* says. Where the first command exits `1`, the merge
-  conflicts (`/btclib-pr`'s *Rebase and CI*).
-- The bot's commands are `gh pr view`, `gh pr diff`, `gh issue view`,
-  `gh-get` (which reads a blob or a file from GitHub), and what the
-  tree's `claude-review.yml` adds as `extra-allowed-tools`. Where a
-  decision rests on a query the diff adds that none of them runs,
-  `REVIEWING.md`'s *The verdict* says what the bot answers. The body of
-  a pull request that adds one holds runs the bot can repeat with
-  `gh pr view`.
+  is worth a round* says. The verdict names the `origin/main` sha it
+  read. Where the first command exits `1`, the merge conflicts: the
+  verdict says so and names the paths in its `CONFLICT` lines.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 
