@@ -37,8 +37,8 @@ process.
 - `gh`, logged in (`gh auth login`).
 - `uv`.
 - git signing your commits: `commit.gpgsign = true` and a key registered
-  on GitHub. Every btclib-org repository requires signed commits on
-  `main`.
+  on GitHub. The process signs every commit it writes
+  (`process/btclib-common.md`'s *Signed and signed off*).
 
 ## Setup
 

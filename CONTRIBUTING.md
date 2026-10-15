@@ -315,6 +315,9 @@ third party returning 502 would be a red merge with nothing to fix; the
 second posts the ack of record `REVIEWING.md` describes, which is an
 opinion for you to weigh. Neither belongs in a branch rule.
 
+`verified-signatures.yml` reports after each push to `main` whether every
+commit pushed is `verified`; [the standard's *Signatures*][s-sigs] has the rule.
+
 ### A version, and no release
 
 Nothing here is released: no index carries it, no GitHub release cuts it,

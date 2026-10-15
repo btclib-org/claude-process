@@ -546,9 +546,9 @@ human.
 
 - **What gates a merge on GitHub** is the repository's own
   `REPOSITORY.md`, read from `origin/main`: typically an approval from
-  somebody other than the author, `required_signatures`, every review
-  thread resolved, and the required status checks. The bot's ACK is a
-  comment, not an approval. A push dismisses an approval already given.
+  somebody other than the author, every review thread resolved, and the
+  required status checks. The bot's ACK is a comment, not an approval. A
+  push dismisses an approval already given.
 - **Squash, with the head pinned, by auto-merge.** The branch carries
   several commits once review has added any, so the subject and the
   message are written, not inherited:

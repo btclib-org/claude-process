@@ -77,8 +77,8 @@ gh api repos/btclib-org/claude-process/rules/branches/main \
 
 The protection is the same object `.github`, `portanode` and
 `btclib-org.github.io` carry. Its other fields repeat the rulesets, except
-two that are off: `enforce_admins` and classic's own `required_signatures`.
-[Section 11][s11-branch] gives the reason for both.
+`enforce_admins`, which is off. Classic's own `required_signatures` is off, as it
+is in every ruleset over `main`. [Section 11][s11-branch] gives the reason for both.
 
 ```shell
 gh api repos/btclib-org/claude-process/branches/main/protection \
@@ -122,8 +122,8 @@ gh api repos/btclib-org/claude-process/rulesets --jq '.[].id' \
            bypass: [.bypass_actors[]?.bypass_mode]}'
 # {"bypass":[],"enforcement":"active","name":"main-integrity",
 #  "refs":["refs/heads/main"],
-#  "rules":["required_signatures","required_linear_history",
-#           "non_fast_forward","deletion"],"target":"branch"}
+#  "rules":["required_linear_history","non_fast_forward","deletion"],
+#  "target":"branch"}
 # {"bypass":["pull_request"],"enforcement":"active",
 #  "name":"main-self-merge","refs":["refs/heads/main"],
 #  "rules":["pull_request"],"target":"branch"}
@@ -131,7 +131,7 @@ gh api repos/btclib-org/claude-process/rulesets --jq '.[].id' \
 #  "refs":["refs/tags/v*"],"rules":["required_signatures"],"target":"tag"}
 ```
 
-- `main-integrity` — required signatures, required linear history, no
+- `main-integrity` — required linear history, no
   force pushes, no deletions — with **no bypass actor at all**, which is
   what makes every one of those true of an administrator too.
 - `main-self-merge` — a pull request, an approving review, stale reviews
@@ -163,6 +163,15 @@ gh api repos/btclib-org/claude-process/rulesets/24293514 \
 ```
 
 Id 3296421 is `fametrano`: `gh api users/fametrano --jq .id`.
+
+No ruleset over `main` carries `required_signatures`, so nothing refuses
+an unsigned commit at the push. `verified-signatures.yml` checks after the
+push: for each commit pushed it reads `.commit.verification.verified` from
+the API and fails naming any whose value is not `true`. A red run is read
+in the Actions tab; the check is not a required one. What a pull request
+writes to `main` is the squash GitHub composes, which carries its web-flow
+key, and [the standard asks for a verified commit and not for a particular
+signer][s11-sigs].
 
 `tag-integrity` matches no ref: `CONTRIBUTING.md`'s *A version, and no
 release* is where nothing being tagged is measured. The rule stands ahead
