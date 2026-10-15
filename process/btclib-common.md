@@ -871,10 +871,14 @@ run and another bot run.
   line:
 
   ```shell
-  git -C <checkout> merge-tree --write-tree origin/main <sha>
+  git -C <checkout> -c merge.union.driver=false \
+    merge-tree --write-tree origin/main <sha>
   ```
 
-  This reads a file in that tree:
+  With the `-c`, a path marked `merge=union` that both sides changed
+  always conflicts. Without it, such a path merges clean where the
+  forge, which does not apply `merge=union`, can refuse (*A rebase and
+  the clearance*). This reads a file in that tree:
 
   ```shell
   git -C <checkout> show <tree>:<path>
@@ -882,8 +886,9 @@ run and another bot run.
 
   A sentence true only at the base is a finding, weighed as *Which prose
   is worth a round* says. The verdict names the `origin/main` sha it
-  read. Where the first command exits `1`, the merge conflicts: the
-  verdict says so and names the paths in its `CONFLICT` lines.
+  read. Where the first command exits `1`, the merge conflicts, or a
+  union path changed on both sides needs a look: the verdict says so and
+  names the paths in its `CONFLICT` lines.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 
