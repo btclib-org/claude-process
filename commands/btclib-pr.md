@@ -78,7 +78,8 @@ is:
   branch becoming the writer's own. Where a session still holds it,
   stop.
 - **A bot's** — Dependabot, pre-commit.ci. The reviewer checks that the
-  diff moves what its title says and nothing else, and in which
+  diff moves what its title says and nothing else (but for `uv.lock`'s
+  `revision` line, as *The decision* says), and in which
   direction: Dependabot follows the default branch, so a submodule
   pinned off it is offered a rollback. Its branch is the bot's: where
   it conflicts, or where `CONTRIBUTING.md`'s *Landing it* asks for a
@@ -400,8 +401,10 @@ awk '/^diff --git /{p = ($3 == "a/pyproject.toml" || $3 == "a/uv.lock")}
 ```
 
 Any other change in them fails this item, a new requirement or
-`[[package]]` included. A version whose first non-zero number changes
-is a major one.
+`[[package]]` included, but for one: the `revision = N` line at the top
+of `uv.lock` may change. Each uv version writes its own number, and uv's
+documentation says it tracks backwards-compatible lockfile changes. A
+version whose first non-zero number changes is a major one.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
