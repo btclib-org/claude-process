@@ -32,10 +32,10 @@
 # memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
 # percent of memory or more free, never level 4. Where a read fails, as
 # off macOS, it does not wait on that read. It prints the load, the level,
-# the percentage free and the disk free. Neither wait has a bound, nor
-# has the wait for gate.generator: holders that never finish keep every
-# waiter waiting. btclib-common.md's "The gates" (the gate lock) gives the
-# command that names them.
+# the percentage free and the disk free. These waits have no bound, nor has
+# the wait for gate.generator: holders that never finish keep every waiter
+# waiting. btclib-common.md's "The gates" (the gate lock) gives the command
+# that names them.
 #
 # To check, from the repository root in a fresh sh, with a directory of
 # your own so as not to wait on a real gate:

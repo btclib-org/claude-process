@@ -105,7 +105,9 @@ holder() {
 
 pids=""
 fail() { # <reason>: stop the sessions started and their children
-  for pid in $pids; do
+  # one PID a line, since zsh does not split an unquoted $pids
+  printf '%s\n' "$pids" | tr ' ' '\n' | while read -r pid; do
+    [ -n "$pid" ] || continue
     # stopped first, so that it starts no child between the two kills
     kill -STOP "$pid" 2>/dev/null
     pkill -P "$pid" 2>/dev/null

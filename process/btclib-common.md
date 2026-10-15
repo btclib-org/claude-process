@@ -643,8 +643,8 @@ the orchestrator in the pull request.
   generator runs at a time, so that two do not split the slots and wait
   on each other for ever: `gate_take_all` first takes the directory
   `gate.generator`, which holds an `owner` file and is removed as a stale
-  slot is. It then takes the slots one by one, and holds
-  those it has while it waits for the rest. That wait is at least
+  slot is. It then takes the slots one by one, and holds those it has while
+  it waits for the rest. That wait is at least
   (`GATE_LOCK_SLOTS` − 1) × `GATE_LOCK_STAGGER` seconds, 2 minutes by
   default. Each take queues with a fresh ticket, so gates that queue
   meanwhile take the next free slots before it, and it may hold the
@@ -686,9 +686,8 @@ the orchestrator in the pull request.
   ```
 
   The trap kills the processes when the shell exits or receives SIGHUP,
-  SIGINT or SIGTERM. A SIGKILL of the
-  shell leaves the processes, and the PID file is there to kill them by
-  hand.
+  SIGINT or SIGTERM. A SIGKILL of the shell leaves the processes, and the
+  PID file is there to kill them by hand.
 
 ### Committing and rebasing
 
