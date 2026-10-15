@@ -402,9 +402,10 @@ awk '/^diff --git /{p = ($3 == "a/pyproject.toml" || $3 == "a/uv.lock")}
 
 Any other change in them fails this item, a new requirement or
 `[[package]]` included, but for one: the `revision = N` line at the top
-of `uv.lock` may change. Each uv version writes its own number, and uv's
-documentation says it tracks backwards-compatible lockfile changes. A
-version whose first non-zero number changes is a major one.
+of `uv.lock` may change. The number depends on the uv that wrote the
+lock, and uv's documentation says it tracks backwards-compatible
+lockfile changes. A version whose first non-zero number changes is a
+major one.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
