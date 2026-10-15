@@ -831,6 +831,12 @@ branch, or a text to be posted.
   the answer.
 - A non-blocking finding waits for the next change; *Which prose is
   worth a round* says which prose blocks.
+- **A *Done when* that is a differential over generated inputs** (against
+  Bitcoin Core or another implementation) has its input set fixed before
+  the writer starts: a generator with its seed, or a corpus, named in the
+  issue or the brief. Every reviewer judges the branch on that set. An
+  input outside it blocks only where the branch does worse than `main`
+  on it; otherwise it becomes a new issue.
 
 ### A pull request's rounds
 
