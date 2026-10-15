@@ -280,7 +280,7 @@ them.
       ```
 
       Where it prints `ahead`, a pull request whose only red check is
-      this one takes no `blocked` label. *The decision*'s ACK item says
+      this one takes no reason label. *The decision*'s ACK item says
       what the missing ACK means.
 
 - **The bot's review is answered like any other**, iterating to an ACK
