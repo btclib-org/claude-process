@@ -857,6 +857,25 @@ run and another bot run.
   prompt says about gates, the fresh reviewer follows *The gates are the
   writer's* instead. It posts nothing; its verdict is as *The verdict*
   says.
+- **Every reviewer reads the prose a branch adds as it will read on
+  `main`.** The squash lands on `origin/main`, which may have moved past
+  the branch's base. A sentence true at the base can be false there.
+  After `git fetch origin`, this prints the merge's tree on its first
+  line:
+
+  ```shell
+  git -C <checkout> merge-tree --write-tree origin/main <sha>
+  ```
+
+  This reads a file in that tree:
+
+  ```shell
+  git -C <checkout> show <tree>:<path>
+  ```
+
+  A sentence true only at the base is a finding, weighed as *Which prose
+  is worth a round* says. Where the first command exits `1`, the merge
+  conflicts (`/btclib-pr`'s *Rebase and CI*).
 - The bot's commands are `gh pr view`, `gh pr diff`, `gh issue view`,
   `gh-get` (which reads a blob or a file from GitHub), and what the
   tree's `claude-review.yml` adds as `extra-allowed-tools`. Where a
@@ -878,6 +897,8 @@ run and another bot run.
       prose is worth a round*)
 - [ ] where the change touches a rule the tree states, the writer's
       inventory is complete (*A rule stated more than once*)
+- [ ] on a branch, the prose it adds was read on the merge with
+      `origin/main` (*A pull request's rounds*)
 - [ ] what the verdict does not cover
 - [ ] `git status --porcelain` empty in the tree reviewed and in the
       primary checkout
