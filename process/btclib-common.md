@@ -864,6 +864,26 @@ run and another bot run.
   `REVIEWING.md`'s *The verdict* says what the bot answers. The body of
   a pull request that adds one holds runs the bot can repeat with
   `gh pr view`.
+- **Every reviewer reads the prose a branch adds as it will read on
+  `main`.** The squash lands on `origin/main`, which may have moved past
+  the branch's base. A sentence true at the base can be false there.
+  After `git fetch origin`, this prints the merge's tree on its first
+  line:
+
+  ```shell
+  git -C <checkout> merge-tree --write-tree origin/main <sha>
+  ```
+
+  This reads a file in that tree:
+
+  ```shell
+  git -C <checkout> show <tree>:<path>
+  ```
+
+  A sentence true only at the base is a finding, weighed as *Which prose
+  is worth a round* says. The verdict names the `origin/main` sha it
+  read. Where the first command exits `1`, the merge conflicts: the
+  verdict says so and names the paths in its `CONFLICT` lines.
 - A branch a review on GitHub sends back, the bot's or a person's, goes
   through the same rounds before its fix is pushed.
 
@@ -878,6 +898,8 @@ run and another bot run.
       prose is worth a round*)
 - [ ] where the change touches a rule the tree states, the writer's
       inventory is complete (*A rule stated more than once*)
+- [ ] on a branch, the prose it adds was read on the merge with
+      `origin/main` (*A pull request's rounds*)
 - [ ] what the verdict does not cover
 - [ ] `git status --porcelain` empty in the tree reviewed and in the
       primary checkout
