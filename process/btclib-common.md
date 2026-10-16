@@ -548,20 +548,25 @@ the orchestrator in the pull request.
   out load first; measure the rate on a quiet machine, then open an
   issue. A branch that fails differently on every run cannot land,
   whatever the last run says.
-- **Every worker that gates reports the load, the memory pressure level,
-  the percentage of memory free and the disk free at each run**, a
-  reviewer running the gates itself included.
+- **Every worker that gates reports the CPU idle percentage, the load,
+  the memory pressure level, the percentage of memory free and the disk
+  free at each run** (what `gate_wait` prints), a reviewer running the
+  gates itself included.
 - **Call `gate_wait` before each heavy gate**: the suite, the hooks and
   the docs build, inside the lock (*The gate lock*). `gate_take` waits
   once, at the start, and the load, the memory and the disk move while a
-  worker holds a slot. `gate_wait` returns once the 1-minute load is
-  under `GATE_LOCK_LOAD`, `GATE_LOCK_DISK` GB or more of disk is free
-  where `$GATE_LOCK_DIR` sits (*Before starting*), and memory is
+  worker holds a slot. `gate_wait` returns once `GATE_LOCK_IDLE` (30)
+  percent or more of the CPU was idle over the last `GATE_LOCK_POLL` (5)
+  seconds, the 1-minute
+  load is under `GATE_LOCK_LOAD`, `GATE_LOCK_DISK` GB or more of disk is
+  free where `$GATE_LOCK_DIR` sits (*Before starting*), and memory is
   admissible: pressure level 1, or level 2 with `GATE_LOCK_FREE` (30)
   percent or more of memory free, never level 4 (macOS answers `1`
-  normal, `2` warn, `4` critical). Where a read fails, as off macOS, it does not
-  wait on that read. It prints the load, the level, the percentage free
-  and the disk free, which the report copies.
+  normal, `2` warn, `4` critical). Where a read fails, as off macOS, it
+  does not wait on that read. The load is only a ceiling, since on macOS
+  it also counts threads that use no CPU. It prints the idle percentage, the
+  load, the level, the percentage free and the disk free, which the report
+  copies.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
   worktree, the same name on every run of that branch. A teardown
   `OSError` or `FileNotFoundError` on `popen-gw*` is a neighbour's run on
@@ -586,7 +591,7 @@ the orchestrator in the pull request.
   build; a load generator holds all of them (*A load generator*, below).
   `GATE_LOCK_SLOTS` sets how many, 3 by default. The defaults follow the
   core count, so that the rule holds on another machine:
-  `GATE_LOCK_LOAD` is 1.5 times the cores (15 on 10), and
+  `GATE_LOCK_LOAD`, a ceiling, is 3 times the cores (30 on 10), and
   `GATE_LOCK_WORKERS`, the `-n` of a suite, is the cores divided by the
   slots (3 on 10). The slots and their queue sit in one directory shared
   by every session, `$GATE_LOCK_DIR`, by default
@@ -628,11 +633,11 @@ the orchestrator in the pull request.
   `LC_ALL=C` because some locales print a decimal comma) and then takes
   the first free slot, so that nobody holds one while only waiting, a
   load generator excepted. It takes none within `GATE_LOCK_STAGGER` (60)
-  seconds of the last take recorded in `gate.last`, so that the 1-minute
-  load shows the gate just started.
-  `gate_take` waits for the stagger, the load, the memory, the disk and
-  a free slot with no bound. A timeout on the background call covers the
-  gates, not `gate_take`. Holders that never finish keep everyone
+  seconds of the last take recorded in `gate.last`, so that the idle
+  reading shows the gate just started.
+  `gate_take` waits for the stagger, the idle CPU, the load, the memory,
+  the disk and a free slot with no bound. A timeout on the background
+  call covers the gates, not `gate_take`. Holders that never finish keep everyone
   waiting, and this names them:
 
   ```shell
@@ -653,21 +658,21 @@ the orchestrator in the pull request.
   default. Each take queues with a fresh ticket, so gates that queue
   meanwhile take the next free slots before it, and it may hold the
   slots it has for longer. The session that runs it starts at most one
-  single-threaded process per free core: the cores, minus the load on
-  the last line `gate_take_all` printed, rounded up, minus the workers of
-  the measured run. The measured run goes in the same shell call, inside
-  that hold, with no `gate_take` of its own. The session records the
-  PIDs, kills them within 15 minutes of the start of the measured run, as
-  the example's watchdog does, and checks with `ps` that they are gone
-  before `gate_release_all`:
+  single-threaded process per free core: the cores times the idle
+  fraction on the last line `gate_take_all` printed, rounded down, minus
+  the workers of the measured run. The measured run goes in the same
+  shell call, inside that hold, with no `gate_take` of its own. The
+  session records the PIDs, kills them within 15 minutes of the start of
+  the measured run, as the example's watchdog does, and checks with `ps`
+  that they are gone before `gate_release_all`:
 
   ```shell
   . ~/.claude/scripts/gate-lock.sh
   out=<scratchpad>/gen.out pids=<scratchpad>/gen.pids workers=<n>
   gate_take_all <worktree> > "$out" 2>&1 && {
-    load=$(tail -n 1 "$out" | sed 's/.* at load \([0-9]*\).*/\1/')
-    # the load is cut to an integer: the 1 rounds it up
-    free=$(( $(sysctl -n hw.ncpu) - load - 1 - workers ))
+    idle=$(tail -n 1 "$out" | sed 's/.* at \([0-9]*\)% CPU idle.*/\1/')
+    case $idle in ''|*[!0-9]*) idle=0 ;; esac
+    free=$(( $(sysctl -n hw.ncpu) * idle / 100 - workers ))
     : > "$pids"
     trap 'while read -r pid; do kill "$pid" 2>/dev/null; done < "$pids"' EXIT
     trap 'exit 1' HUP INT TERM

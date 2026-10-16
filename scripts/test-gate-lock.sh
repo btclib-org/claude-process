@@ -5,8 +5,8 @@
 #
 # Each session is a `sh` of its own, since the holder is its PID. Load,
 # memory and disk are stubbed, so that the test does not depend on the
-# machine: a session redefines _gl_load, _gl_level, _gl_free and _gl_disk
-# after sourcing. Every wait for an event polls once a second, up to 30
+# machine: a session redefines _gl_idle, _gl_load, _gl_level, _gl_free and
+# _gl_disk after sourcing. Every wait for an event polls once a second, up to 30
 # times. Past that, the test kills the sessions it started and their
 # children, prints the events, and exits 1. The cases, in order:
 #
@@ -26,9 +26,9 @@
 #   that knows one lock only leaves it, fills one slot: of three sessions,
 #   two take a slot and the third waits. Once that process is killed, the
 #   third finds gate.lock stale and takes it.
-# - A session takes a slot at a low load, finds the load high when it
+# - A session takes a slot at a high idle, finds the CPU busy when it
 #   calls gate_wait, and must return from it only after the test lowers
-#   the load.
+#   the idle.
 # - Spacing. With GATE_LOCK_STAGGER at 4 seconds, two sessions ask at once
 #   with a slot free for each. The stamps in gate.last that the two takes
 #   write are 4 seconds or more apart.
@@ -42,29 +42,31 @@
 # - A generator killed with SIGKILL while it holds every slot. The next
 #   generator reclaims gate.generator and the slots, and finishes.
 # - Defaults. Sourced with no GATE_LOCK_LOAD, GATE_LOCK_SLOTS or
-#   GATE_LOCK_WORKERS and a core count stubbed, the script sets the load to
-#   1.5 times the cores, and the workers to the cores divided by the slots,
-#   at least 1.
-# - _gl_admit is called with each load, disk, level and free percentage
-#   in the tables below.
+#   GATE_LOCK_WORKERS and a core count stubbed, the script sets the load
+#   ceiling to 3 times the cores, the idle to 30, and the workers to the
+#   cores divided by the slots, at least 1.
+# - The real _gl_idle prints an integer from 0 to 100.
+# - _gl_admit is called with each idle percentage, load, disk, level and
+#   free percentage in the tables below.
 
 # The stubs are called by the sourced script, and the script is a variable.
-# The stubs are text a session evals, and they read $load.
+# The stubs are text a session evals, and they read $idle.
 # shellcheck disable=SC1090,SC2329,SC2016,SC2034
 script=${1:-$(dirname "$0")/gate-lock.sh}
 tmp=$(mktemp -d) || exit 1
 trap 'rm -r "$tmp"' EXIT
 GATE_LOCK_DIR=$tmp/lock GATE_LOCK_POLL=1 GATE_LOCK_SLOTS=1
-GATE_LOCK_LOAD=15 GATE_LOCK_FREE=30 GATE_LOCK_DISK=20 GATE_LOCK_STAGGER=0
+GATE_LOCK_LOAD=30 GATE_LOCK_IDLE=30 GATE_LOCK_FREE=30 GATE_LOCK_DISK=20 GATE_LOCK_STAGGER=0
 export GATE_LOCK_DIR GATE_LOCK_POLL GATE_LOCK_SLOTS GATE_LOCK_STAGGER
-export GATE_LOCK_LOAD GATE_LOCK_FREE GATE_LOCK_DISK
-echo 5 > "$tmp/load"
+export GATE_LOCK_LOAD GATE_LOCK_IDLE GATE_LOCK_FREE GATE_LOCK_DISK
+echo 80 > "$tmp/idle"
 mkdir "$tmp/scratchpad-A" "$tmp/scratchpad-B"
 : > "$tmp/events"
 
 # The stubs every session defines after sourcing the script
 stubs='
-  _gl_load() { cat "$load"; }
+  _gl_idle() { sleep 1; cat "$idle"; }
+  _gl_load() { echo 5; }
   _gl_level() { echo 1; }
   _gl_free() { echo 50; }
   _gl_disk() { echo 100; }
@@ -73,7 +75,7 @@ stubs='
 session() { # <name> <scratchpad> <seconds held>
   exec sh -c '
     . "$1"
-    load=$6
+    idle=$6
     eval "$7"
     echo "$(date +%s) $2 asks" >> "$4"
     gate_take "$3" "wt-$2" >/dev/null || exit 1
@@ -82,7 +84,7 @@ session() { # <name> <scratchpad> <seconds held>
     echo "$(date +%s) $2 released" >> "$4"
     gate_release "$3" >/dev/null || exit 1
     echo "$(date +%s) $2 done" >> "$4"
-  ' sh "$script" "$1" "$2" "$tmp/events" "$3" "$tmp/load" "$stubs"
+  ' sh "$script" "$1" "$2" "$tmp/events" "$3" "$tmp/idle" "$stubs"
 }
 
 # <name>: writes its PID to $tmp/pid-<name> and what gate_take prints to
@@ -90,7 +92,7 @@ session() { # <name> <scratchpad> <seconds held>
 holder() {
   exec sh -c '
     . "$1"
-    load=$4/load
+    idle=$4/idle
     eval "$5"
     echo $$ > "$4/pid-$2"
     echo "$(date +%s) $2 asks" >> "$3"
@@ -238,11 +240,11 @@ if command -v zsh > /dev/null; then
   rm -rf "${GATE_LOCK_DIR:?}"
   zsh -c '
     . "$1"
-    load=$3
+    idle=$3
     eval "$4"
     gate_take wt-Z > /dev/null || exit 1
     gate_release
-  ' zsh "$script" "$tmp" "$tmp/load" "$stubs" > "$tmp/out-Z" 2>&1 ||
+  ' zsh "$script" "$tmp" "$tmp/idle" "$stubs" > "$tmp/out-Z" 2>&1 ||
     { cat "$tmp/out-Z"; fail "a zsh session did not release its slot"; }
   grep -q 'gate.lock released by' "$tmp/out-Z" || { cat "$tmp/out-Z"; fail "zsh printed no release"; }
   [ ! -e "$GATE_LOCK_DIR/gate.lock" ] || fail "gate.lock is still there after a zsh release"
@@ -259,7 +261,7 @@ fi
 generator() { # <shell> <name>
   exec "$1" -c '
     . "$1"
-    load=$4/load
+    idle=$4/idle
     eval "$5"
     echo "$(date +%s) $2 asks" >> "$3"
     gate_take_all "wt-$2" > /dev/null || exit 1
@@ -307,12 +309,12 @@ done
 rm -rf "${GATE_LOCK_DIR:?}"
 sh -c '
   . "$1"
-  load=$3
+  idle=$3
   eval "$4"
   gate_take_all wt-H > /dev/null || exit 1
   : > "$2/held-H"
   exec sleep 300
-' sh "$script" "$tmp" "$tmp/load" "$stubs" &
+' sh "$script" "$tmp" "$tmp/idle" "$stubs" &
 pids=$!
 i=0
 until [ -f "$tmp/held-H" ]; do
@@ -337,12 +339,12 @@ rm -rf "${GATE_LOCK_DIR:?}"
 : > "$tmp/events"
 sh -c '
   . "$1"
-  load=$3
+  idle=$3
   eval "$4"
   gate_take_all wt-X > /dev/null || exit 1
   : > "$2/held-X"
   exec sleep 300
-' sh "$script" "$tmp" "$tmp/load" "$stubs" &
+' sh "$script" "$tmp" "$tmp/idle" "$stubs" &
 pids=$!
 i=0
 until [ -f "$tmp/held-X" ]; do
@@ -354,11 +356,11 @@ kill -KILL "$pids"
 wait "$pids" 2>/dev/null
 sh -c '
   . "$1"
-  load=$3
+  idle=$3
   eval "$4"
   gate_take_all wt-R || exit 1
   gate_release_all
-' sh "$script" "$tmp" "$tmp/load" "$stubs" > "$tmp/out-R" 2>&1 &
+' sh "$script" "$tmp" "$tmp/idle" "$stubs" > "$tmp/out-R" 2>&1 &
 pids=$!
 await_pid() { # <pid> <reason>: wait up to 30 seconds for the process to end
   i=0
@@ -383,7 +385,7 @@ GATE_LOCK_SLOTS=1
 # The values are printed by a subshell that has none of the settings.
 defaults() { # <ncpu> <sysctl or getconf>
   (
-    unset GATE_LOCK_LOAD GATE_LOCK_SLOTS GATE_LOCK_WORKERS
+    unset GATE_LOCK_LOAD GATE_LOCK_IDLE GATE_LOCK_SLOTS GATE_LOCK_WORKERS
     n=$1
     if [ "$2" = sysctl ]; then sysctl() { echo "$n"; }
     else
@@ -391,7 +393,7 @@ defaults() { # <ncpu> <sysctl or getconf>
       getconf() { echo "$n"; }
     fi
     . "$script"
-    echo "$GATE_LOCK_LOAD $GATE_LOCK_SLOTS $GATE_LOCK_WORKERS"
+    echo "$GATE_LOCK_LOAD $GATE_LOCK_IDLE $GATE_LOCK_SLOTS $GATE_LOCK_WORKERS"
   )
 }
 bad=0
@@ -399,22 +401,22 @@ while read -r ncpu via want; do
   got=$(defaults "$ncpu" "$via")
   [ "$got" = "$want" ] || { echo "FAIL: $ncpu cores by $via: '$got', want '$want'"; bad=1; }
 done <<'CASES'
-10 sysctl 15 3 3
-10 getconf 15 3 3
-8 sysctl 12 3 2
-2 getconf 3 3 1
+10 sysctl 30 30 3 3
+10 getconf 30 30 3 3
+8 sysctl 24 30 3 2
+2 getconf 6 30 3 1
 CASES
 [ "$bad" -eq 0 ] || exit 1
-echo "ok: load is 1.5 times the cores, workers the cores divided by the slots, at least 1"
+echo "ok: the load ceiling is 3 times the cores, idle 30, workers the cores divided by the slots, at least 1"
 
-# A gate that finds the load high after the slot is taken waits for it.
+# A gate that finds the CPU busy after the slot is taken waits for it.
 : > "$tmp/events"
 (
   . "$script"
-  load=$tmp/load
+  idle=$tmp/idle
   eval "$stubs"
   gate_take "$tmp/scratchpad-A" wt-W > /dev/null || exit 1
-  echo 200 > "$tmp/load"
+  echo 10 > "$tmp/idle"
   echo "$(date +%s) W waits" >> "$tmp/events"
   gate_wait > /dev/null
   echo "$(date +%s) W returned" >> "$tmp/events"
@@ -423,15 +425,51 @@ echo "ok: load is 1.5 times the cores, workers the cores divided by the slots, a
 pids=$!
 await 'W waits' 1 "W never reached gate_wait"
 sleep 3
-grep -q 'W returned' "$tmp/events" && fail "gate_wait returned at a load over GATE_LOCK_LOAD"
-echo 5 > "$tmp/load"
-await 'W returned' 1 "gate_wait did not return once the load fell"
+grep -q 'W returned' "$tmp/events" && fail "gate_wait returned at an idle under GATE_LOCK_IDLE"
+echo 80 > "$tmp/idle"
+await 'W returned' 1 "gate_wait did not return once the CPU was idle"
 wait
-echo "ok: gate_wait waited for the load after the slot was taken"
+echo "ok: gate_wait waited for idle CPU after the slot was taken"
+
+# The real reader, not stubbed
+(
+  . "$script"
+  GATE_LOCK_POLL=2
+  t0=$(date +%s)
+  u=$(_gl_idle)
+  [ $(($(date +%s) - t0)) -ge 2 ] || { echo "FAIL: _gl_idle took under the poll"; exit 1; }
+  case $u in "" | *[!0-9]*) echo "FAIL: _gl_idle printed '$u'"; exit 1 ;; esac
+  [ "$u" -le 100 ] || { echo "FAIL: _gl_idle printed '$u'"; exit 1; }
+) || exit 1
+echo "ok: _gl_idle printed a percentage, over the poll interval"
+
+# Idle: percentage idle, expected admission ("-" is a failed read).
+(
+  . "$script"
+  _gl_load() { echo 5; }
+  _gl_level() { echo 1; }
+  _gl_free() { echo 50; }
+  _gl_disk() { echo 100; }
+  bad=0
+  while read -r u want; do
+    _gl_idle() { [ "$u" = - ] || echo "$u"; }
+    _gl_admit && got=admit || got="wait"
+    [ "$got" = "$want" ] || { echo "FAIL: idle $u: $got, want $want"; bad=1; }
+  done <<'CASES'
+30 admit
+29 wait
+100 admit
+0 wait
+- admit
+CASES
+  exit "$bad"
+) || exit 1
+echo "ok: a gate is admitted with 30% of the CPU idle, not with 29%"
 
 # Load and disk: load, GB free, expected admission ("-" is a failed read).
 (
   . "$script"
+  _gl_idle() { echo 80; }
   _gl_level() { echo 1; }
   _gl_free() { echo 50; }
   bad=0
@@ -441,8 +479,9 @@ echo "ok: gate_wait waited for the load after the slot was taken"
     _gl_admit && got=admit || got="wait"
     [ "$got" = "$want" ] || { echo "FAIL: load $l disk $g: $got, want $want"; bad=1; }
   done <<'CASES'
-14.99 100 admit
-15.00 100 wait
+29.99 100 admit
+30.00 100 wait
+23.20 100 admit
 5.00 20 admit
 5.00 19 wait
 5.00 - admit
@@ -450,11 +489,12 @@ echo "ok: gate_wait waited for the load after the slot was taken"
 CASES
   exit "$bad"
 ) || exit 1
-echo "ok: a gate is admitted under load 15, and with 20 GB of disk free"
+echo "ok: a gate is admitted under load 30, and with 20 GB of disk free"
 
 # Memory: level, free percentage, expected admission ("-" is a failed read).
 (
   . "$script"
+  _gl_idle() { echo 80; }
   _gl_load() { echo 5; }
   _gl_disk() { echo 100; }
   bad=0
