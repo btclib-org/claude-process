@@ -67,7 +67,7 @@ Facts, not reassurances:
   and rebasing* holds the push; `git log --format='%h %G? %GS'` over
   the range;
 - each gate's command and **exit code**, the counts the runner prints,
-  and the load and the memory pressure level at each run (*The gates*);
+  and what *The gates* has every worker report at each run;
   where a run fell and a later one passed, both;
 - `git status --porcelain` empty, checked after the last gate;
 - the decisions you took and their ground, departures from the brief

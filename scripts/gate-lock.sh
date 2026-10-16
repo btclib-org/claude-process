@@ -25,16 +25,19 @@
 # until its ticket is the oldest one whose process is alive. Then it waits,
 # as gate_wait does, and takes the first free slot, but not within
 # GATE_LOCK_STAGGER seconds of the last take recorded in gate.last, so that
-# the 1-minute load shows the gate just started. gate.last sits in
+# the idle reading shows the gate just started. gate.last sits in
 # $GATE_LOCK_DIR and is written aside and renamed. gate_wait waits
-# until the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or more of
-# disk is free where $GATE_LOCK_DIR sits (/tmp when it is unset), and
-# memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
+# until GATE_LOCK_IDLE percent or more of the CPU was idle over the last
+# GATE_LOCK_POLL seconds, the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or
+# more of disk is free where $GATE_LOCK_DIR sits (/tmp when it is unset),
+# and memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
 # percent of memory or more free, never level 4. Where a read fails, as
-# off macOS, it does not wait on that read. It prints the load, the level,
-# the percentage free and the disk free. These waits have no bound, nor has
-# the wait for gate.generator: holders that never finish keep every waiter
-# waiting. btclib-common.md's "The gates" (the gate lock) gives the command
+# off macOS, it does not wait on that read. It prints the idle percentage,
+# the load, the level, the percentage free and the disk free. The idle
+# percentage is the gate; the load, which on macOS counts threads that use
+# no CPU, is only a ceiling that catches a runaway. These waits have no
+# bound, nor has the wait for gate.generator: holders that never finish keep
+# every waiter waiting. btclib-common.md's "The gates" (the gate lock) gives the command
 # that names them.
 #
 # To check, from the repository root in a fresh sh, with a directory of
@@ -69,11 +72,12 @@ _gl_ncpu() {
     nproc 2>/dev/null || echo 1
 }
 
-# The load and the workers follow the cores, so that they hold on any machine
+# The load ceiling and the workers follow the cores, so that they hold on any machine
 _gl_cpus=$(_gl_ncpu)
 GATE_LOCK_SLOTS=${GATE_LOCK_SLOTS:-3}
 [ "$GATE_LOCK_SLOTS" -ge 1 ] 2>/dev/null || GATE_LOCK_SLOTS=1
-GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-$((_gl_cpus * 3 / 2))}
+GATE_LOCK_LOAD=${GATE_LOCK_LOAD:-$((_gl_cpus * 3))}
+GATE_LOCK_IDLE=${GATE_LOCK_IDLE:-30}
 GATE_LOCK_WORKERS=${GATE_LOCK_WORKERS:-$((_gl_cpus / GATE_LOCK_SLOTS))}
 [ "$GATE_LOCK_WORKERS" -ge 1 ] || GATE_LOCK_WORKERS=1
 GATE_LOCK_FREE=${GATE_LOCK_FREE:-30}
@@ -115,6 +119,24 @@ _gl_load() {
   else LC_ALL=C sysctl -n vm.loadavg | cut -d' ' -f2; fi
 }
 
+# The percentage of CPU idle over the next GATE_LOCK_POLL seconds, as an
+# integer. The read is the wait of a poll, so that a poll costs the same
+# time whether or not the read works. Linux reads /proc/stat twice; macOS
+# reads the second line of `iostat -c 2`, the first being the average since
+# boot. Where it fails it prints nothing.
+_gl_idle() {
+  if [ -r /proc/stat ]; then
+    { head -n 1 /proc/stat; sleep "$GATE_LOCK_POLL"; head -n 1 /proc/stat; } |
+      awk '{ t = 0; for (i = 2; i <= NF; i++) t += $i
+             if (NR == 1) { t0 = t; i0 = $5 }
+             else if (t > t0) print int(($5 - i0) * 100 / (t - t0)) }'
+  else
+    _gl_o=$(LC_ALL=C iostat -c 2 -w "$GATE_LOCK_POLL" 2>/dev/null |
+      awk 'END { if ($(NF-3) ~ /^[0-9]+$/) print $(NF-3) }')
+    if [ -n "$_gl_o" ]; then echo "$_gl_o"; else sleep "$GATE_LOCK_POLL"; fi
+  fi
+}
+
 _gl_level() { sysctl -n kern.memorystatus_vm_pressure_level 2>/dev/null; }
 _gl_free() { sysctl -n kern.memorystatus_level 2>/dev/null; }
 
@@ -124,11 +146,12 @@ _gl_disk() {
     awk 'NR == 2 { print int($4 / 1048576) }'
 }
 
-# Reads load, level, free and disk into _gl_l, _gl_p, _gl_f and _gl_g;
-# succeeds when all four admit a gate. An empty read admits.
+# Reads idle, load, level, free and disk into _gl_u, _gl_l, _gl_p, _gl_f and
+# _gl_g; succeeds when all five admit a gate. An empty read admits.
 _gl_admit() {
-  _gl_l=$(_gl_load 2>/dev/null) _gl_p=$(_gl_level) _gl_f=$(_gl_free)
-  _gl_g=$(_gl_disk)
+  _gl_u=$(_gl_idle 2>/dev/null) _gl_l=$(_gl_load 2>/dev/null)
+  _gl_p=$(_gl_level) _gl_f=$(_gl_free) _gl_g=$(_gl_disk)
+  [ -z "$_gl_u" ] || [ "$_gl_u" -ge "$GATE_LOCK_IDLE" ] || return 1
   [ -z "${_gl_l%.*}" ] || [ "${_gl_l%.*}" -lt "$GATE_LOCK_LOAD" ] || return 1
   [ -z "$_gl_g" ] || [ "$_gl_g" -ge "$GATE_LOCK_DISK" ] || return 1
   [ -z "$_gl_p" ] || [ "$_gl_p" -le 1 ] && return 0
@@ -136,7 +159,7 @@ _gl_admit() {
 }
 
 _gl_status() {
-  echo "load ${_gl_l:-?}, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free, ${_gl_g:-?} GB disk free"
+  echo "${_gl_u:-?}% CPU idle, load ${_gl_l:-?}, memory pressure level ${_gl_p:-?}, ${_gl_f:-?}% free, ${_gl_g:-?} GB disk free"
 }
 
 # Succeeds when GATE_LOCK_STAGGER seconds or more have passed since the last
@@ -159,7 +182,7 @@ _gl_stamp() {
 }
 
 gate_wait() {
-  until _gl_admit; do sleep "$GATE_LOCK_POLL"; done
+  until _gl_admit; do :; done
   echo "gate_wait: $(_gl_status)"
 }
 
@@ -216,8 +239,9 @@ gate_take() {
 $(ls "$_gl_queue" 2>/dev/null)
 EOF
     [ "$_gl_head" = "$_gl_ticket" ] || { sleep "$GATE_LOCK_POLL"; continue; }
-    if ! { _gl_spaced && _gl_admit; }; then sleep "$GATE_LOCK_POLL"; continue; fi
-    _gl_i=1 _gl_freed=""
+    _gl_spaced || { sleep "$GATE_LOCK_POLL"; continue; }
+    _gl_admit || continue
+    _gl_i=1
     while [ "$_gl_i" -le "$GATE_LOCK_SLOTS" ]; do
       _gl_slot "$_gl_i"
       if mkdir "$_gl_s" 2>/dev/null; then
@@ -227,10 +251,10 @@ EOF
         echo "${_gl_s##*/} taken by $$ at $(_gl_status)"
         return 0
       fi
-      _gl_reclaim && _gl_freed=1
+      _gl_reclaim
       _gl_i=$((_gl_i + 1))
     done
-    [ -n "$_gl_freed" ] || sleep "$GATE_LOCK_POLL"
+    # no sleep here: the admit above waited a poll
   done
 }
 
