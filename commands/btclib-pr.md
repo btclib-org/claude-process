@@ -82,10 +82,9 @@ is:
   `revision` line, as *The decision* says), and in which
   direction: Dependabot follows the default branch, so a submodule
   pinned off it is offered a rollback. Its branch is the bot's: where
-  it conflicts, or where `CONTRIBUTING.md`'s *Landing it* asks for a
-  rebase after a repair, the bot's own rebase command brings it up to
-  date, or `gh pr update-branch` for a bot with none, as pre-commit.ci
-  is. Never a push but the one below.
+  it conflicts, the bot's own rebase command brings it up to date, or
+  `gh pr update-branch` for a bot with none, as pre-commit.ci is. Never
+  a push but the one below.
   Where the update is wrong, close it with the measurement.
 
   Where the tree's `CONTRIBUTING.md` says an owner commits a hook's
@@ -238,9 +237,20 @@ them.
     - **red on the default branch too**, same check
       (`gh run list --repo <owner>/<repo> --branch main --workflow
       <file> --limit 5`): not this pull request's. Find or file its
-      issue. A required check holds the pull request until the repair
-      lands, as *Landing*'s first bullet says. A check that only reports
-      is named in the decision;
+      issue; its repair comes first (*Landing*'s first bullet). A
+      required check holds the pull request. Once the repair has
+      landed, close and reopen the pull request, with no push
+      (`CONTRIBUTING.md`'s *Landing it* says why):
+
+      ```shell
+      gh pr close <n> --repo <owner>/<repo>
+      gh pr reopen <n> --repo <owner>/<repo>
+      ```
+
+      *The decision* reads the bot's review of the reopen. Where
+      `gh pr view <n> --repo <owner>/<repo> --json autoMergeRequest`
+      shows the pull request disarmed, arm it again as *Landing* says.
+      A check that only reports is named in the decision;
     - **not reproducing**: the shared *A failure that does not reproduce
       is measured*. One re-run measures it (`gh run rerun <run id>
       --repo <owner>/<repo> --failed`); two different answers are an
@@ -296,10 +306,6 @@ theirs to give.
 **GitHub refuses an approval from a pull request's author.** On the
 human's own pull request the session never approves: *The human's own
 pull request* says what it does instead.
-
-**Before any approval, read `main` as *Landing*'s first bullet says.**
-An approval on an armed pull request merges it at once. Where `main` is
-red, only its repair is approved.
 
 **The approval is obvious where every item holds**, each measured on the
 head `<sha>`. The diff is read once, by two commands that must each
@@ -547,24 +553,14 @@ human.
 
 ## Landing
 
-- **Before approving, arming `--auto` or merging, read `main`'s latest
-  push runs**: `gh run list --repo <owner>/<repo> --branch main --event
-  push`. `main` is red where a required check failed in the latest run
-  of its workflow. A cancelled check is not a failure, and a check that
-  only reports does not count (the maintainer, 2026-10-14). While `main`
-  is red, only its repair lands (`CONTRIBUTING.md`'s *Landing it*).
-  Every other armed `--auto` in the repository is disabled and recorded
-  as a hold (the shared *When the human has to decide*). `gh pr list
-  --repo <owner>/<repo> --json number,autoMergeRequest` lists them, and
-  this disables one:
-
-  ```shell
-  gh pr merge --repo <owner>/<repo> --disable-auto <n>
-  ```
-
-  Once `main` is green, each held pull request is decided again (*The
-  decision*) and armed again.
-
+- **Read `main`'s latest push runs** when choosing which pull requests
+  to work, and after each landing: `gh run list --repo <owner>/<repo>
+  --branch main --event push`. `main` is red where a required check
+  failed in the latest run of its workflow. A cancelled check is not a
+  failure, and a check that only reports does not count (the
+  maintainer, 2026-10-14). While `main` is red, its repair is the first
+  work, and other pull requests are still approved and armed
+  (`CONTRIBUTING.md`'s *Landing it*).
 - **What gates a merge on GitHub** is the repository's own
   `REPOSITORY.md`, read from `origin/main`: typically an approval from
   somebody other than the author, every review thread resolved, and the
@@ -635,8 +631,8 @@ human.
     --jq '.workflow_runs[].status' | sort -u)" = completed ]
   ```
 
-  Then run this section's first bullet again: a pull request armed
-  before the merge would otherwise land on a red `main`.
+  Then run this section's first bullet again: where the merge turned
+  `main` red, its repair comes first.
 
 - **A landing in `btclib-org/claude-process` brings its primary checkout
   forward at once**, by the shared fast-forward. The files under

@@ -471,10 +471,10 @@ does it before briefing anybody.
   the worktree's last modification, and ask the human where it is not
   certain. Then hand it to a writer as a take-over, which makes the
   branch the writer's own: re-derive *Done when*
-  against both `origin/main` and the branch, finish, rebase, gate, and a
-  fresh review of the whole diff from its parent. Its worktree can be
-  reused, reinstalling the build first (a flagged build may be in its
-  `.venv`).
+  against both `origin/main` and the branch, finish, rebase where it
+  conflicts with `main`, gate, and a fresh review of the whole diff
+  from its parent. Its worktree can be reused, reinstalling the build
+  first (a flagged build may be in its `.venv`).
 - **Look at the machine.** `uptime`, and `ps -eo pid,etime,pcpu,command |
   sort -k3 -rn | head`. Report to the human anything that looks orphaned;
   killing it is not yours (*The machine is shared*).
