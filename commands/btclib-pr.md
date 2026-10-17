@@ -239,17 +239,15 @@ them.
       <file> --limit 5`): not this pull request's. Find or file its
       issue; its repair comes first (*Landing*'s first bullet). A
       required check holds the pull request. Once the repair has
-      landed, close and reopen the pull request, with no push:
+      landed, close and reopen the pull request, with no push
+      (`CONTRIBUTING.md`'s *Landing it* says why):
 
       ```shell
       gh pr close <n> --repo <owner>/<repo>
       gh pr reopen <n> --repo <owner>/<repo>
       ```
 
-      The reopen runs the checks on a fresh merge with the repaired
-      `main`; a re-run would test the old merge commit. The head does
-      not move, so its approvals stand. The reopen also runs the
-      review bot again, and *The decision* reads its new review. Where
+      *The decision* reads the bot's review of the reopen. Where
       `gh pr view <n> --repo <owner>/<repo> --json autoMergeRequest`
       shows the pull request disarmed, arm it again as *Landing* says.
       A check that only reports is named in the decision;
@@ -541,8 +539,8 @@ human.
   failed in the latest run of its workflow. A cancelled check is not a
   failure, and a check that only reports does not count (the
   maintainer, 2026-10-14). While `main` is red, its repair is the first
-  work. Other pull requests are still approved, armed and landed, and
-  an armed one stays armed (the maintainer, 2026-10-17).
+  work, and other pull requests are still approved and armed
+  (`CONTRIBUTING.md`'s *Landing it*).
 - **What gates a merge on GitHub** is the repository's own
   `REPOSITORY.md`, read from `origin/main`: typically an approval from
   somebody other than the author, every review thread resolved, and the
