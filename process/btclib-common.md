@@ -987,7 +987,8 @@ Rebase, run the gates, and push.
   design decision, no separate gate risk: fix it in the branch**, and say
   so in the report and the commit.
 - **Everything else is a new issue, filed by whoever noticed it, when
-  they notice it**, in the repository hosting that code. Search first
+  they notice it**, in the repository hosting that code, or, for code
+  outside btclib-org, as the next bullet says. Search first
   (`gh issue list --repo <owner>/<repo> --state open --search
   "<word> <word>"`). Measure first; where that would mean leaving the
   work at hand, put the deciding
@@ -995,6 +996,13 @@ Rebase, run the gates, and push.
   one that no red gate, security or packaging defect waits on is filed
   with the `good first issue` label, a *Done when* and the file to look
   at.
+- **Code outside btclib-org** is reported first in the btclib-org
+  repository where it was found, not in its own tracker: `gh issue create
+  --repo btclib-org/<repo> --label upstream-report`. Section 11 of
+  `btclib-org/.github`'s `README.md` (*Labels and issue types*) says what
+  becomes of the issue once the report is filed upstream. The text for the
+  external tracker goes to the human, and nothing is posted there before
+  the human has read it.
 - **Evidence you lean on is evidence you own.** A claim your change turns
   into the ground of a new sentence is re-derived, whoever wrote it.
 - **Where your diff falsifies a sentence elsewhere, fixing it is part of
@@ -1017,10 +1025,10 @@ Rebase, run the gates, and push.
   session is done with that pull request, to the same writer/reviewer
   pair; what was filed outside any, to a new pair. Each is taken to an
   open pull request or closed with the measurement that refutes it. The
-  only exceptions are an issue in another repository, one the maintainer
-  suspended, one a `BACKLOG` row or an `EXPECTED_DRIFT` entry already
-  points at, and one labelled `good first issue`; each is named in the
-  report with its reason.
+  only exceptions are an issue in another repository or labelled
+  `upstream-report`, one the maintainer suspended, one a `BACKLOG` row or
+  an `EXPECTED_DRIFT` entry already points at, and one labelled `good
+  first issue`; each is named in the report with its reason.
 - **The session is not done while an issue it opened has no pull
   request** outside those exceptions. One that waits on the human is a
   question, or at night a deferred item, never a silent leftover.
