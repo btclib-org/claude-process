@@ -36,11 +36,11 @@ session acts through their `gh` login and their signing key. *The
 author* of a pull request is the login that opened it. *The maintainer*
 is the one `btclib-org/.github`'s `GOVERNANCE.md` names, who takes the
 decisions the written rules leave open. They may be the same person.
-The maintainer's login is read from the repository's bypass actor:
+The maintainer's login is read from `btclib-org/.github`'s bypass actor:
 
 ```shell
-gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
-  | xargs -I{} gh api repos/<owner>/<repo>/rulesets/{} \
+gh api repos/btclib-org/.github/rulesets --jq '.[].id' \
+  | xargs -I{} gh api repos/btclib-org/.github/rulesets/{} \
     --jq '.bypass_actors[]? | select(.actor_type=="User") | .actor_id' \
   | sort -u | xargs -I{} gh api user/{} --jq .login
 ```
@@ -205,6 +205,72 @@ Every brief states the grant, because the classifier has refused those
 pushes where none was on record. A refusal is still a stop (*A denied
 permission is a stop*), with the `-r2` fallback in *Committing and
 rebasing*.
+
+### Arming auto-merge
+
+**The session arms squash auto-merge on a pull request only once both
+hold on its head** (the maintainer, 2026-10-17):
+
+- every required check passed or was skipped;
+- the review bot's latest review starts `ACK <head>`.
+
+Each pull request is armed on its own measurement: never by default, in
+bulk or by a workflow. Several may be armed at once. The bot's check is
+not a required check: a pull request armed earlier lands on an approval
+given before the bot answered, or after it asked for changes.
+
+**The ACK may be missing in two cases only**, and in both the pull
+request is armed once every required check is green and the latest
+fresh reviewer's `CLEARED` names the head (the maintainer, 2026-10-17):
+
+- the bot's run failed with a 429, its quota exhausted, matched as
+  `/btclib-pr`'s *Rebase and CI* says;
+- the pull request changes `claude-review.yml`, which the bot does not
+  review.
+
+It is armed pinned to the head, with squash, the only merge method
+(`CONTRIBUTING.md`'s *Landing it*):
+`gh pr merge --squash --auto --match-head-commit <head>`. `/btclib-pr`'s
+*Landing* gives the whole command.
+
+**The required checks are the branch protection's contexts.** This
+prints each one that has not passed or been skipped on the head, and
+exits `1` where none is left. `<required file>` must not be empty:
+
+```shell
+gh api repos/<owner>/<repo>/branches/main/protection/required_status_checks \
+  --jq '.contexts[]' > <required file>
+gh pr checks <n> --repo <owner>/<repo> --json name,bucket --jq '.[]
+  | select(.bucket == "pass" or .bucket == "skipping") | .name' > <green file>
+grep -vxFf <green file> <required file>
+```
+
+`gh pr checks --required` is not enough: it omits a required check that
+has not reported yet.
+
+**The bot's review is read as `/btclib-pr`'s *The decision* reads it.**
+This answers `true` where it starts `ACK <head>`:
+
+```shell
+gh pr view <n> --repo <owner>/<repo> --json headRefOid,reviews \
+  --jq '.headRefOid as $h
+  | [.reviews[] | select(.author.login == "claude" and .body != "")]
+  | last | (.body // "") | startswith("ACK " + $h)'
+```
+
+**A pull request armed otherwise is disarmed.** One that is armed is
+disarmed before a push, and armed again once this section allows it on
+the new head.
+This lists the armed ones, and the second command disarms one:
+
+```shell
+gh pr list --repo <owner>/<repo> --json number,autoMergeRequest \
+  --jq '.[] | select(.autoMergeRequest) | .number'
+```
+
+```shell
+gh pr merge <n> --repo <owner>/<repo> --disable-auto
+```
 
 ### Issues left to newcomers
 

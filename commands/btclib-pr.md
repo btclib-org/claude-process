@@ -334,9 +334,8 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       .body'`. While the bot is out of quota (a 429 with its reset
       ahead, read as *Rebase and CI* says), this item and the checks
       item fail, and the human decides (*Where it is not obvious*); on
-      the human's own pull request, another owner or the session under
-      `--land` does (*The human's own pull request*). The missing ACK
-      does not stop the approval.
+      the human's own pull request, *The human's own pull request* says
+      who does. The missing ACK does not stop the approval.
 - [ ] no review thread is unresolved, every page read (*What was
       raised*)
 - [ ] every item of *What was raised* is answered
@@ -454,10 +453,27 @@ decision. At night it is a deferred item (the shared *Night mode*).
 
 ### The human's own pull request
 
-Where `--land` covers it (*Landing*), the session lands it once every
-item above holds but the first and the last four, as *Landing*
-qualifies them. Without `--land`, another owner decides; once the same
-items hold, except the two a 429 fails:
+**Where the human is the maintainer (the shared *Three roles this file
+names*), on a repository that publishes no package, the session lands
+it through the maintainer's bypass, and requests no owner's review**
+(the maintainer, 2026-10-17). It lands once every item above holds but
+the first and the last four, as *Landing* qualifies them, the bot's ACK
+included or missing as the shared *Arming auto-merge* allows. *Landing*
+gives the command. Such a repository has the maintainer as a bypass
+actor of an active ruleset. This prints his id there, and nothing on a
+repository that publishes a package:
+
+```shell
+gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
+  | xargs -I{} gh api repos/<owner>/<repo>/rulesets/{} \
+    --jq 'select(.enforcement == "active") | .bypass_actors[]?
+      | select(.actor_type == "User" and .bypass_mode == "pull_request")
+      | .actor_id'
+```
+
+Elsewhere, under `--land` (*Landing*), the same. Without `--land`,
+another owner decides; once the same items hold, except the two a 429
+fails:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
@@ -468,15 +484,19 @@ items hold, except the two a 429 fails:
   gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>
   ```
 
-- arm the landing, so that their approval lands it (*Landing*);
+- arm the landing once the shared *Arming auto-merge* allows it, so
+  that their approval lands it (*Landing*);
 - report whom it waits on.
 
 After a push, request the review again on the new head (*Landing*).
 
 A pull request that changes `claude-review.yml` gets no review from the
 bot. The action refuses to run where its workflow differs from the
-default branch's, and its check fails. There `--land` does not apply:
-the landing is armed without the bot's ACK, every other check green.
+default branch's, and its check fails. There `--land` does not apply,
+and it is armed as the shared *Arming auto-merge* says. On a repository
+with the bypass, where the human is the maintainer, it lands through it
+once every other check is green and the latest fresh reviewer's
+`CLEARED` names the head.
 
 ## Outside contributors
 
@@ -550,9 +570,9 @@ human.
   somebody other than the author, every review thread resolved, and the
   required status checks. The bot's ACK is a comment, not an approval. A
   push dismisses an approval already given.
-- **Squash, with the head pinned, by auto-merge.** The branch carries
-  several commits once review has added any, so the subject and the
-  message are written, not inherited:
+- **Squash, by auto-merge, armed as the shared *Arming auto-merge*
+  says.** The branch carries several commits once review has added any,
+  so the subject and the message are written, not inherited:
 
   ```shell
   gh pr merge <n> --repo <owner>/<repo> --squash --auto \
@@ -568,8 +588,17 @@ human.
   message is fixed here, with no new round.
 
   Never land through the maintainer's bypass (`--admin`, or any other
-  route to it) unless the human has instructed it for that pull request.
-  It merges with no approval, even with required checks red.
+  route to it) unless the human has instructed it for that pull request,
+  or, where the human is the maintainer, it is the human's own pull
+  request on a repository that publishes no package (*The human's own
+  pull request*). It merges with no approval, even with required checks
+  red. Either lands with this, in place of the command above:
+
+  ```shell
+  gh pr merge <n> --repo <owner>/<repo> --squash --admin \
+    --match-head-commit <the head that lands> \
+    --subject "<title> (closes #<issue>) (#<n>)" --body-file <message>
+  ```
 
   **`--land` is that instruction**, for the pull requests named with it,
   or opened by `/btclib-iss` for the issues named with it, and no others.
@@ -578,14 +607,7 @@ human.
   has reached the point *The human's own pull request* names. A check
   that only reports and is red on `main` too does not hold it, and is
   named in the report. A 429 alone does not hold it either, once local
-  review has cleared and the other checks are green. In place of the
-  command above:
-
-  ```shell
-  gh pr merge <n> --repo <owner>/<repo> --squash --admin \
-    --match-head-commit <the head that lands> \
-    --subject "<title> (closes #<issue>) (#<n>)" --body-file <message>
-  ```
+  review has cleared and the other checks are green.
 
 - **The pin is the head as last pushed**, not the sha a verdict named.
 - **A stacked pull request lands like any other**: once its base has
