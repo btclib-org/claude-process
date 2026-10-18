@@ -91,9 +91,10 @@ jobs:
       # the gates instruction
       extra-prompt: |
         What this repository ships is the text that sessions follow:
-        commands/btclib-iss.md and commands/btclib-pr.md are the two
+        commands/btclib-iss.md and commands/btclib-pr.md are two
         commands, process/btclib-common.md is what they share, and the
-        two agents are generic readers of them. A change is judged by
+        two agents are generic readers of them. commands/btclib-table.md
+        is a third command, which only reads. A change is judged by
         what a session does differently afterwards, so a rule stated
         without the command that checks it, a sentence copied from the
         standard rather than pointed at, and an agent file restating a
