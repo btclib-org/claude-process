@@ -17,8 +17,10 @@ The process the btclib-org maintainers follow with
   an open pull request, followed as its author;
 - `commands/btclib-pr.md` — the `/btclib-pr` command, from an open pull
   request to the decision to approve, and to `main`;
-- `process/btclib-common.md` — what both commands share, read whole by
-  each;
+- `commands/btclib-table.md` — the `/btclib-table` command, one table of
+  every repository of the organization, which only reads;
+- `process/btclib-common.md` — what `/btclib-iss` and `/btclib-pr`
+  share, read whole by each;
 - `agents/writer.md` — the agent that writes a change in its own
   worktree;
 - `agents/reviewer.md` — the agent that reviews it at fresh context;
@@ -67,6 +69,10 @@ ln -s "${CLAUDE_PROCESS:?}/commands/btclib-pr.md" ~/.claude/commands/btclib-pr.m
 ```
 
 ```shell
+ln -s "${CLAUDE_PROCESS:?}/commands/btclib-table.md" ~/.claude/commands/btclib-table.md
+```
+
+```shell
 ln -s "${CLAUDE_PROCESS:?}/process/btclib-common.md" ~/.claude/process/btclib-common.md
 ```
 
@@ -86,11 +92,12 @@ Each link holds the clone's path as it was when the link was made: a
 clone moved later leaves the links pointing at nothing; remove them and
 make them again from the new path.
 
-`ln -s` refuses to overwrite an existing file: move any `writer.md`,
-`reviewer.md` or `gate-lock.sh` you already have out of the way first.
+`ln -s` refuses to overwrite an existing file: move any file of the same
+name you already have out of the way first.
 
-Check it in a new session: `/btclib-iss` and `/btclib-pr` are listed
-among the commands, and `/agents` lists `writer` and `reviewer`.
+Check it in a new session: `/btclib-iss`, `/btclib-pr` and
+`/btclib-table` are listed among the commands, and `/agents` lists
+`writer` and `reviewer`.
 
 ## Use
 
@@ -109,10 +116,18 @@ answers what the reviewers raised, gets CI green, and takes them to the
 decision to approve and to `main`. With no argument it sweeps the
 organization's open pull requests and proposes which to work.
 
-Both work in every repository of `btclib-org`; the shared *Where you
-work* says how the repository is named. `/btclib-pr`'s *The decision*
-and *Landing* say when a session approves and when it lands, `--land`
-included.
+```text
+/btclib-table
+```
+
+shows one table of every repository of the organization that is not
+archived: open issues, open pull requests, the last release, and whether
+a new one is due. It only reads.
+
+`/btclib-iss` and `/btclib-pr` work in every repository of
+`btclib-org`; the shared *Where you work* says how the repository is
+named. `/btclib-pr`'s *The decision* and *Landing* say when a session
+approves and when it lands, `--land` included.
 
 ## Updating
 
@@ -125,6 +140,9 @@ CLAUDE_PROCESS=~/Git/claude-process
 ```shell
 git -C "${CLAUDE_PROCESS:?}" pull --ff-only
 ```
+
+A command added since the machine was set up has no link yet: make it
+as *Setup* says.
 
 A machine set up before the commands were split has a link
 `~/.claude/commands/btclib-org.md` that points at nothing. Remove it,

@@ -249,6 +249,8 @@ The text of the process the maintainers follow with Claude Code:
 `commands/btclib-iss.md` and `commands/btclib-pr.md` are the two commands,
 `process/btclib-common.md` is what they share, and `agents/writer.md` and
 `agents/reviewer.md` are the agents a session briefs with them.
+`commands/btclib-table.md` is a third command, which only reads: one
+table of the organization's repositories.
 `README.md` says how a machine is set up to use them. A change here
 changes what every session reads once its branch lands, so it is
 reviewed like code.

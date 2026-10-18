@@ -23,7 +23,8 @@ and the rows of the root-files table marked for that tier.
 `commands/btclib-pr.md` are the process; `agents/writer.md` and
 `agents/reviewer.md` are the agents a session briefs with it. The
 opening of `process/btclib-common.md` says how they divide the rules,
-and where a rule is changed. `.claude/commands/review.md` is a
+and where a rule is changed. `commands/btclib-table.md` is a third
+command, which only reads. `.claude/commands/review.md` is a
 different file with a similar name: it is the `/review` command of
 *this* repository's own pull requests, not part of the process shipped.
 
@@ -75,13 +76,13 @@ git worktree remove --force <scratchpad>/wt-<tracker>-<issue>-<repo>-<role>
 ## Non-obvious facts that will otherwise waste a session
 
 - **The primary checkout is what every session reads.** On a machine set
-  up as `README.md` says, the two commands under `~/.claude/commands/`,
-  `~/.claude/process/btclib-common.md`, the two agents under
-  `~/.claude/agents/` and `~/.claude/scripts/gate-lock.sh` are symlinks
-  into it, so a file
-  edited or a branch switched to there changes the text the next
-  session reads. That is why the section above holds here as it does,
-  and why the fast-forward alone moves that checkout. The links answer:
+  up as `README.md` says, this repository's commands under
+  `~/.claude/commands/`, `~/.claude/process/btclib-common.md`, the two
+  agents under `~/.claude/agents/` and `~/.claude/scripts/gate-lock.sh`
+  are symlinks into it, so a file edited or a branch switched to there
+  changes the text the next session reads. That is why the section above
+  holds here as it does, and why the fast-forward alone moves that
+  checkout. The links answer:
 
   ```shell
   ls -l ~/.claude/commands ~/.claude/process ~/.claude/agents ~/.claude/scripts
