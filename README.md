@@ -146,7 +146,7 @@ as *Setup* says.
 
 A machine set up before the commands were split has a link
 `~/.claude/commands/btclib-org.md` that points at nothing. Remove it,
-then make the directory and the three links of *Setup* it lacks:
+then make the directory and the links of *Setup* it lacks:
 
 ```shell
 rm ~/.claude/commands/btclib-org.md
