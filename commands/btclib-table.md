@@ -50,9 +50,9 @@ bl3 = gold = "-"
 if bp:
     url = f"https://www.bestpractices.dev/projects/{bp}.json"
     b = json.load(urllib.request.urlopen(url))
-    repo = b["repo_url"].rstrip("/").split("/")[-1]
-    if repo not in (r, name):
-        bl3 = gold = f"mismatch: {b['repo_url']}"
+    url_seen = b["repo_url"]
+    if url_seen.rstrip("/").split("/")[-1] not in (r, name):
+        bl3 = gold = f"mismatch: {url_seen}"
     else:
         bl3 = b["badge_percentage_baseline_3"]
         gold = b["badge_percentage_2"]
