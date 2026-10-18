@@ -7,9 +7,8 @@ body:
   - type: markdown
     attributes:
       value: >
-        This repository holds the text of the `/btclib-iss` and `/btclib-pr`
-        commands, of the file they share, and of the `writer` and
-        `reviewer` agents. A report here is a sentence
+        This repository holds the text of the btclib-org process, whose
+        files its README lists. A report here is a sentence
         that is false, a command that fails as written, or two sections
         that disagree.
 
