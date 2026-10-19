@@ -136,10 +136,10 @@ where a page comes back full.
   <owner>/<repo> --json comments`.
 - **Checks**: `gh pr checks <n> --repo <owner>/<repo>`.
 
-An unresolved thread is an item. So is a review or comment from anybody
-but the human that asks something, where nobody has answered it or it
-came after the human's last comment and last push. A resolved thread is
-done.
+Every unresolved thread is an item, whoever wrote it, the bot included,
+outdated or not. So is a review or comment from anybody but the human
+that asks something, where nobody has answered it or it came after the
+human's last comment and last push. A resolved thread is done.
 
 ## Answering it
 
@@ -147,12 +147,15 @@ done.
 answered one of three ways:
 
 - **accept**: fixed in a new signed commit on top (the shared
-  *Committing and rebasing*). A suggestion is applied in the worktree,
-  not with GitHub's button, so the gates run on it.
+  *Committing and rebasing*).
 - **decline**: with the measurement that refutes it.
 - **decision**: a choice the tree does not settle — design, scope, a
   reserved decision. It goes to the human or the maintainer, as the
   shared *When the human has to decide* says.
+
+**Every inline `suggestion` is applied in the worktree or declined with
+its measurement.** It is not applied with GitHub's button, so that the
+gates run on it.
 
 **Every thread gets a reply, and is then resolved.** An accepted one
 names the commit that fixes it; a declined one carries its measurement.
@@ -343,7 +346,8 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       the human's own pull request, *The human's own pull request* says
       who does. The missing ACK does not stop the approval.
 - [ ] no review thread is unresolved, every page read (*What was
-      raised*)
+      raised*). It binds every approval, the human's decision
+      included; the shared *Arming auto-merge* has it for arming
 - [ ] every item of *What was raised* is answered
 - [ ] no other reviewer's changes requested stand: `latestReviews`
       holds no `CHANGES_REQUESTED`
@@ -449,10 +453,11 @@ the branch, and report whom it waits on.
 **Where it is not obvious, the human decides**, as one decision (the
 shared *When the human has to decide*). Its context is the `PR` link,
 the head sha, and each failed item with its measurement. The
-alternatives are: approve as it is; ask the author for changes, naming
-them, where the session cannot push to the branch; wait, naming on what
-or whom; close, where that is an option. Where only the bot's quota
-fails the items, the human may run a Claude review locally.
+alternatives are: approve, once the thread item holds; ask the author
+for changes, naming them, where the session cannot push to the branch;
+wait, naming on what or whom; close, where that is an option. Where
+only the bot's quota fails the items, the human may run a Claude review
+locally.
 Record it as a hold (the shared *When the human has to decide*). On
 "approve", approve as above, with a body saying it follows the human's
 decision. At night it is a deferred item (the shared *Night mode*).
@@ -501,8 +506,8 @@ bot. The action refuses to run where its workflow differs from the
 default branch's, and its check fails. There `--land` does not apply,
 and it is armed as the shared *Arming auto-merge* says. On a repository
 with the bypass, where the human is the maintainer, it lands through it
-once every other check is green and the latest fresh reviewer's
-`CLEARED` names the head.
+once every other check is green, no review thread is unresolved, and
+the latest fresh reviewer's `CLEARED` names the head.
 
 ## Outside contributors
 
@@ -566,6 +571,11 @@ human.
   somebody other than the author, every review thread resolved, and the
   required status checks. The bot's ACK is a comment, not an approval. A
   push dismisses an approval already given.
+- **Where `gh pr merge` refuses, or an approved pull request stays
+  `BLOCKED`** (`gh pr view <n> --repo <owner>/<repo> --json
+  mergeStateStatus`), read its threads first, with *What was raised*'s
+  query, then its checks. Do not explain a block by a ruleset option you
+  have not read.
 - **Squash, by auto-merge, armed as the shared *Arming auto-merge*
   says.** The branch carries several commits once review has added any,
   so the subject and the message are written, not inherited:

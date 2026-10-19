@@ -208,11 +208,14 @@ rebasing*.
 
 ### Arming auto-merge
 
-**The session arms squash auto-merge on a pull request only once both
-hold on its head** (the maintainer, 2026-10-17):
+**The session arms squash auto-merge on a pull request only once all
+three hold on its head** (the maintainer, 2026-10-17):
 
 - every required check passed or was skipped;
-- the review bot's latest review starts `ACK <head>`.
+- the review bot's latest review starts `ACK <head>`;
+- no review thread is unresolved, read as `/btclib-pr`'s *What was
+  raised* says
+  ([ISS 152](https://github.com/btclib-org/claude-process/issues/152)).
 
 Each pull request is armed on its own measurement: never by default, in
 bulk or by a workflow. Several may be armed at once. The bot's check is
@@ -220,8 +223,9 @@ not a required check: a pull request armed earlier lands on an approval
 given before the bot answered, or after it asked for changes.
 
 **The ACK may be missing in two cases only**, and in both the pull
-request is armed once every required check is green and the latest
-fresh reviewer's `CLEARED` names the head (the maintainer, 2026-10-17):
+request is armed once every required check is green, no review thread
+is unresolved, and the latest fresh reviewer's `CLEARED` names the head
+(the maintainer, 2026-10-17):
 
 - the bot's run failed with a 429, its quota exhausted, matched as
   `/btclib-pr`'s *Rebase and CI* says;
