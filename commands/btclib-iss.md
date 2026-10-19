@@ -128,7 +128,8 @@ open:**
 Once a pull request is open, the session follows it as its author.
 `~/.claude/commands/btclib-pr.md` holds the rules, read there and not
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
-*The human's own pull request*, and *Landing*'s first four bullets and
+*The human's own pull request*, and *Landing*'s bullets from *Read
+`main`'s latest push runs* to *The pin is the head as last pushed*, and
 its *Check what landed*. Under `--land`, all of *Landing* applies.
 
 - **The `/btclib-pr` *Landing* bullets on the collateral and on the
