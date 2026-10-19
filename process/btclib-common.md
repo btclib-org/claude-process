@@ -698,9 +698,10 @@ the orchestrator in the pull request.
   (*Call `gate_wait` before each heavy gate*; the load is read under
   `LC_ALL=C` because some locales print a decimal comma) and then takes
   the first free slot, so that nobody holds one while only waiting, a
-  load generator excepted. It takes none within `GATE_LOCK_STAGGER` (60)
-  seconds of the last take recorded in `gate.last`, so that the idle
-  reading shows the gate just started.
+  load generator excepted. While a slot is held, it takes none within
+  `GATE_LOCK_STAGGER` (60) seconds of the last take recorded in
+  `gate.last`, so that the idle reading shows the gate just started. A
+  slot is held while its owner file names a live process.
   `gate_take` waits for the stagger, the idle CPU, the load, the memory,
   the disk and a free slot with no bound. A timeout on the background
   call covers the gates, not `gate_take`. Holders that never finish keep everyone
