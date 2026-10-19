@@ -839,17 +839,20 @@ the orchestrator in the pull request.
     env -C <wt> uv run --no-project --python 3.15 - <base>..
   ```
 
-  Its control is the tree's second commit, which carries no trailer: the
-  same command over its range exits `1`, where a failed fetch pipes an
-  empty script, which exits `0`.
+  Its control is commit `c1786962edc1` of `btclib-org/.github`, which
+  carries no `Signed-off-by:` trailer. A tree's own commits may all carry
+  one, so the control is this one commit for every tree. The script reads
+  only commits, so a blobless clone in your scratch directory serves:
 
   ```shell
-  c=$(git -C <wt> rev-list --reverse HEAD | sed -n 2p)
+  git clone --bare --filter=blob:none https://github.com/btclib-org/.github <clone>
   ```
 
-  Its range is `"${c:?}~1..${c:?}"`. An amend
-  with `--no-edit` and a rebase keep the trailer. A commit that lacks it
-  gets it from `git rebase --signoff <base>`, or at the tip from
+  The same command, with `<clone>` for `<wt>` and
+  `c1786962edc1~1..c1786962edc1` for `<base>..`, exits `1`. A failed
+  fetch pipes an empty script, which exits `0`. An amend with `--no-edit`
+  and a rebase keep the trailer. A commit that lacks it gets it from
+  `git rebase --signoff <base>`, or at the tip from
   `git commit --amend --no-edit -s`.
 - **A clean rebase is not a correct one.** Re-run the gates, and look for
   what `main` added around what you remove.
