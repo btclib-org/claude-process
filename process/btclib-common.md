@@ -106,6 +106,13 @@ These bind the writer, the reviewer and the orchestrator alike.
   pytest-xdist, with `-n "$GATE_LOCK_WORKERS"` (*The gate lock*), which
   overrides an `-n auto` in its `addopts`. Other sessions' processes are
   not yours to kill.
+- **`timeout` may not be installed, so a command that uses it checks
+  `command -v timeout` first.** Where that prints nothing, the command
+  runs without a time limit, and the report says so. On macOS,
+  Homebrew's coreutils provides it, and it exits `124` when time runs
+  out. Coreutils installs its GNU versions of the commands macOS already
+  ships, such as `date` and `stat`, under a `g` prefix (`gdate`,
+  `gstat`); the unprefixed ones stay BSD.
 
 ### Where you work
 
@@ -832,17 +839,20 @@ the orchestrator in the pull request.
     env -C <wt> uv run --no-project --python 3.15 - <base>..
   ```
 
-  Its control is the tree's second commit, which carries no trailer: the
-  same command over its range exits `1`, where a failed fetch pipes an
-  empty script, which exits `0`.
+  Its control is commit `c1786962edc1` of `btclib-org/.github`, which
+  carries no `Signed-off-by:` trailer. A tree's own commits may all carry
+  one, so the control is this one commit for every tree. The script reads
+  only commits, so a blobless clone in your scratch directory serves:
 
   ```shell
-  c=$(git -C <wt> rev-list --reverse HEAD | sed -n 2p)
+  git clone --bare --filter=blob:none https://github.com/btclib-org/.github <clone>
   ```
 
-  Its range is `"${c:?}~1..${c:?}"`. An amend
-  with `--no-edit` and a rebase keep the trailer. A commit that lacks it
-  gets it from `git rebase --signoff <base>`, or at the tip from
+  The same command, with `<clone>` for `<wt>` and
+  `c1786962edc1~1..c1786962edc1` for `<base>..`, exits `1`. A failed
+  fetch pipes an empty script, which exits `0`. An amend with `--no-edit`
+  and a rebase keep the trailer. A commit that lacks it gets it from
+  `git rebase --signoff <base>`, or at the tip from
   `git commit --amend --no-edit -s`.
 - **A clean rebase is not a correct one.** Re-run the gates, and look for
   what `main` added around what you remove.
