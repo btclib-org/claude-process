@@ -106,6 +106,13 @@ These bind the writer, the reviewer and the orchestrator alike.
   pytest-xdist, with `-n "$GATE_LOCK_WORKERS"` (*The gate lock*), which
   overrides an `-n auto` in its `addopts`. Other sessions' processes are
   not yours to kill.
+- **`timeout` may not be installed, so a command that uses it checks
+  `command -v timeout` first.** Where that prints nothing, the command
+  runs without a time limit, and the report says so. On macOS,
+  Homebrew's coreutils provides it, and it exits `124` when time runs
+  out. Coreutils installs its GNU versions of the commands macOS already
+  ships, such as `date` and `stat`, under a `g` prefix (`gdate`,
+  `gstat`); the unprefixed ones stay BSD.
 
 ### Where you work
 
