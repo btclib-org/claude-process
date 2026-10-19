@@ -30,8 +30,13 @@
 #   calls gate_wait, and must return from it only after the test lowers
 #   the idle.
 # - Spacing. With GATE_LOCK_STAGGER at 4 seconds, two sessions ask at once
-#   with a slot free for each. The stamps in gate.last that the two takes
-#   write are 4 seconds or more apart.
+#   with a slot free for each. The first holds its slot while the second
+#   waits. The stamps in gate.last that the two takes write are 4 seconds
+#   or more apart.
+# - No slot held. With GATE_LOCK_STAGGER at 60 seconds and gate.last just
+#   written, a session asks while no slot is held, and takes one within
+#   the 30 seconds of a wait. Then a session asks beside a gate.lock.3
+#   whose holder is gone, and takes a slot within them too.
 # - Zsh. A zsh session takes the first slot with no other slot present, and
 #   releases it. Skipped where there is no zsh.
 # - Load generators. Under each of sh, bash, zsh and dash, two sessions ask
@@ -232,6 +237,34 @@ t2=$(cat "$tmp/last-L")
 echo "ok: the second take came $((t2 - t1)) seconds after the first, the stagger being $GATE_LOCK_STAGGER"
 for n in K L; do touch "$tmp/go-$n"; done
 wait
+
+# No slot held: a recent take does not hold the next one back for the
+# stagger, nor does a slot whose holder is gone.
+GATE_LOCK_STAGGER=60
+date +%s > "$GATE_LOCK_DIR/gate.last"
+: > "$tmp/events"
+holder M &
+pids=$!
+await 'M taken' 1 "with no slot held, M was held for the stagger"
+touch "$tmp/go-M"
+await 'M done' 1 "M never released its slot"
+wait
+# a process that ends by itself: one killed at once may still be a copy of
+# this shell, which runs the trap that removes $tmp
+sh -c : &
+dead=$!
+wait "$dead"
+mkdir "$GATE_LOCK_DIR/gate.lock.3"
+echo "$dead $(date +%s) wt-dead" > "$GATE_LOCK_DIR/gate.lock.3/owner"
+holder N &
+pids=$!
+await 'N taken' 1 "beside a stale gate.lock.3, N was held for the stagger"
+touch "$tmp/go-N"
+await 'N done' 1 "N never released its slot"
+wait
+cat "$tmp/events"
+echo "ok: with no slot held, or only a stale one, a take came within the stagger of $GATE_LOCK_STAGGER"
+rm -r "${GATE_LOCK_DIR:?}/gate.lock.3"
 GATE_LOCK_STAGGER=0
 
 # Under zsh, which stops at a glob with no match, a session takes the first

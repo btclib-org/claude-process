@@ -23,9 +23,11 @@
 # Waiters queue in arrival order. gate_take writes a ticket into
 # $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
 # until its ticket is the oldest one whose process is alive. Then it waits,
-# as gate_wait does, and takes the first free slot, but not within
-# GATE_LOCK_STAGGER seconds of the last take recorded in gate.last, so that
-# the idle reading shows the gate just started. gate.last sits in
+# as gate_wait does, and takes the first free slot. While a slot is held,
+# it takes none within GATE_LOCK_STAGGER seconds of the last take recorded
+# in gate.last, so that the idle reading shows the gate just started. A
+# slot is held while its owner file names a live process, so that a stale
+# slot does not hold the next take back. gate.last sits in
 # $GATE_LOCK_DIR and is written aside and renamed. gate_wait waits
 # until GATE_LOCK_IDLE percent or more of the CPU was idle over the last
 # GATE_LOCK_POLL seconds, the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or
@@ -174,6 +176,20 @@ _gl_spaced() {
   [ "$_gl_gap" -lt 0 ] || [ "$_gl_gap" -ge "$GATE_LOCK_STAGGER" ]
 }
 
+# Succeeds when the owner file of a slot names a live process
+_gl_held() {
+  _gl_hn=1
+  # counted rather than globbed: zsh stops at a glob with no match
+  while [ "$_gl_hn" -le "$GATE_LOCK_SLOTS" ]; do
+    _gl_slot "$_gl_hn"
+    _gl_hn=$((_gl_hn + 1))
+    _gl_hpid=""
+    [ -r "$_gl_s/owner" ] && read -r _gl_hpid _ < "$_gl_s/owner"
+    [ -n "$_gl_hpid" ] && ps -p "$_gl_hpid" >/dev/null 2>&1 && return 0
+  done
+  return 1
+}
+
 # Records now as the time of the last take. It is written before the ticket
 # is removed, so that the next head reads it. The rename keeps a reader from
 # a half written file.
@@ -239,7 +255,7 @@ gate_take() {
 $(ls "$_gl_queue" 2>/dev/null)
 EOF
     [ "$_gl_head" = "$_gl_ticket" ] || { sleep "$GATE_LOCK_POLL"; continue; }
-    _gl_spaced || { sleep "$GATE_LOCK_POLL"; continue; }
+    ! _gl_held || _gl_spaced || { sleep "$GATE_LOCK_POLL"; continue; }
     _gl_admit || continue
     _gl_i=1
     while [ "$_gl_i" -le "$GATE_LOCK_SLOTS" ]; do
