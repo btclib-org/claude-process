@@ -906,8 +906,8 @@ branch, or a text to be posted.
   a docs page, is code. So is everything else, a test's code included.
   The orchestrator reads every added and removed line of `git diff <sha
   of the first verdict> <cleared sha>`, or, where a rebase came between,
-  the `range-diff` of *A rebase and the clearance*, to check that each
-  fix is a prose-only fix.
+  of `git range-diff <old base>..<sha of the first verdict>
+  <new base>..<cleared sha>`, to check that each fix is a prose-only fix.
 - **The rounds end when a fresh reviewer's first verdict is `CLEARED`**,
   or at the `CLEARED` that the fresh-reviewer bullet above lets end them.
 - **The orchestrator checks that the rounds converge.** It keeps each
@@ -1028,20 +1028,34 @@ run and another bot run.
 
 ### A rebase and the clearance
 
-**A rebase voids the gates, not necessarily the `CLEARED`.** Where
-`git range-diff <old base>..<old tip> origin/main..<new tip>` marks
-every commit `=`, the clearance stands. A `!` keeps it only
-where the branch's own added and removed lines are unchanged; otherwise
-a fresh reviewer reads the whole branch. For a one-commit branch,
-"unchanged" is proved by comparing every added and removed line —
-bullets and blank lines included, headers dropped — with explicit shas,
-each revision a separate argument:
+**A rebase that applies without a conflict keeps the `CLEARED`** (the
+human, 2026-10-20). No reviewer reads it. It voids the gates: they run
+again on the new tip, and so does the check of *Signed and signed off*.
+This holds where the rebase replays the cleared commits and no others.
+Then these two commands print the same subjects in the same order,
+`<old base>` being the parent the cleared sha was reviewed on:
+
+```shell
+git -C <wt> log --reverse --format=%s '<old base>..<cleared sha>'
+git -C <wt> log --reverse --format=%s '<new base>..<new tip>'
+```
+
+It holds even where `main` already carried a hunk, which the rebased
+commit then lacks.
+
+**A rebase that applies without a conflict but replays other commits, or
+drops one, keeps the `CLEARED` only where the branch's own added and
+removed lines are unchanged.** Otherwise a fresh reviewer reads the
+whole branch. For a one-commit branch, "unchanged" is proved by
+comparing every added and removed line — bullets and blank lines
+included, headers dropped — with explicit shas, each revision a separate
+argument:
 
 ```shell
 hdr='^(diff --git |index |@@ |--- (a/|/dev/null)|\+\+\+ (b/|/dev/null))'
 before=$(git -C <wt> diff '<cleared sha>^' '<cleared sha>' \
            | grep -vE "$hdr" | grep -E '^[+-]')
-after=$(git -C <wt> diff '<new sha>^' '<new sha>' \
+after=$(git -C <wt> diff '<new tip>^' '<new tip>' \
           | grep -vE "$hdr" | grep -E '^[+-]')
 printf '%s\n' "$before" | shasum
 printf '%s\n' "$after"  | shasum
@@ -1050,7 +1064,11 @@ printf '%s\n' "$before" "$after" | grep -c .   # not zero
 
 Equal hashes over a non-empty stream, and the clearance stands. A
 branch of several commits is compared the same way over `<base>..<tip>`
-at both ends. Say in the pull request which case it was.
+at both ends.
+
+**A rebase that resolved a conflict goes to a fresh reviewer**, who
+reads the whole branch: the resolution is a change no reviewer has seen.
+Say in the pull request which case it was.
 
 **"This branch has conflicts" on GitHub is real** even where a local
 rebase exits `0`: the forge does not apply a tree's `merge=union`.
@@ -1133,7 +1151,7 @@ Rebase, run the gates, and push.
   wrong.
 - **Do not hand the reviewer your hypothesis as a premise.**
 - **After a rebase or a new commit, the gates run again on the new sha
-  before the reviewer is asked**, and the report you hand it names that
+  before any reviewer is asked**, and the report you hand it names that
   sha.
 - **Do not retract part of a brief mid-round.** Let the round finish and
   discard the finding. Where it cannot wait, say why the brief was wrong,

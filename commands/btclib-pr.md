@@ -198,9 +198,10 @@ them.
 
 ## Rebase and CI
 
-- **The reviewer reads the delta** from the sha it last read, and the
-  rebase case of the shared *A rebase and the clearance*. A fresh
-  reviewer's first read is the whole diff from its parent.
+- **The reviewer reads the delta** from the sha it last read. A rebase
+  goes to a reviewer only where the shared *A rebase and the clearance*
+  sends it. A fresh reviewer's first read is the whole diff from its
+  parent.
 - **A pull request is rebased onto the default branch only where
   `CONTRIBUTING.md`'s *Landing it* says, or for a retarget.** An outside
   contributor's branch is never rebased: *Outside contributors* brings
