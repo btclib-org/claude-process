@@ -710,7 +710,7 @@ the orchestrator in the pull request.
   `LC_ALL=C` because some locales print a decimal comma) and then takes
   the first free slot, so that nobody holds one while only waiting, a
   load generator excepted. While a slot is held, it takes none within
-  `GATE_LOCK_STAGGER` (60) seconds of the last take recorded in
+  `GATE_LOCK_STAGGER` (15) seconds of the last take recorded in
   `gate.last`, so that the idle reading shows the gate just started. A
   slot is held while its owner file names a live process.
   `gate_take` waits for the stagger, the idle CPU, the load, the memory,
@@ -732,7 +732,7 @@ the orchestrator in the pull request.
   `gate.generator`, which holds an `owner` file and is removed as a stale
   slot is. It then takes the slots one by one, and holds those it has while
   it waits for the rest. That wait is at least
-  (`GATE_LOCK_SLOTS` − 1) × `GATE_LOCK_STAGGER` seconds, 2 minutes by
+  (`GATE_LOCK_SLOTS` − 1) × `GATE_LOCK_STAGGER` seconds, 30 seconds by
   default. Each take queues with a fresh ticket, so gates that queue
   meanwhile take the next free slots before it, and it may hold the
   slots it has for longer. The session that runs it starts at most one
