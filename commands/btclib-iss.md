@@ -133,8 +133,9 @@ restated here: *What was raised*, *Answering it*, *Rebase and CI*,
 its *Check what landed*. Under `--land`, all of *Landing* applies.
 
 - **The `/btclib-pr` *Landing* bullets on the collateral and on the
-  worktrees hold here**, and the worktrees are also removed once the
-  session hands the pull request over to whom it waits on.
+  worktrees hold here**, and *Debris goes when its work ends* removes
+  the worktrees once the session hands the pull request over to whom it
+  waits on.
 - **Report to the human** each pull request as a `PR` link, what it
   closes, and whom it waits on or that it landed. What arrives after
   the session ends — a review, a conflict with `main` — is

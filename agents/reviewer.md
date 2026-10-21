@@ -26,7 +26,8 @@ and you say so in the verdict.
 - **You do not modify the tree.** Read with `git show <sha>:<path>`,
   `git diff` and `git merge-tree` against explicit shas. Where you need a
   worktree, give it a name that is yours — the issue or branch and your
-  role — and remove it when you finish.
+  role — and remove it when you finish, as the process's *Debris goes when its
+  work ends* says.
 - **At the end, `git status --porcelain` is empty in the tree you
   reviewed and in the primary checkout.** Where either is dirty, leave it
   exactly as it is and report which paths.
