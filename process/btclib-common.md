@@ -95,6 +95,34 @@ These bind the writer, the reviewer and the orchestrator alike.
   place*): a summary names the section that holds a rule and does not
   restate it. A text the reader has to read twice has failed, however
   correct.
+- **What is posted on a forge** — an issue, a pull request, a comment or
+  a reply, in any repository — meets these limits, and every reviewer
+  checks them as a blocking item:
+    - **The first line is the point**: the verdict of a pull request
+      review, the problem an issue or pull request addresses, the answer
+      a reply gives. A reader who stops there knows it.
+    - **A verdict is given only on a pull request, and only where the
+      review supports it.** Upstream it is `ACK <sha>`, `tACK <sha>`,
+      `utACK <sha>`, `Concept ACK`, `Approach ACK`, `Concept NACK` or
+      `NACK`. In btclib-org only the deciding review gives one, as
+      `REVIEWING.md`'s *The verdict* says. A review that cannot give one
+      is a comment, and its first line says so. The deciding review's
+      summary keeps the shape `REVIEWING.md`'s *The verdict* gives it,
+      its findings one bullet each; the limits below hold for every
+      other review.
+    - **Then purpose, finding, conclusion**: what was checked and why,
+      what was found, and what follows for the pull request or the next
+      step. One point per text; no sha or line-number chains, no
+      preemptive rebuttals, plain words.
+    - **A comment or reply is at most 200 words**, with no list and no
+      heading: the first line, then at most two paragraphs, the second
+      holding the technical findings. A review that reports measurements
+      says in one sentence how they were measured, and offers or links
+      the detail.
+    - **A pull request or issue body is at most two short paragraphs**
+      before any code block or required template section.
+    - **A text over a limit is not posted but returned cut**, unless a
+      maintainer asked for exactly that detail.
 - **Parallelize as much as you can.** Reads, remote work, writers and
   reviewers run side by side, within the machine's CPU load, memory
   pressure and free disk (*The gates*, *Before starting*).
@@ -1231,8 +1259,9 @@ the human has to decide*) is a hold, not an item. A branch taking a
 reserved decision is opened, not landed, and its cut-back is one of the
 decision's alternatives.
 
-- **Record each item as a hold**, its comment in the shape *When the
-  human has to decide* gives; a missing label is not created at night.
+- **Record each item as a hold**, its comment carrying, in prose, what
+  the shape *When the human has to decide* gives; a missing label is not
+  created at night.
   An item that belongs to no issue or pull request (a permission refused
   outside any issue's work, a dirty primary checkout not provably the
   session's), and any question about an outside contributor's pull

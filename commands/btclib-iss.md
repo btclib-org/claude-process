@@ -95,16 +95,17 @@ open:**
       *Citations and closing keywords*)
 - [ ] the closing block comes after the sections, as the bullet below
       describes, and the sweep finds no other keyword
-- [ ] the body has the shape below: two short paragraphs, `## Evidence`,
+- [ ] the body has the shape below: the opening paragraphs, `## Evidence`,
       and `## Decision` where a decision was reserved
 - [ ] `closingIssuesReferences` counts what you meant to close
 
 - **A change to `claude-review.yml` is its own pull request**: the bot
   does not review it (`/btclib-pr`'s *The human's own pull request*).
-- **The body is two short paragraphs, then sections, then the closing
-  block (the shared *Citations and closing keywords*).** The paragraphs
-  say what the change does and why. The sections do not count against
-  the two-paragraph limit, and each stays short.
+- **The body is the paragraphs, then sections, then the closing block
+  (the shared *Citations and closing keywords*).** The paragraphs keep
+  the body limit of the shared *What is posted on a forge* and say what
+  the change does and why. The sections do not count against that limit,
+  and each stays short.
 - **`## Evidence` is a short table or list**: the gates that ran on the
   head, with their exit codes; the rebase case the clearance is in; the
   review. The records the tree asks of a body go here too, each where

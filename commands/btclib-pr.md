@@ -160,7 +160,8 @@ gates run on it.
 **Every thread gets a reply, and is then resolved.** An accepted one
 names the commit that fixes it; a declined one carries its measurement.
 A thread waiting on a decision or on the author is replied to and
-resolved once that arrives. Write the reply to a file of your own, then:
+resolved once that arrives. The reply meets the shared *What is posted
+on a forge*. Write the reply to a file of your own, then:
 
 ```shell
 gh api graphql -F t=<thread id> -F b=@<reply file> -f query='
@@ -178,7 +179,7 @@ gh api graphql -F t=<thread id> -f query='
 ```
 
 A review or comment outside a thread is answered in one comment on the
-pull request, item by item.
+pull request, which meets the shared *What is posted on a forge*.
 
 ### Another person's branch
 
@@ -425,14 +426,11 @@ gh api repos/<owner>/<repo>/pulls/<n>/reviews -f event=APPROVE \
   -f commit_id=<sha> -F body=@<body file>
 ```
 
-The body says, one line each:
-
-- the head it approves, `<sha>`;
-- the `CLEARED` it relies on, and the rebase case;
-- the bot's ACK, as a link; during a 429, the 429 run, as a link, in
-  its place;
-- that every check passed or was skipped, the 429 run apart;
-- what was not checked.
+The body is a one-line summary naming the head it approves, `<sha>`,
+then one paragraph: the `CLEARED` it relies on and the rebase case; the
+bot's ACK as a link, or during a 429 the 429 run as a link; that every
+check passed or was skipped, the 429 run apart; and what was not
+checked.
 
 Then land it, pinned to the same `<sha>` (*Landing*).
 
@@ -518,12 +516,14 @@ reviews it against `REVIEWING.md`.
 **It is completed in place where `maintainerCanModify` is `true`**,
 with every fix the approval needs, blocking findings and nits alike
 (the maintainer, 2026-10-14), as the bullets below say. Otherwise the
-orchestrator delivers the findings on the pull request, warmly: thanks
-first, what is right before what is missing, a one-click suggestion
-where the fix is a few lines. The session then waits. Where a branch of
-ours must land first and touches their lines, the maintainer decides the
-order, and the contributor is told on their pull request what moved and
-how to resolve it. Completing it:
+orchestrator delivers the findings on the pull request, warmly and as
+the shared *What is posted on a forge* says: the first line thanks them
+and names what holds the pull request, what is right comes before what
+is missing, and a fix of a few lines is a one-click suggestion. The
+session then waits. Where a branch of ours must land first and touches
+their lines, the maintainer decides the order, and the contributor is
+told on their pull request what moved and how to resolve it. Completing
+it:
 
 - **Add, never rewrite.** Their commits stay byte for byte. `main` comes
   in by a signed merge, not a rebase. The fixes are a
