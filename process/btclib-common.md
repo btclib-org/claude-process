@@ -172,9 +172,23 @@ These bind the writer, the reviewer and the orchestrator alike.
 - **A measurement that must hold is taken against shas**, `git show
   <sha>:<path>`, `git diff` and `git merge-tree` on explicit shas, not
   from a working file another session might share.
-- **The writer's worktree lives until the session is done with the
-  branch**, not until the hand-over: review sending a branch back is the
-  ordinary case.
+- **Debris goes when its work ends, not at the wrap-up**, because a long
+  session otherwise fills the disk (the maintainer, 2026-10-21). A
+  worktree goes, with its basetemp and build directories, once the
+  session hands the pull request over to whom it waits on, or it lands
+  or closes: a clean, pushed worktree is recreated in seconds if review
+  sends the branch back, and one with uncommitted or unpushed work stays
+  (*Before removing or discarding anything that could be work*). A
+  gate's basetemp and build directories go once that branch's gates are
+  done. A reviewer's worktree, exports, clones and reports go before it
+  hands back its verdict.
+- **The orchestrator, never a writer, sweeps what a session that no
+  longer runs left**, when the disk is short (*Before starting*). It
+  removes only a worktree that is clean and pushed, and that session's
+  scratch where none of its worktrees stays, never another live
+  session's (*Before removing or discarding anything that could be
+  work*). Where it is not certain a session has ended, it asks the human
+  (*A branch left by a session that no longer runs*).
 - **Long jobs run in the background with a timeout; kill what you
   started.** Do not end your turn waiting for one — nothing wakes a
   stopped subagent. Poll within the same turn, or hand back saying what
@@ -490,9 +504,12 @@ does it before briefing anybody.
   sort -k3 -rn | head`. Report to the human anything that looks orphaned;
   killing it is not yours (*The machine is shared*).
 - **Look at the free disk** before cloning, building or adding a
-  worktree: `df -g <scratchpad>`. Under 30 GB available, stop and tell
-  the human: work not yet started needs room to clone and build. A gate
-  on work already started runs down to `GATE_LOCK_DISK`, 20 GB.
+  worktree: `df -g <scratchpad>`. Under 30 GB available, the
+  orchestrator sweeps (*The orchestrator, never a writer, sweeps*) and
+  reads it again; a writer tells the orchestrator. Still under 30 GB,
+  stop and tell the human: work not yet started needs room to clone and
+  build. A gate on work already started runs down to `GATE_LOCK_DISK`,
+  20 GB.
 
 ## Writing work
 
@@ -645,7 +662,8 @@ the orchestrator in the pull request.
   load, the level, the percentage free and the disk free, which the report
   copies.
 - **`--basetemp=<scratchpad>/pytest-<repo>-<branch>`**, outside the
-  worktree, the same name on every run of that branch. A teardown
+  worktree, the same name on every run of that branch, removed once the branch's
+  gates are done (*Debris goes when its work ends*). A teardown
   `OSError` or `FileNotFoundError` on `popen-gw*` is a neighbour's run on
   a shared path (`ps` shows it), not a failing test.
 - **Build artefacts outside the worktree** (`uv build --out-dir
@@ -1247,7 +1265,7 @@ decision's alternatives.
 - **When nothing left can advance without an answer, the work stops
   and waits**, still in night mode. Nothing is left running: no worker
   mid-turn, no background job. A slot left by a worker you stopped is
-  stale (*The gate lock*). Worktrees of branches waiting on an answer
+  stale (*The gate lock*). Worktrees with uncommitted or unpushed work
   stay standing. The morning report may be given then.
 
 **The morning report** is a message to the human. A copy in
@@ -1271,12 +1289,11 @@ Before the wrap-up, *Collateral*'s last bullet holds.
 **Release every pull request the session claimed** (*A claim holds a
 pull request's branch*).
 
-**Remove what the session created**: its clean worktrees, build
-directories, and caches in its scratch directories. A worktree with
-uncommitted or unpushed work stays (*Before removing or discarding
-anything that could be work*), and so does anything another session
-made. Name both in the report. A read-only tree, as Go's module cache
-is, is made writable first:
+**Remove what is left of what the session created** (*Debris goes when
+its work ends*): worktrees, build directories, and caches in its scratch
+directories. A worktree with uncommitted or unpushed work stays, and so
+does anything another session made. Name both in the report. A read-only
+tree, as Go's module cache is, is made writable first:
 
 ```shell
 chmod -R u+w <dir>

@@ -653,7 +653,7 @@ human.
 - **The collateral goes back now** (the shared *Collateral*), before
   anything new starts.
 - **Remove the worktrees** — yours, and tell the writer to remove its
-  own.
+  own (*Debris goes when its work ends*).
 
 Then the shared *Wrap-up*.
 

@@ -40,6 +40,8 @@ the process, the process wins, and you say so in the report.
   wrote there, stop and report it — which paths, whether staged or
   committed — and do not put it back: the orchestrator restores what is
   provably yours, under the process's rule, and leaves the rest.
+- **Your gates' basetemp and build directories go once the gates are
+  done**, as the process's *Debris goes when its work ends* says.
 - **A denied permission is a stop.** No other command that reaches the
   same result, except a route the process itself sanctions (its `-r2`
   fallback for a refused force-push). Put the exact command in your
