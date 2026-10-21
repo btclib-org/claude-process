@@ -363,8 +363,10 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 - [ ] every other file in the list is a doc, a test, `pyproject.toml`
       or `uv.lock`: the third command below prints nothing
 - [ ] `pyproject.toml` and `uv.lock` only move dependencies they
-      already hold to a new version, never a major one, read from the
-      fourth command below
+      already hold to a new version, read from the fourth command below;
+      a major move also needs the latest fresh reviewer's `CLEARED` to
+      name the release notes or changelog it read between the two
+      versions and to say that nothing in them breaks the tree
 
 The first prints each file under `.github/` or any `.claude/`, any top-level
 `RELEASING.md`, `REPOSITORY.md` or `SECURITY.md`, and any `CLAUDE.md`,
@@ -415,8 +417,9 @@ Any other change in them fails this item, a new requirement or
 `[[package]]` included, but for one: the `revision = N` line at the top
 of `uv.lock` may change. The number depends on the uv that wrote the
 lock, and uv's documentation says it tracks backwards-compatible
-lockfile changes. A version whose first non-zero number changes is a
-major one.
+lockfile changes. A major move is one where a version's first non-zero
+number changes. Where the notes show a known problem, the item
+fails and the human decides (*Where it is not obvious*).
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
@@ -429,8 +432,8 @@ gh api repos/<owner>/<repo>/pulls/<n>/reviews -f event=APPROVE \
 The body is a one-line summary naming the head it approves, `<sha>`,
 then one paragraph: the `CLEARED` it relies on and the rebase case; the
 bot's ACK as a link, or during a 429 the 429 run as a link; that every
-check passed or was skipped, the 429 run apart; and what was not
-checked.
+check passed or was skipped, the 429 run apart; for a major move, the
+dependency and the notes its `CLEARED` names; and what was not checked.
 
 Then land it, pinned to the same `<sha>` (*Landing*).
 
