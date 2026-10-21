@@ -369,13 +369,13 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       versions and to say that nothing in them breaks the tree
 
 The first prints each file under `.github/` or any `.claude/`, any top-level
-`RELEASING.md`, `REPOSITORY.md` or `SECURITY.md`, and any `CLAUDE.md`,
+`RELEASING.md`, `REPOSITORY.md` or `SECURITY.md`, and any `AGENTS.md`,
 `REVIEWING.md`, `GOVERNANCE.md` or `CONTRIBUTING.md`. It exits `1` where
 there is none:
 
 ```shell
-grep -E -e '^\.github/|^(RELEASING|REPOSITORY|SECURITY)\.md$' \
-  -e '(^|/)(\.claude/|(CLAUDE|REVIEWING|GOVERNANCE|CONTRIBUTING)\.md$)' \
+grep -E -e '^\.github/|^(AGENTS|RELEASING|REPOSITORY|SECURITY)\.md$' \
+  -e '(^|/)(\.claude/|(AGENTS|REVIEWING|GOVERNANCE|CONTRIBUTING)\.md$)' \
   <list file>
 ```
 

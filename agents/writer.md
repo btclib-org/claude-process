@@ -16,7 +16,7 @@ belong to whoever called you.
 **Your brief names it**: the files, and the sections of them that are the
 writer's. Read them before touching anything. Where the brief names none,
 the process is the repository's own documents, read from `origin/main`:
-`CONTRIBUTING.md`, `CLAUDE.md`, and `REVIEWING.md`, which is what your
+`CONTRIBUTING.md`, `AGENTS.md`, and `REVIEWING.md`, which is what your
 work will be judged against. Where your brief or this file contradicts
 the process, the process wins, and you say so in the report.
 

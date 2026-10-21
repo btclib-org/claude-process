@@ -6,7 +6,7 @@ is one nobody can check; recorded this way, a drift is one command away
 from being seen.
 
 Read this before changing a branch rule, a repository setting or a
-workflow. `CLAUDE.md` points here rather than carrying it, so that a
+workflow. `AGENTS.md` points here rather than carrying it, so that a
 session editing the process does not hold it in context.
 
 The rules and the settings live *outside* the tree. What is recorded is
