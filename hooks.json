@@ -1,0 +1,17 @@
+{
+  "description": "Codex reads this as ~/.codex/hooks.json, which README.md's Setup renders with the path of the clone",
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PROCESS/scripts/git-c-allow.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 ---
-description: btclib-table — one table of every btclib-org repository, measured now: open issues, open pull requests, last release, whether a new one is due
+name: btclib-table
+description: "btclib-table — one table of every btclib-org repository, measured now: open issues, open pull requests, last release, whether a new one is due"
 ---
 
 # The btclib-org table
@@ -10,8 +11,9 @@ earlier run.
 
 The command only reads. It writes nothing, comments nowhere and takes no
 decision, so it needs no worktree and none of the roles of
-`~/.claude/process/btclib-common.md`. What it writes after the table
-follows that file's *Write plainly*.
+`$PROCESS/process/btclib-common.md` (`echo "$PROCESS"` prints the
+clone's path). What it writes after the table follows that file's
+*Write plainly*.
 
 ## Measure
 

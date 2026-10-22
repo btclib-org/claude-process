@@ -248,9 +248,9 @@ has no topics.
 
 ```shell
 gh api repos/btclib-org/claude-process --jq '{description, homepage}'
-# {"description":"The btclib-org Claude Code process: the /btclib-iss,
-#  /btclib-pr and /btclib-table commands, the file they share, and the
-#  writer and reviewer agents","homepage":null}
+# {"description":"The btclib-org process for coding agents: the
+#  btclib-iss, btclib-pr and btclib-table skills, the file they share,
+#  and the writer and reviewer agents","homepage":null}
 ```
 
 `homepage` is null. The standard gives that field to a tree that

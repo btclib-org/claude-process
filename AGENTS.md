@@ -19,6 +19,6 @@ for multi-step work, and the most capable available model for difficult
 or ambiguous problems. Increase capability if progress stalls.
 
 This repository holds the maintainers' process: `process/btclib-common.md`
-contains shared rules, `commands/btclib-iss.md` and
-`commands/btclib-pr.md` guide issue and pull-request work, and
+contains shared rules, `skills/btclib-iss/SKILL.md` and
+`skills/btclib-pr/SKILL.md` guide issue and pull-request work, and
 `agents/` defines the writer and reviewer roles.
