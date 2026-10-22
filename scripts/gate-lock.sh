@@ -8,7 +8,7 @@
 # GATE_LOCK_WORKERS, the cores divided by the slots, for the `-n` of a
 # suite run in a slot:
 #
-#   . ~/.claude/scripts/gate-lock.sh
+#   . "${PROCESS:?}/scripts/gate-lock.sh"
 #   gate_take [<worktree>] && { gate_wait; <a gate>; gate_wait; <a gate>; gate_release; }
 #
 # A load generator takes every slot with gate_take_all and releases them with

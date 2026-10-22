@@ -51,8 +51,8 @@ body:
     attributes:
       label: Anything else
       description: >
-        The repository the session was working in, and the version of
-        Claude Code.
+        The repository the session was working in, and the coding agent
+        and its version.
 
   - type: markdown
     attributes:
