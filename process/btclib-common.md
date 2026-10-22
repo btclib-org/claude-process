@@ -115,10 +115,16 @@ These bind the writer, the reviewer and the orchestrator alike.
       step. One point per text; no sha or line-number chains, no
       preemptive rebuttals, plain words.
     - **A comment or reply is at most 200 words** (`wc -w <file>`),
-      with no list and no heading: the first line, then at most two
-      paragraphs, the second holding the technical findings. A review
+      with no list and no heading: the first line, then at most three
+      paragraphs. In a review they are the measurement, the technical
+      findings, and what the change leaves unfixed (next bullet). A review
       that reports measurements says in one sentence how they were
       measured, and offers or links the detail.
+    - **What the reviewed change leaves unfixed gets one paragraph of its
+      own**, apart from the measurement. Where the review neither asks
+      for a fix in the same pull request nor gives it, the paragraph
+      links the pull request we open with the fix, and the review is
+      posted once that pull request is open.
     - **A pull request or issue body is at most two short paragraphs**
       before any code block or required template section.
     - **A text over a limit is not posted but returned cut**, unless a
