@@ -123,12 +123,13 @@ These bind the writer, the reviewer and the orchestrator alike.
       what was found, and what follows for the pull request or the next
       step. One point per text; no sha or line-number chains, no
       preemptive rebuttals, plain words.
-    - **A comment or reply is at most 200 words** (`wc -w <file>`),
-      with no list and no heading: the first line, then at most three
-      paragraphs. In a review they are the measurement, the technical
-      findings, and what the change leaves unfixed (next bullet). A review
-      that reports measurements says in one sentence how they were
-      measured, and offers or links the detail.
+    - **A comment or reply is about 200 words, and never more than 250**
+      (`wc -w <file>`), with no list and no heading: the first line,
+      then at most three paragraphs. In a review they are the
+      measurement, the technical findings, and what the change leaves
+      unfixed (next bullet). A review that reports measurements says in
+      one sentence how they were measured, and offers or links the
+      detail.
     - **What the reviewed change leaves unfixed gets one paragraph of its
       own**, apart from the measurement. Where the review neither asks
       for a fix in the same pull request nor gives it, the paragraph
