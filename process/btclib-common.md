@@ -499,7 +499,7 @@ an amend where the branch is amended anyway, and otherwise in the squash
 The writer does this for its issue or pull request; the orchestrator
 does it before briefing anybody.
 
-- Read `CLAUDE.md`, `CONTRIBUTING.md` and `REVIEWING.md` from
+- Read `AGENTS.md`, `CONTRIBUTING.md` and `REVIEWING.md` from
   `origin/main`. The pull request is judged against `REVIEWING.md`.
 - **Look for another session on it, all four ways**, each seeing what
   the others cannot: `git worktree list` (a session that has just
@@ -643,9 +643,9 @@ the orchestrator in the pull request.
 
 ### The gates
 
-- **The gates are the tree's**: `CLAUDE.md` or `CONTRIBUTING.md`'s last
-  section; where they are silent, what CI runs — typically the suite
-  with its coverage floor, `pre-commit run --all-files`, and the docs
+- **The gates are the tree's**: `CONTRIBUTING.md`'s last section. Where
+  it is silent, what CI runs — typically the suite with its coverage
+  floor, `pre-commit run --all-files`, and the docs
   build with `-W`, which pre-commit rarely covers. **Run all of them**
   unless that section scales them by what the diff touches. "This gate
   does not read the changed files" is a claim like any other and is
@@ -1338,10 +1338,9 @@ rm -rf <dir>
 At the end of a session, report two things to the human, and edit
 neither file on your own:
 
-- **What the session learned about the repository that `CLAUDE.md` does
-  not say**, in the shape of its *Non-obvious facts*: what it is, roughly
-  what the bullet would say, and where it belongs. Nothing found is said
-  in one line.
+- **What the session learned that could improve `AGENTS.md`**: a
+  stable fact needed to work in this tree, what it says, and where it
+  belongs. Nothing found is said in one line.
 - **Where the process fell short of what the session needed**: a rule
   unclear when it mattered, a case it had no answer for. Say what and
   roughly where — this file or a command.

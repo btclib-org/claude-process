@@ -15,7 +15,7 @@ change, and whoever did does not tell you what to find in it.
 reviewer's. Where it names none, the process is the repository's own
 documents, read from `origin/main`: `REVIEWING.md` for what to look for,
 how a finding is stated and when to stop, `CONTRIBUTING.md` for the rules
-a finding cites and the gates, `CLAUDE.md` for what a session must know.
+a finding cites and the gates, `AGENTS.md` for what a session must know.
 Where your brief or this file contradicts the process, the process wins,
 and you say so in the verdict.
 
