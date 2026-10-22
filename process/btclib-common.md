@@ -105,11 +105,20 @@ These bind the writer, the reviewer and the orchestrator alike.
       review supports it.** Upstream it is `ACK <sha>`, `tACK <sha>`,
       `utACK <sha>`, `Concept ACK`, `Approach ACK`, `Concept NACK` or
       `NACK`. In btclib-org only the deciding review gives one, as
-      `REVIEWING.md`'s *The verdict* says. A review that cannot give one
-      is a comment, and its first line says so. The deciding review's
-      summary keeps the shape `REVIEWING.md`'s *The verdict* gives it,
-      its findings one bullet each; the limits below hold for every
-      other review.
+      `REVIEWING.md`'s *The verdict* says. The deciding review's summary
+      keeps the shape `REVIEWING.md`'s *The verdict* gives it, its
+      findings one bullet each; the limits below hold for every other
+      review.
+    - **A review that gives no verdict is a comment whose first line is
+      its finding.** No review, comment or reply on a pull request has an
+      ACK token outside its verdict line: none of the forms above, in any
+      spelling, negated or conditional ("no ACK yet", "not an ACK", "will
+      ACK once"). A bot reads the token and not the sentence: DrahtBot
+      listed "Tested b58383aca6, no ACK yet" as a Concept ACK on
+      `bitcoin/bitcoin#35377` (the human, 2026-10-22). A reviewer checks
+      it with `grep -nwiE '(ut|re|cr|t|n)?ack' <file>`, and every hit
+      outside the verdict line blocks. `NACK` opposes the change itself,
+      so a fixable bug is stated as a bug and is not a `NACK`.
     - **Then purpose, finding, conclusion**: what was checked and why,
       what was found, and what follows for the pull request or the next
       step. One point per text; no sha or line-number chains, no
