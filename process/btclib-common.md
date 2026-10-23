@@ -109,8 +109,9 @@ These bind the writer, the reviewer and the orchestrator alike.
       keeps the shape `REVIEWING.md`'s *The verdict* gives it, its
       findings one bullet each; the limits below hold for every other
       review.
-    - **A review that gives no verdict is a comment whose first line is
-      its finding.** No review, comment or reply on a pull request has an
+    - **A review that gives no verdict states its finding on its first
+      line**, with no `Comment:` prefix and no "a comment, not a
+      review". No review, comment or reply on a pull request has an
       ACK token outside its verdict line: none of the forms above, in any
       spelling, negated or conditional ("no ACK yet", "not an ACK", "will
       ACK once"). A bot reads the token and not the sentence: DrahtBot
@@ -137,6 +138,16 @@ These bind the writer, the reviewer and the orchestrator alike.
       posted once that pull request is open.
     - **A pull request or issue body is at most two short paragraphs**
       before any code block or required template section.
+    - **Upstream, AI disclosure has one form, and only where a
+      repository asks for it.** Three ask, in their `AGENTS.md`:
+      rust-bitcoin, rust-miniscript and Floresta. The form is
+      `Assisted-by: my usual tools (LLM, Internet, computer). Mistakes
+      are mine.`: a plain trailer in a commit, an italic last line in a
+      pull request body. A comment, review or reply never carries it,
+      `bitcoin/bitcoin` included. Elsewhere upstream no text names an
+      LLM: no "written with help from", no sentence on what an AI did, no
+      `Co-Authored-By:` naming a model. Our own code is never called
+      "independent": say "I maintain".
     - **A text over a limit is not posted but returned cut**, unless a
       maintainer asked for exactly that detail.
 - **Parallelize as much as you can.** Reads, remote work, writers and
