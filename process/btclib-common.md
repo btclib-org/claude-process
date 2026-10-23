@@ -65,6 +65,33 @@ keywords*).
 
 These bind the writer, the reviewer and the orchestrator alike.
 
+### Clients
+
+The process runs in Claude Code and in Codex. `$PROCESS` is the path of
+this repository's clone, exported as `README.md`'s *Setup* says, and
+the process names its own files by their path under it. Claude Code's
+`~/.claude` below is `$CLAUDE_CONFIG_DIR` where that is set.
+
+- **Skills.** Claude Code reads them from `~/.claude/skills/`, Codex
+  from `~/.agents/skills/`. Claude Code runs one as `/btclib-iss`, Codex
+  as `$btclib-iss`; this text writes the first form. Claude Code puts
+  the words after the skill's name in place of `$ARGUMENTS`. Codex
+  leaves `$ARGUMENTS` as written, and it means the same words.
+- **Agents.** Claude Code reads them from `~/.claude/agents/*.md`. It
+  starts the writer or the reviewer with the `Agent` tool, naming the
+  agent, and resumes one with `SendMessage` to its id. Codex reads them
+  from `~/.codex/agents/*.toml`. It starts one when asked to spawn the
+  custom agent of that name, and resumes one by a follow-up to its agent
+  thread. Starting always makes a new agent.
+- **Hooks.** Claude Code reads them from `~/.claude/settings.json`,
+  Codex from `~/.codex/hooks.json`. Both run `scripts/git-c-allow.py`.
+- **Git writes under Codex.** Its `workspace-write` sandbox keeps each
+  writable root's `.git`, and the git directory it points to, read-only,
+  and `~/.gnupg` outside the workspace. Each
+  git write — `worktree add` and `remove`, a commit, an amend, a rebase,
+  a push — runs outside the sandbox, through an escalation request, and
+  never with signing turned off (*Signed and signed off*).
+
 ### Shell, checkouts and prose
 
 - **Never open a command with `cd`.** The working directory resets to
@@ -246,7 +273,7 @@ These bind the writer, the reviewer and the orchestrator alike.
   (*A branch left by a session that no longer runs*).
 - **Long jobs run in the background with a timeout; kill what you
   started.** Do not end your turn waiting for one — nothing wakes a
-  stopped subagent. Poll within the same turn, or hand back saying what
+  stopped agent. Poll within the same turn, or hand back saying what
   is outstanding. Find your job by its worktree's absolute path, written
   out (`pgrep -f '/abs/path/wt-….*pytest'`), never by command name, or
   rely on its own completion notification.
@@ -749,12 +776,12 @@ the orchestrator in the pull request.
   The first slot is the directory `gate.lock`, the others `gate.lock.2`,
   `gate.lock.3` and so on. Release the slot the moment the gates finish.
   A slot is taken and released only through
-  `~/.claude/scripts/gate-lock.sh`, sourced in the same background shell
+  `$PROCESS/scripts/gate-lock.sh`, sourced in the same background shell
   call as the gates (*Long jobs run in the background*), never by a
   hand-written `mkdir` or `rmdir`:
 
   ```shell
-  . ~/.claude/scripts/gate-lock.sh
+  . "${PROCESS:?}/scripts/gate-lock.sh"
   gate_take <worktree> && {
     gate_wait; # … a gate …
     gate_wait; # … the next gate …
@@ -818,7 +845,7 @@ the orchestrator in the pull request.
   that they are gone before `gate_release_all`:
 
   ```shell
-  . ~/.claude/scripts/gate-lock.sh
+  . "${PROCESS:?}/scripts/gate-lock.sh"
   out=<scratchpad>/gen.out pids=<scratchpad>/gen.pids workers=<n>
   gate_take_all <worktree> > "$out" 2>&1 && {
     idle=$(tail -n 1 "$out" | sed 's/.* at \([0-9]*\)% CPU idle.*/\1/')
@@ -953,7 +980,7 @@ branch, or a text to be posted.
 - **A reviewer stays until it clears.** This holds for the dedicated
   reviewer and for every fresh one. Its `CHANGES REQUESTED` goes back
   to the writer, and the fix goes back to the same reviewer
-  (`SendMessage` to its id), which reads the delta from what it last
+  (resumed as *Clients* says), which reads the delta from what it last
   read. No new reviewer starts before the one in charge has answered
   `CLEARED`. Where a finding is declined and its reviewer still holds
   it, both positions go to the human as one decision (*When the human
@@ -1080,7 +1107,7 @@ run and another bot run.
 - [ ] what the verdict does not cover
 - [ ] `git status --porcelain` empty in the tree reviewed and in the
       primary checkout
-- [ ] collateral filed, with the body inline (no `Write` tool)
+- [ ] collateral filed, with the body inline
 
 - **The gates are the writer's.** A run on this sha, reported with
   commands and exit codes, is relied on and attributed — `REVIEWING.md`'s
@@ -1192,8 +1219,8 @@ Rebase, run the gates, and push.
 - **Read back the number before reporting it**:
   `gh issue view <n> --repo <owner>/<repo>`. In a report, collateral
   appears as `ISS 123`, never as a description.
-- **The reviewer files with the body inline**: it has no `Write` tool;
-  where it cannot file, the body goes verbatim in its report.
+- **The reviewer files with the body inline**; where it cannot file,
+  the body goes verbatim in its report.
 - **Collateral is closed within the same session**, whoever filed it —
   writer, reviewer or orchestrator — and is worked as `/btclib-iss`
   says. What was filed while a pull request was worked goes, once the
@@ -1211,7 +1238,7 @@ Rebase, run the gates, and push.
 ## Orchestration
 
 - **Dispatching a writer**: this file's path
-  (`~/.claude/process/btclib-common.md`), the command's, and the
+  (`$PROCESS/process/btclib-common.md`), the command's, and the
   sections of both that are its role's, the issue or pull request, the
   repository, the worktree and scratch paths, the force-push grant, and
   the claims you measured. The same for a reviewer.
@@ -1260,13 +1287,16 @@ Rebase, run the gates, and push.
   `/compact`; its own deferred half and its own collateral it takes
   uncompacted. *The rounds* says which worker stays for which rounds;
   the dedicated reviewer comes back only for its pull request's
-  collateral. Resuming a worker is `SendMessage` to its id; `Agent`
-  always starts a new one.
-- **Models**: the writer runs on Sonnet, which its agent definition
-  sets. Where the work is likely to take decisions — a design, or a
-  decision its issue reserved — the orchestrator starts the writer on
-  Opus: the `Agent` tool's `model` parameter overrides the definition.
-  The orchestrator may run on Opus.
+  collateral. *Clients* says how a worker is resumed, and that starting
+  one always makes a new one.
+- **Models**: in Claude Code the writer runs on Sonnet, which its agent
+  definition sets. Where the work is likely to take decisions — a
+  design, or a decision its issue reserved — the orchestrator starts the
+  writer on Opus: the `Agent` tool's `model` parameter overrides the
+  definition. The orchestrator may run on Opus. In Codex the agent
+  files set no model: an agent runs on the one its spawn request names,
+  else on the `[agents]` default of `config.toml`, else on the
+  orchestrator's.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
 - **Writing runs in parallel; gating runs under the gate lock** (*The

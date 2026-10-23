@@ -1,6 +1,7 @@
 ---
-description: btclib-iss — from an issue to an open pull request, locally reviewed before GitHub and followed as its author, measuring rather than asserting
-argument-hint: [--night] [--land] <issue numbers or URLs>
+name: btclib-iss
+description: "btclib-iss — from an issue to an open pull request, locally reviewed before GitHub and followed as its author, measuring rather than asserting"
+argument-hint: "[--night] [--land] <issue numbers or URLs>"
 ---
 
 # From an issue to a pull request
@@ -10,8 +11,9 @@ and take each to an open pull request, written, gated and cleared by a
 local review (*Opening the pull request*). Then follow each as its
 author (*Following it*).
 
-**First read `~/.claude/process/btclib-common.md`, whole.** Its opening
-says what it holds and what this file holds. What the session writes,
+**First read `$PROCESS/process/btclib-common.md`, whole**:
+`echo "$PROCESS"` prints the clone's path. Its opening says what it
+holds and what this file holds. What the session writes,
 and this file, follow its *Write plainly*.
 
 **Where $ARGUMENTS names no issue, ask the human which, before reading
@@ -127,7 +129,7 @@ open:**
 ## Following it
 
 Once a pull request is open, the session follows it as its author.
-`~/.claude/commands/btclib-pr.md` holds the rules, read there and not
+`$PROCESS/skills/btclib-pr/SKILL.md` holds the rules, read there and not
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
 *The human's own pull request*, and *Landing*'s bullets from *Read
 `main`'s latest push runs* to *The pin is the head as last pushed*, and
