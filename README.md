@@ -159,4 +159,10 @@ mkdir -p ~/.claude/process
 The links then point at the new text. Do not edit the clone the links
 point at: change the process through a pull request from a worktree,
 reviewed by another person, like any other btclib-org repository.
-[CONTRIBUTING.md](./CONTRIBUTING.md) says how.
+
+## Contributing
+
+Development is LLM-based: humans are welcome, as long as they are
+comfortable with agentic development ;-). A contribution must have been
+read and understood by the person who submits it.
+[`CONTRIBUTING.md`](./CONTRIBUTING.md#working-with-an-llm) has the rules.
