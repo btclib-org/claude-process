@@ -13,9 +13,12 @@
 ## Checks
 
 <!-- `lint.yml` is the whole of what a merge here can be gated on. The
-     point of running it locally is not to wait for CI to say so. -->
+     point of running it locally is not to wait for CI to say so. No
+     check reads the last box. -->
 
 - [ ] the lint gate is clean: `uvx pre-commit run --all-files`
+- [ ] I have read and understood every line of this change, and can
+      answer a review of it without the model
 
 ## Anything the reviewer should know
 
