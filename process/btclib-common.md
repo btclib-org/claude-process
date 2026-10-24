@@ -594,14 +594,15 @@ The writer's section; the reviewer judges its result.
 ### A rule stated more than once
 
 **Before writing, search for every sentence that states the rule you
-change.** Run one search over every tracked file (`git grep`), with a
-pattern for each way the rule is worded (*`grep` reads lines, and prose
-wraps*). List each hit as `file:line` with what you do with it.
-Change them all in one round. A restatement becomes a pointer to the
-section that holds the rule (*Write plainly*). The report carries the
-patterns and the hits. The reviewer runs the same search, adds the
-patterns it would have used, and reads the files where the rule is
-stated. A sentence either search finds and the list lacks is a finding.
+change.** Run one search over every file `git ls-files` lists, with a
+pattern for each way the rule is worded, matched across line breaks
+(*`grep` reads lines, and prose wraps*). List each hit as `file:line`
+with what you do with it. Change them all in one round. A restatement
+becomes a pointer to the section that holds the rule (*Write plainly*).
+The report carries the patterns and the hits. The reviewer runs the same
+search, adds the patterns it would have used, and reads the files where
+the rule is stated. A sentence either search finds and the list lacks is
+a finding.
 
 **A pointer keeps every condition of the text it replaces**: the target
 states each one, or the condition stays where it was.
