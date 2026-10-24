@@ -252,7 +252,8 @@ them.
       gh pr reopen <n> --repo <owner>/<repo>
       ```
 
-      *The decision* reads the bot's review of the reopen. Where
+      *The decision* reads the bot's review of the reopen, and names
+      the other case that calls for one. Where
       `gh pr view <n> --repo <owner>/<repo> --json autoMergeRequest`
       shows the pull request disarmed, arm it again as *Landing* says.
       A check that only reports is named in the decision;
@@ -339,6 +340,8 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
       "skipping")'` answers `true`. A cancelled check (bucket
       `cancel`) fails this item until a re-run passes.
+- [ ] the checks ran on the current `main`, read as the paragraph
+      below the list says
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
@@ -420,6 +423,26 @@ lock, and uv's documentation says it tracks backwards-compatible
 lockfile changes. A major move is one where a version's first non-zero
 number changes. Where the notes show a known problem, the item
 fails and the human decides (*Where it is not obvious*).
+
+**The checks ran on the current `main` where the base of the merge they
+ran on is `origin/main`.** A check runs on the pull request merged with
+the `main` of that moment, so a pull request that landed since leaves it
+stale. A run's log names the merge, `Merge <head> into <base>`. After
+`git fetch origin`, this prints it, for one run of a required check's
+workflow:
+
+```shell
+gh run view "$(gh run list --repo <owner>/<repo> --commit <sha> \
+  --event pull_request --workflow <file> --limit 1 \
+  --json databaseId --jq '.[0].databaseId')" --repo <owner>/<repo> --log |
+  grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
+```
+
+Where `<base>` is not `git rev-parse origin/main`, close and reopen
+the pull request (*Rebase and CI*). No push is made, so the approval
+and `CLEARED` stand. A reopen seconds after `main` moved can still
+run on the old base, so read `<base>` of the new run, and close and
+reopen again where it is the old one.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
@@ -620,6 +643,9 @@ human.
   review has cleared and the other checks are green.
 
 - **The pin is the head as last pushed**, not the sha a verdict named.
+- **A landing moves `main` under every other pull request.** Each one
+  approved or armed is read again against *The decision*'s item on the
+  current `main`, and a stale one is disarmed and reopened as there.
 - **A stacked pull request lands like any other**: once its base has
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
   opened as soon as it is written* says, gated, decided again on the new
