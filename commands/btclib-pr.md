@@ -430,12 +430,13 @@ ran on is `main`'s current head.** A check runs on the pull request
 merged with the `main` of that moment, so a pull request that landed
 since leaves it stale. A run's log names the merge,
 `Merge <head> into <base>`. Every workflow a head's `pull_request` event
-started shares that merge, so any one of them serves. This waits for
-the newest run created after `<since>` that succeeded or failed, which
-has a log, and prints the merge. `<since>` is empty for a first read,
-which returns at once, and after a reopen it is the time noted just
-before it (`date -u +%FT%TZ`). The loop gives up after 30 minutes, and
-`gh run view` then fails for want of a run id; say so where it does:
+started shares that merge, so any one of them serves. This waits, in
+the background, for the newest run created after `<since>` that
+succeeded or failed, which has a log, and prints the merge. `<since>`
+is empty for a first read, which returns at once, and after a reopen it
+is the time noted just before it (`date -u +%FT%TZ`). The loop gives up
+after 30 minutes, and `gh run view` then fails for want of a run id;
+say so where it does:
 
 ```shell
 since=<since>
