@@ -425,11 +425,11 @@ number changes. Where the notes show a known problem, the item
 fails and the human decides (*Where it is not obvious*).
 
 **The checks ran on the current `main` where the base of the merge they
-ran on is `origin/main`.** A check runs on the pull request merged with
-the `main` of that moment, so a pull request that landed since leaves it
-stale. A run's log names the merge, `Merge <head> into <base>`. Every
-workflow a head's `pull_request` event started shares that merge, so
-any one of them serves. After `git fetch origin`, this prints it for
+ran on is `main`'s current head.** A check runs on the pull request
+merged with the `main` of that moment, so a pull request that landed
+since leaves it stale. A run's log names the merge,
+`Merge <head> into <base>`. Every workflow a head's `pull_request` event
+started shares that merge, so any one of them serves. This prints it for
 the newest run that succeeded or failed, which has a log:
 
 ```shell
@@ -441,13 +441,14 @@ gh run view "$(gh run list --repo <owner>/<repo> --commit <sha> \
   grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
 ```
 
-Where `<base>` is not `git rev-parse origin/main`, close and reopen
-the pull request (*Rebase and CI*). No push is made, so the approval
-and `CLEARED` stand. After a reopen, read `<base>` only once the
-reopen's checks have completed (*Rebase and CI*'s loop): until then the
-command prints the run before the reopen. A reopen seconds after `main`
-moved can still run on the old base, so where `<base>` of the new run
-is the old one, close and reopen again.
+`main`'s head is `gh api repos/<owner>/<repo>/commits/main --jq .sha`.
+Where `<base>` differs from it, close and reopen the pull request
+(*Rebase and CI*). No push is made, so the approval and `CLEARED` stand.
+After a reopen, read `<base>` only once the reopen's checks have
+completed (*Rebase and CI*'s loop): until then the command prints the
+run before the reopen. A reopen seconds after `main` moved can still run
+on the old base, so where `<base>` of the new run is the old one, close
+and reopen again.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
