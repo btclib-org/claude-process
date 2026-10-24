@@ -1,5 +1,5 @@
 ---
-description: btclib-table — one table of every btclib-org repository, measured now: open issues, open pull requests, last release, whether a new one is due
+description: btclib-table — one table of every btclib-org repository, measured now: open issues, open pull requests, CI and README badge status, last release, whether a new one is due
 ---
 
 # The btclib-org table
@@ -18,16 +18,37 @@ follows that file's *Write plainly*.
 Run this, which only reads:
 
 ```shell
-ti=0 tp=0
+# call: a command's output, or "error: <its stderr>" and exit 1 where it
+# fails or prints anything on stderr
+call() {
+  e=$(mktemp)
+  o=$("$@" 2> "${e}")
+  s=$?
+  if [ "${s}" -ne 0 ] || [ -s "${e}" ]; then
+    printf 'error: %s' "$(tr '\n' ' ' < "${e}")"
+    rm -f "${e}"
+    return 1
+  fi
+  rm -f "${e}"
+  printf '%s' "${o}"
+}
+ti=0 tp=0 part=""
 for r in $(gh repo list btclib-org --no-archived --limit 200 \
     --json name --jq '.[].name' | sort); do
-  iss=$(gh issue list -R "btclib-org/${r}" --state open --limit 1000 \
+  iss=$(call gh issue list -R "btclib-org/${r}" --state open --limit 1000 \
     --json number --jq length)
-  prs=$(gh pr list -R "btclib-org/${r}" --state open --limit 1000 \
+  prs=$(call gh pr list -R "btclib-org/${r}" --state open --limit 1000 \
     --json number --jq length)
-  ti=$(( ti + iss )) tp=$(( tp + prs ))
-  bp=$(gh api "repos/btclib-org/${r}/readme" \
-      -H 'Accept: application/vnd.github.raw' 2>/dev/null |
+  case ${iss}${prs} in
+    *[!0-9]*) part=" (rows with an error left out)" ;;
+    *) ti=$(( ti + iss )) tp=$(( tp + prs )) ;;
+  esac
+  badges="" readme=$(call gh api "repos/btclib-org/${r}/readme" \
+    -H 'Accept: application/vnd.github.raw') || case ${readme} in
+    *"(HTTP 404)"*) readme="" ;;
+    *) badges="${readme}" readme="" ;;
+  esac
+  bp=$(printf '%s' "${readme}" |
     grep -oE 'bestpractices\.dev/projects/[0-9]+' | head -n 1 | sed 's|.*/||')
   pkg=$(gh api "repos/btclib-org/${r}/contents/pyproject.toml" \
       -H 'Accept: application/vnd.github.raw' 2>/dev/null |
@@ -58,6 +79,50 @@ if bp:
         gold = b["badge_percentage_2"]
 print(f"{name} | pypi={pypi} | bl3={bl3} gold={gold} | deps: {deps}")' \
     "${r}" "${bp}")
+  ci="" wfs=$(call gh api \
+    "repos/btclib-org/${r}/actions/workflows?per_page=100" \
+    --jq '.workflows[] | select(.state == "active")
+      | select(.path != ".github/workflows/release.yml") | .id') ||
+    ci="${wfs}"
+  [ -n "${ci}" ] || while read -r w; do
+    [ -n "${w}" ] || continue
+    c=$(call gh api -X GET "repos/btclib-org/${r}/actions/workflows/${w}/runs" \
+      -f branch=main -f status=completed -f per_page=20 \
+      --jq "[.workflow_runs[] | select(.head_repository.full_name
+        == \"btclib-org/${r}\" and .conclusion != \"cancelled\")][0] // empty
+        | select(.conclusion | IN(\"success\", \"skipped\") | not)
+        | .name + \"=\" + .conclusion") || c="${w}=${c}"
+    [ -z "${c}" ] || ci="${ci:+${ci},}${c}"
+  done <<EOF_WFS
+${wfs}
+EOF_WFS
+  [ -n "${badges}" ] || badges=$(printf '%s' "${readme}" |
+    uv run --no-project --python 3.15 python -c '
+import colorsys, re, sys, urllib.request
+bad = []
+for url in re.findall(r"!\[[^]]*\]\(([^)\s]+)", sys.stdin.read()):
+    if "/pypi/status/" in url:
+        continue
+    req = urllib.request.Request(url, headers={"User-Agent": "btclib-table"})
+    try:
+        svg = urllib.request.urlopen(req, timeout=30).read().decode()
+    except Exception as e:
+        bad.append(f"{url}: {e}")
+        continue
+    title = (re.findall(r"<title>([^<]*)", svg) or [url])[0]
+    if re.fullmatch(r"openssf best practices: (silver|gold)", title):
+        continue
+    hues = []
+    hexes = r"(?:fill|stop-color)=.#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\W"
+    for h in re.findall(hexes, svg):
+        h = "".join(c * 2 for c in h) if len(h) == 3 else h
+        rgb = [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+        hue, sat, _ = colorsys.rgb_to_hsv(*rgb)
+        if sat >= 0.5:
+            hues.append(hue * 360)
+    if not hues or not all(70 <= hue < 260 for hue in hues):
+        bad.append(title)
+print(" || ".join(bad))') || badges="error: the badge script failed"
   rel=no
   gh api "repos/btclib-org/${r}/contents/.github/workflows/release.yml" \
     > /dev/null 2>&1 && rel=yes
@@ -70,15 +135,43 @@ print(f"{name} | pypi={pypi} | bl3={bl3} gold={gold} | deps: {deps}")' \
       + ([.commits[].commit.message | split("\n")[0]] | join(" || "))' \
     2>/dev/null)
   echo "${r} | iss=${iss} | pr=${prs} | ${pkg} | release.yml=${rel}" \
-    "| tag=${tag:-none} ${since}"
+    "| ci=${ci:-ok} | badges=${badges:-ok} | tag=${tag:-none} ${since}"
 done
-echo "total | iss=${ti} | pr=${tp}"
+echo "total | iss=${ti} | pr=${tp}${part}"
 ```
 
 The last line gives the totals the table's headings carry. The badge
 project is the first `bestpractices.dev/projects/` link of the README;
 its `repo_url` names the repository, or its package where the two
 differ.
+
+`ci` names each active workflow whose latest completed run on `main`
+concluded neither `success` nor `skipped`, `ok` where none did.
+`release.yml` is left out: on `main` it runs only as a rehearsal, and a
+release runs on its tag. A run still in progress or `cancelled` does
+not count: the completed one before it does. A disabled workflow, one
+with no completed run on `main`, and a run from a fork's `main` count
+for nothing.
+
+`badges` names each image of the README that does not render green or
+blue, `ok` where none. Every `![…](…)` image counts as a badge. Its
+colours are the SVG's `fill` and `stop-color` values with an HSV
+saturation of 0.5 or more; the greys, white and black of the frame fall
+below that. An image renders green or blue where it has such a colour
+and each such colour has a hue from 70° (green) to 260° (blue). An image
+that does not download, or is grey only, does not.
+
+A `pypi/status` badge is not read: its colour is the development status,
+yellow at beta and red at alpha. A bestpractices badge titled `openssf
+best practices: silver` or `…: gold` counts as green: its colour is the
+metal, grey `#c0c0c0` for silver.
+
+The calls behind `iss`, `pr` and `ci`, and the README fetch, go through
+`call`: one that fails, or prints anything on stderr, puts `error:` and
+its message in that value, or in `badges` for the README, where a 404
+means no README. A badge script that fails puts `error: the badge
+script failed` in `badges`. A row whose `iss` or `pr` holds an error is
+left out of the totals, and the last line says so.
 
 A PyPI project of the same name with no tag of ours is someone else's:
 say so in one line.
@@ -104,18 +197,17 @@ even before its first release, with `never`. One with a tag and no
 `release.yml` is group 4. One with neither does not release, and is
 group 5.
 
-## The Release due? column
+## The 🚀 column
 
-Judge it from the commit subjects since the last tag:
+Whether a release is due, judged from the commit subjects since the last
+tag:
 
-- `in progress`: a release pull request or tag is under way;
-- `YES (#n)`: a user of the package would notice a change, and the
-  release is due. `#n` is the one pull request that makes it urgent;
+- `⏳`: a release pull request or tag is under way;
+- `YES`: a user of the package would notice a change, and one pull
+  request makes the release urgent;
 - `yes`: the same, with no urgency (lowercase means not urgent);
 - `no`: only tests, CI, docs, process files or the next cycle landed;
 - `-`: the repository does not release.
-
-No value but `YES` carries a pull request number.
 
 ## Show it
 
@@ -123,32 +215,38 @@ A box-drawn table inside a code block, at most 80 columns wide, so that it
 reads in the terminal:
 
 ```text
-┌───────────────┬───────┬─────┬─────┬──────┬─────────────┬─────────────┐
-│ Repository    │ Issue │ PR  │ BL3 │ Gold │ Last        │ Release     │
-│               │ (X)   │ (Y) │ (%) │ (%)  │ release     │ due?        │
-├───────────────┼───────┼─────┼─────┼──────┼─────────────┼─────────────┤
-│ base58-bech32 │     1 │   0 │   0 │    0 │ never       │ in progress │
-│ bip39-slip39  │     3 │   0 │ 100 │   87 │ v2026.10.17 │ YES (#283)  │
-├───────────────┼───────┼─────┼─────┼──────┼─────────────┼─────────────┤
-│ …             │       │     │     │      │             │             │
-└───────────────┴───────┴─────┴─────┴──────┴─────────────┴─────────────┘
+┌───────────────┬─────┬────┬─────┬─────┬────┬────┬────────────┬─────┐
+│ Repository    │ 233 │ 51 │ BL3 │ 🥇% │ CI │ 📛 │ Last       │ 🚀  │
+│               │ ISS │ PR │ (%) │     │    │    │ release    │     │
+├───────────────┼─────┼────┼─────┼─────┼────┼────┼────────────┼─────┤
+│ base58-bech32 │   1 │  0 │   0 │   0 │ ✅ │ ❌ │ never      │ ⏳  │
+│ bip39-slip39  │   3 │  0 │ 100 │  🥇 │ ❌ │ ✅ │ 2026.10.17 │ YES │
+├───────────────┼─────┼────┼─────┼─────┼────┼────┼────────────┼─────┤
+│ …             │     │    │     │     │    │    │            │     │
+└───────────────┴─────┴────┴─────┴─────┴────┴────┴────────────┴─────┘
 ```
 
-The columns are Repository, Issue, PR, BL3, Gold, Last release and
-Release due?, in that order, each heading on two lines. The second line of
-Issue and PR is the total over every row, `X` and `Y` above, from the
-measure's last line. BL3 and Gold are the badge percentages, `-` where
-the repository has no badge project.
+The columns are Repository, ISS, PR, BL3, 🥇%, CI, 📛, Last release and
+🚀, in that order, each heading on two lines. The first line of ISS and
+PR is the total over every row, from the measure's last line. BL3 is the
+badge project's baseline percentage. 🥇% is its gold percentage, `🥇`
+where that is 100. Both are `-` where the repository has no badge
+project. CI and 📛 are `✅` where the measure's `ci` and `badges` say
+`ok`, and `❌` otherwise. An ISS or PR cell whose value is an error
+shows `err`.
 
-Last release is the latest tag, `never` where there is none. A cell
-holds its value and nothing else.
+Last release is the latest tag without its leading `v`, `never` where
+there is none. A cell holds its value and nothing else.
 
 Each column is as wide as its longest cell, plus one space on each side.
-Numbers are right-aligned. A horizontal rule goes between two groups,
+`✅`, `❌`, `⏳`, `🥇`, `📛` and `🚀` each take two columns of the
+terminal, and the widths and the alignment count them so. Numbers are
+right-aligned. A horizontal rule goes between two groups,
 never between two rows of one group. Where the table would pass 80
 columns, a cell too long goes on in a continuation line, its other cells
 empty. No Markdown table.
 
 After it, at most two lines: what a reader cannot see in the table, such
-as a repository whose package name differs from its own (`bip39-slip39`
-publishes `btclib-mnemonics`).
+as the pull request that makes a `YES` urgent, or a repository whose
+package name differs from its own (`bip39-slip39` publishes
+`btclib-mnemonics`).
