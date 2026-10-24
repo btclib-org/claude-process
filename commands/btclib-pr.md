@@ -340,8 +340,8 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
       "skipping")'` answers `true`. A cancelled check (bucket
       `cancel`) fails this item until a re-run passes.
-- [ ] the checks ran on the current `main`, read as the paragraph
-      below the list says
+- [ ] the checks ran on the current `main`, read as *The checks ran on
+      the current `main`* below says
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
@@ -427,14 +427,18 @@ fails and the human decides (*Where it is not obvious*).
 **The checks ran on the current `main` where the base of the merge they
 ran on is `origin/main`.** A check runs on the pull request merged with
 the `main` of that moment, so a pull request that landed since leaves it
-stale. A run's log names the merge, `Merge <head> into <base>`. After
-`git fetch origin`, this prints it, for one run of a required check's
-workflow:
+stale. A run's log names the merge, `Merge <head> into <base>`. Every
+workflow a head's `pull_request` event started shares that merge, so
+any one of them serves. After `git fetch origin`, this prints it for
+the newest completed run that is not skipped, which has a log. A run
+still in progress, or a skipped one (the run a close starts), prints
+nothing: read `<base>` once a run has completed.
 
 ```shell
 gh run view "$(gh run list --repo <owner>/<repo> --commit <sha> \
-  --event pull_request --workflow <file> --limit 1 \
-  --json databaseId --jq '.[0].databaseId')" --repo <owner>/<repo> --log |
+  --event pull_request --status completed --json databaseId,conclusion \
+  --jq '[.[] | select(.conclusion == "success" or .conclusion
+  == "failure")][0].databaseId')" --repo <owner>/<repo> --log |
   grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
 ```
 
@@ -643,9 +647,6 @@ human.
   review has cleared and the other checks are green.
 
 - **The pin is the head as last pushed**, not the sha a verdict named.
-- **A landing moves `main` under every other pull request.** Each one
-  approved or armed is read again against *The decision*'s item on the
-  current `main`, and a stale one is disarmed and reopened as there.
 - **A stacked pull request lands like any other**: once its base has
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
   opened as soon as it is written* says, gated, decided again on the new
