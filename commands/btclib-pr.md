@@ -430,23 +430,24 @@ the `main` of that moment, so a pull request that landed since leaves it
 stale. A run's log names the merge, `Merge <head> into <base>`. Every
 workflow a head's `pull_request` event started shares that merge, so
 any one of them serves. After `git fetch origin`, this prints it for
-the newest completed run that is not skipped, which has a log. A run
-still in progress, or a skipped one (the run a close starts), prints
-nothing: read `<base>` once a run has completed.
+the newest run that succeeded or failed, which has a log:
 
 ```shell
 gh run view "$(gh run list --repo <owner>/<repo> --commit <sha> \
-  --event pull_request --status completed --json databaseId,conclusion \
-  --jq '[.[] | select(.conclusion == "success" or .conclusion
-  == "failure")][0].databaseId')" --repo <owner>/<repo> --log |
+  --event pull_request --status completed --limit 100 \
+  --json databaseId,conclusion --jq '[.[] | select(.conclusion
+  == "success" or .conclusion == "failure")][0].databaseId')" \
+  --repo <owner>/<repo> --log |
   grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
 ```
 
 Where `<base>` is not `git rev-parse origin/main`, close and reopen
 the pull request (*Rebase and CI*). No push is made, so the approval
-and `CLEARED` stand. A reopen seconds after `main` moved can still
-run on the old base, so read `<base>` of the new run, and close and
-reopen again where it is the old one.
+and `CLEARED` stand. After a reopen, read `<base>` only once the
+reopen's checks have completed (*Rebase and CI*'s loop): until then the
+command prints the run before the reopen. A reopen seconds after `main`
+moved can still run on the old base, so where `<base>` of the new run
+is the old one, close and reopen again.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
