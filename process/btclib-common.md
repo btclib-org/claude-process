@@ -587,20 +587,21 @@ The writer's section; the reviewer judges its result.
 - [ ] the commit message was re-read, not carried by `--no-edit`
 - [ ] every claim in prose that lands was measured
 - [ ] collateral filed, by number
-- [ ] where the change touches a rule the tree states, the inventory of
+- [ ] where the change touches a rule the tree states, the search of
       *A rule stated more than once* is in the report
 - [ ] the report says what was **not** checked, and why
 
 ### A rule stated more than once
 
-**Before writing, list every sentence that states the rule you change.**
-Grep the tree for the rule's key words (*`grep` reads lines, and prose
-wraps*), and write down each hit as `file:line` with what you do with
-it. Change them all in one round. A restatement becomes a pointer to the
-section that holds the rule (*Write plainly*). The list goes in your
-report. The reviewer checks it is complete: its own grep finds no
-sentence the list missed, and it reads the files where the rule is
-stated.
+**Before writing, search for every sentence that states the rule you
+change.** Run one search over every tracked file (`git grep`), with a
+pattern for each way the rule is worded (*`grep` reads lines, and prose
+wraps*). List each hit as `file:line` with what you do with it.
+Change them all in one round. A restatement becomes a pointer to the
+section that holds the rule (*Write plainly*). The report carries the
+patterns and the hits. The reviewer runs the same search, adds the
+patterns it would have used, and reads the files where the rule is
+stated. A sentence either search finds and the list lacks is a finding.
 
 **A pointer keeps every condition of the text it replaces**: the target
 states each one, or the condition stays where it was.
@@ -1071,7 +1072,7 @@ run and another bot run.
 - [ ] every finding carries its measurement, and its weight (*Which
       prose is worth a round*)
 - [ ] where the change touches a rule the tree states, the writer's
-      inventory is complete (*A rule stated more than once*)
+      search is complete (*A rule stated more than once*)
 - [ ] on a branch, the prose it adds was read on the merge with
       `origin/main` (*A pull request's rounds*)
 - [ ] where the diff moves a dependency to a new major version, the
