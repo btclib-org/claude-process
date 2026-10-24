@@ -244,7 +244,8 @@ them.
       <file> --limit 5`): not this pull request's. Find or file its
       issue; its repair comes first (*Landing*'s first bullet). A
       required check holds the pull request. Once the repair has
-      landed, close and reopen the pull request, with no push
+      landed, note the time (`date -u +%FT%TZ`), as *The decision*
+      says, then close and reopen the pull request, with no push
       (`CONTRIBUTING.md`'s *Landing it* says why):
 
       ```shell
@@ -430,25 +431,32 @@ merged with the `main` of that moment, so a pull request that landed
 since leaves it stale. A run's log names the merge,
 `Merge <head> into <base>`. Every workflow a head's `pull_request` event
 started shares that merge, so any one of them serves. This prints it for
-the newest run that succeeded or failed, which has a log:
+the newest run created after `<since>` that succeeded or failed, which
+has a log. `<since>` is empty for a first read, and after a reopen it is
+the time noted just before it (`date -u +%FT%TZ`):
 
 ```shell
-gh run view "$(gh run list --repo <owner>/<repo> --commit <sha> \
+since=<since>
+id=$(gh run list --repo <owner>/<repo> --commit <sha> \
   --event pull_request --status completed --limit 100 \
-  --json databaseId,conclusion --jq '[.[] | select(.conclusion
-  == "success" or .conclusion == "failure")][0].databaseId')" \
-  --repo <owner>/<repo> --log |
+  --json databaseId,conclusion,createdAt --jq "[.[] | select(.createdAt
+  > \"$since\" and (.conclusion == \"success\" or .conclusion ==
+  \"failure\"))][0].databaseId")
+gh run view "$id" --repo <owner>/<repo> --log |
   grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
 ```
 
 `main`'s head is `gh api repos/<owner>/<repo>/commits/main --jq .sha`.
-Where `<base>` differs from it, close and reopen the pull request
-(*Rebase and CI*). No push is made, so the approval and `CLEARED` stand.
-After a reopen, read `<base>` only once the reopen's checks have
-completed (*Rebase and CI*'s loop): until then the command prints the
-run before the reopen. A reopen seconds after `main` moved can still run
-on the old base, so where `<base>` of the new run is the old one, close
-and reopen again.
+Where `<base>` differs from it, note the time, then close and reopen the
+pull request (*Rebase and CI*). No push is made, so the approval and
+`CLEARED` stand. Run the command again with `<since>` the noted time,
+every 30 seconds while *Rebase and CI*'s loop waits, until `id` is not
+empty: the runs from before the reopen name the old base.
+
+A reopen can still run on the old base well after `main` moved (ten
+minutes, on [PR 1857](https://github.com/btclib-org/.github/pull/1857)
+of `btclib-org/.github`). Where the `<base>` read from the reopen's runs
+is not `main`'s head, note the time and reopen again.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
