@@ -2,7 +2,9 @@
 # The gate lock, by default one per user, shared by every worker of every
 # session that user runs. It has GATE_LOCK_SLOTS slots, 3 by default, so
 # that many workers gate at once. POSIX sh, sourced in the same shell call
-# that runs the gates, so that `$$` is the holder. Sourcing sets
+# that runs the gates, by sh, bash or zsh, in the main shell or in a
+# `( ... ) &` subshell. btclib-common.md's "The gates" (the gate lock) says
+# in which shell gate_release runs. Sourcing sets
 # GATE_LOCK_WORKERS, the cores divided by the slots, for the `-n` of a
 # suite run in a slot:
 #
@@ -93,6 +95,21 @@ _gl_dir() {
     echo "gate lock: cannot create '$_gl_d'"
     return 1
   }
+}
+
+# Sets _gl_me to the PID of the shell that calls it. `$$` is not that PID in
+# a subshell: it stays the main shell's, which may be gone while a
+# background `( ... ) &` still gates, and is shared by sibling subshells.
+# A command run from this shell, with its output redirected and not
+# substituted, has this shell as its parent. The file is outside
+# $GATE_LOCK_DIR, which a waiter reads, and `>|` writes it under noclobber.
+_gl_self() {
+  _gl_sf=$(mktemp "${TMPDIR:-/tmp}/gate-lock.self.XXXXXX") || return 1
+  sh -c 'echo $PPID' >| "$_gl_sf"
+  _gl_me=""
+  read -r _gl_me < "$_gl_sf"
+  rm -f "$_gl_sf"
+  [ -n "$_gl_me" ] || { echo "gate lock: cannot read this shell's PID"; return 1; }
 }
 
 # The directory of slot $1: gate.lock for the first, gate.lock.<n> after it
@@ -194,7 +211,7 @@ _gl_held() {
 # is removed, so that the next head reads it. The rename keeps a reader from
 # a half written file.
 _gl_stamp() {
-  date +%s > "$_gl_d/.last.$$" && mv "$_gl_d/.last.$$" "$_gl_d/gate.last"
+  date +%s > "$_gl_d/.last.$_gl_me" && mv "$_gl_d/.last.$_gl_me" "$_gl_d/gate.last"
 }
 
 gate_wait() {
@@ -208,36 +225,36 @@ _gl_reclaim() {
   [ -r "$_gl_s/owner" ] && read -r _gl_pid _ < "$_gl_s/owner"
   [ -n "$_gl_pid" ] || return 1
   ! ps -p "$_gl_pid" >/dev/null 2>&1 || return 1
-  mv "$_gl_s/owner" "$_gl_s/stale.$$" 2>/dev/null || return 1
+  mv "$_gl_s/owner" "$_gl_s/stale.$_gl_me" 2>/dev/null || return 1
   _gl_now=""
-  read -r _gl_now _ < "$_gl_s/stale.$$"
+  read -r _gl_now _ < "$_gl_s/stale.$_gl_me"
   if [ "$_gl_now" = "$_gl_pid" ]; then
     echo "${_gl_s##*/} of pid $_gl_pid is stale, its process gone: removed"
-    rm -f "$_gl_s/stale.$$"
+    rm -f "$_gl_s/stale.$_gl_me"
     rmdir "$_gl_s" 2>/dev/null
     return 0
   fi
-  mv "$_gl_s/stale.$$" "$_gl_s/owner"
+  mv "$_gl_s/stale.$_gl_me" "$_gl_s/owner"
   return 1
 }
 
 gate_take() {
-  _gl_dir || return 1
+  _gl_dir && _gl_self || return 1
   _gl_wt=${2:-${1:-}}
   _gl_queue="$_gl_d/gate.queue"
-  _gl_start=$(_gl_started $$)
+  _gl_start=$(_gl_started "$_gl_me")
   [ -n "$_gl_start" ] || {
-    echo "gate_take: ps -o lstart= prints nothing for pid $$"
+    echo "gate_take: ps -o lstart= prints nothing for pid $_gl_me"
     return 1
   }
-  _gl_ticket="$_gl_queue/$(date +%s).$(printf '%010d' $$)"
+  _gl_ticket="$_gl_queue/$(date +%s).$(printf '%010d' "$_gl_me")"
   while :; do
     # written aside and renamed, so that no waiter reads it half written,
     # and written again if a waiter removed it, so that it keeps its place
     [ -f "$_gl_ticket" ] || {
       mkdir -p "$_gl_queue" &&
-      printf '%s\n%s\n%s\n' "$$" "$_gl_start" "$_gl_wt" > "$_gl_queue/.$$" &&
-        mv "$_gl_queue/.$$" "$_gl_ticket" &&
+      printf '%s\n%s\n%s\n' "$_gl_me" "$_gl_start" "$_gl_wt" > "$_gl_queue/.$_gl_me" &&
+        mv "$_gl_queue/.$_gl_me" "$_gl_ticket" &&
         # long enough for a ticket written at the same moment to be seen
         # by the first scan, so that two new waiters do not both find
         # themselves at the head
@@ -261,10 +278,10 @@ EOF
     while [ "$_gl_i" -le "$GATE_LOCK_SLOTS" ]; do
       _gl_slot "$_gl_i"
       if mkdir "$_gl_s" 2>/dev/null; then
-        echo "$$ $(date +%s) $_gl_wt" > "$_gl_s/owner"
+        echo "$_gl_me $(date +%s) $_gl_wt" > "$_gl_s/owner"
         _gl_stamp
         rm -f "$_gl_ticket"
-        echo "${_gl_s##*/} taken by $$ at $(_gl_status)"
+        echo "${_gl_s##*/} taken by $_gl_me at $(_gl_status)"
         return 0
       fi
       _gl_reclaim
@@ -275,7 +292,7 @@ EOF
 }
 
 gate_release() {
-  _gl_dir || return 1
+  _gl_dir && _gl_self || return 1
   _gl_i=0
   while [ "$_gl_i" -lt 5 ]; do
     # a slot with no owner file may be ours, its file renamed by a waiter
@@ -288,10 +305,10 @@ gate_release() {
       [ -d "$_gl_s" ] || continue
       _gl_pid=""
       [ -r "$_gl_s/owner" ] && read -r _gl_pid _ < "$_gl_s/owner"
-      if [ "$_gl_pid" = "$$" ]; then
+      if [ "$_gl_pid" = "$_gl_me" ]; then
         rm -f "$_gl_s/owner"
         rmdir "$_gl_s" 2>/dev/null &&
-          { echo "${_gl_s##*/} released by $$"; return 0; }
+          { echo "${_gl_s##*/} released by $_gl_me"; return 0; }
       elif [ -z "$_gl_pid" ]; then
         _gl_unowned=1
       fi
@@ -299,7 +316,7 @@ gate_release() {
     [ -n "$_gl_unowned" ] || break
     _gl_i=$((_gl_i + 1)); sleep 1
   done
-  echo "no gate slot is held by $$: left alone"
+  echo "no gate slot is held by $_gl_me: left alone"
   return 1
 }
 
@@ -310,12 +327,12 @@ gate_release() {
 # waits for the rest it holds the slots it has. btclib-common.md's "The gates"
 # says what that costs.
 gate_take_all() {
-  _gl_dir || return 1
+  _gl_dir && _gl_self || return 1
   _gl_gwt=${2:-${1:-}}
   while :; do
     _gl_s="$_gl_d/gate.generator"
     if mkdir "$_gl_s" 2>/dev/null; then
-      echo "$$ $(date +%s) $_gl_gwt" > "$_gl_s/owner"
+      echo "$_gl_me $(date +%s) $_gl_gwt" > "$_gl_s/owner"
       break
     fi
     _gl_reclaim || sleep "$GATE_LOCK_POLL"
@@ -330,7 +347,7 @@ gate_take_all() {
 # Releases every slot this shell holds, then gate.generator; fails if it
 # released nothing
 gate_release_all() {
-  _gl_dir || return 1
+  _gl_dir && _gl_self || return 1
   _gl_gi=0 _gl_gn=0
   while [ "$_gl_gi" -lt "$GATE_LOCK_SLOTS" ]; do
     gate_release || break
@@ -340,10 +357,10 @@ gate_release_all() {
   _gl_s="$_gl_d/gate.generator"
   _gl_pid=""
   [ -r "$_gl_s/owner" ] && read -r _gl_pid _ < "$_gl_s/owner"
-  if [ "$_gl_pid" = "$$" ]; then
+  if [ "$_gl_pid" = "$_gl_me" ]; then
     rm -f "$_gl_s/owner"
     rmdir "$_gl_s" 2>/dev/null &&
-      { echo "gate.generator released by $$"; _gl_gn=$((_gl_gn + 1)); }
+      { echo "gate.generator released by $_gl_me"; _gl_gn=$((_gl_gn + 1)); }
   fi
   [ "$_gl_gn" -gt 0 ]
 }
