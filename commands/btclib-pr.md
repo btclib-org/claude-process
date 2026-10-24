@@ -252,7 +252,8 @@ them.
       gh pr reopen <n> --repo <owner>/<repo>
       ```
 
-      *The decision* reads the bot's review of the reopen. Where
+      *The decision* reads the bot's review of the reopen, and names
+      the other case that calls for one. Where
       `gh pr view <n> --repo <owner>/<repo> --json autoMergeRequest`
       shows the pull request disarmed, arm it again as *Landing* says.
       A check that only reports is named in the decision;
@@ -339,6 +340,8 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
       "skipping")'` answers `true`. A cancelled check (bucket
       `cancel`) fails this item until a re-run passes.
+- [ ] the checks ran on the current `main`, read as *The checks ran on
+      the current `main`* below says
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
@@ -420,6 +423,32 @@ lock, and uv's documentation says it tracks backwards-compatible
 lockfile changes. A major move is one where a version's first non-zero
 number changes. Where the notes show a known problem, the item
 fails and the human decides (*Where it is not obvious*).
+
+**The checks ran on the current `main` where the base of the merge they
+ran on is `main`'s current head.** A check runs on the pull request
+merged with the `main` of that moment, so a pull request that landed
+since leaves it stale. A run's log names the merge,
+`Merge <head> into <base>`. Every workflow a head's `pull_request` event
+started shares that merge, so any one of them serves. This prints it for
+the newest run that succeeded or failed, which has a log:
+
+```shell
+gh run view "$(gh run list --repo <owner>/<repo> --commit <sha> \
+  --event pull_request --status completed --limit 100 \
+  --json databaseId,conclusion --jq '[.[] | select(.conclusion
+  == "success" or .conclusion == "failure")][0].databaseId')" \
+  --repo <owner>/<repo> --log |
+  grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
+```
+
+`main`'s head is `gh api repos/<owner>/<repo>/commits/main --jq .sha`.
+Where `<base>` differs from it, close and reopen the pull request
+(*Rebase and CI*). No push is made, so the approval and `CLEARED` stand.
+After a reopen, read `<base>` only once the reopen's checks have
+completed (*Rebase and CI*'s loop): until then the command prints the
+run before the reopen. A reopen seconds after `main` moved can still run
+on the old base, so where `<base>` of the new run is the old one, close
+and reopen again.
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
