@@ -39,6 +39,10 @@
 #   whose holder is gone, and takes a slot within them too.
 # - Zsh. A zsh session takes the first slot with no other slot present, and
 #   releases it. Skipped where there is no zsh.
+# - A background subshell. Under each of sh, bash, zsh and dash, with
+#   noclobber set, a shell starts `( ... ) &` that takes a slot, and
+#   exits. The owner of the slot is the subshell, which is alive, and not
+#   the shell that exited. The subshell releases it.
 # - Load generators. Under each of sh, bash, zsh and dash, two sessions ask
 #   at once for every slot with gate_take_all. Both finish, and their holds
 #   do not overlap.
@@ -286,6 +290,60 @@ if command -v zsh > /dev/null; then
 else
   echo "skipped: no zsh to run the release case under"
 fi
+
+# A background subshell. A shell sources the script, starts `( ... ) &`
+# that takes a slot and holds it until $tmp/go-bg exists, and exits at once.
+# The slot's owner is the subshell, which is alive, and not the shell that
+# exited, whose `$$` the subshell shares. Run under each shell of the kind
+# named, those not installed skipped.
+for shell in sh bash zsh dash; do
+  command -v "$shell" > /dev/null || { echo "skipped: no $shell to run the subshell case under"; continue; }
+  rm -rf "${GATE_LOCK_DIR:?}" "$tmp/go-bg" "$tmp/out-bg" "$tmp/main-bg" "$tmp/sub-bg"
+  idle=$tmp/idle
+  "$shell" -c '
+    . "$1"
+    idle=$2
+    eval "$3"
+    set -C
+    echo $$ > "$4/main-bg"
+    (
+      sh -c '"'"'echo $PPID'"'"' >| "$4/sub-bg"
+      gate_take wt-bg > "$4/out-bg" || exit 1
+      until [ -f "$4/go-bg" ]; do sleep 1; done
+      gate_release >> "$4/out-bg"
+    ) &
+  ' "$shell" "$script" "$tmp/idle" "$stubs" "$tmp" || fail "$shell could not start the subshell"
+  # the subshell is in $pids from its first line, so that fail kills it
+  i=0
+  until [ -s "$tmp/sub-bg" ]; do
+    i=$((i + 1))
+    [ "$i" -le 30 ] || fail "the subshell of $shell did not start"
+    sleep 1
+  done
+  read -r pids < "$tmp/sub-bg"
+  # the owner file exists before its content is written: wait for the PID
+  owner="" i=0
+  until [ -n "$owner" ]; do
+    i=$((i + 1))
+    [ "$i" -le 30 ] || { cat "$tmp/out-bg" 2>/dev/null; fail "a subshell of $shell took no slot after its shell exited"; }
+    sleep 1
+    read -r owner _ 2>/dev/null < "$GATE_LOCK_DIR/gate.lock/owner"
+  done
+  read -r main < "$tmp/main-bg"
+  [ "$owner" != "$main" ] || { touch "$tmp/go-bg"; fail "$shell: the owner of the slot is the shell that exited, not the subshell"; }
+  kill -0 "$owner" 2>/dev/null || { touch "$tmp/go-bg"; fail "$shell: the owner of the slot is not alive"; }
+  touch "$tmp/go-bg"
+  i=0
+  while [ -e "$GATE_LOCK_DIR/gate.lock" ]; do
+    i=$((i + 1))
+    [ "$i" -le 30 ] || fail "the subshell of $shell did not release its slot"
+    sleep 1
+  done
+  grep -q 'gate.lock released by' "$tmp/out-bg" || { cat "$tmp/out-bg"; fail "the subshell of $shell printed no release"; }
+  pids=""
+  echo "ok: under $shell, with noclobber set, a background subshell held gate.lock after its shell exited, and released it"
+done
+rm -rf "${GATE_LOCK_DIR:?}"
 
 # Load generators. Two generators ask at once for every slot, each in a shell
 # of the kind named. Both finish, one after the other: a generator holds

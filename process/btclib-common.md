@@ -765,14 +765,16 @@ the orchestrator in the pull request.
   ```
 
   `gate_take` writes its shell's PID into the slot, and `gate_release`
-  removes only the slot holding that PID. A slot whose holder's process
-  is gone is stale, and `gate_take` removes it itself, by renaming the
-  owner file first, which only one waiter wins. No session removes a
-  slot any other way: a failed `mkdir` or an old slot says nothing
-  about whose it is. A slot or `gate.generator` with no owner file — a
-  hand `mkdir`, or one a waiter killed mid-reclaim left with only a
-  `stale.<pid>` in it — is never reclaimed. The human removes it by its
-  directory name, after checking that no gate runs in it:
+  removes only the slot holding that PID, so `gate_release` runs in the
+  same shell as `gate_take`, not after `$(gate_take …)` or `gate_take |
+  …`, whose shell has exited. A slot whose holder's process is gone is
+  stale, and `gate_take` removes it itself, by renaming the owner file
+  first, which only one waiter wins. No session removes a slot any other
+  way: a failed `mkdir` or an old slot says nothing about whose it is. A
+  slot or `gate.generator` with no owner file — a hand `mkdir`, or one a
+  waiter killed mid-reclaim left with only a `stale.<pid>` in it — is
+  never reclaimed. The human removes it by its directory name, after
+  checking that no gate runs in it:
 
   ```shell
   rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/<slot>
