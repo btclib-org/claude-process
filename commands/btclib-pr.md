@@ -430,18 +430,24 @@ ran on is `main`'s current head.** A check runs on the pull request
 merged with the `main` of that moment, so a pull request that landed
 since leaves it stale. A run's log names the merge,
 `Merge <head> into <base>`. Every workflow a head's `pull_request` event
-started shares that merge, so any one of them serves. This prints it for
+started shares that merge, so any one of them serves. This waits for
 the newest run created after `<since>` that succeeded or failed, which
-has a log. `<since>` is empty for a first read, and after a reopen it is
-the time noted just before it (`date -u +%FT%TZ`):
+has a log, and prints the merge. `<since>` is empty for a first read,
+which returns at once, and after a reopen it is the time noted just
+before it (`date -u +%FT%TZ`). The loop gives up after 30 minutes, and
+`gh run view` then fails for want of a run id; say so where it does:
 
 ```shell
 since=<since>
-id=$(gh run list --repo <owner>/<repo> --commit <sha> \
-  --event pull_request --status completed --limit 100 \
-  --json databaseId,conclusion,createdAt --jq "[.[] | select(.createdAt
-  > \"$since\" and (.conclusion == \"success\" or .conclusion ==
-  \"failure\"))][0].databaseId")
+for i in $(seq 60); do
+  id=$(gh run list --repo <owner>/<repo> --commit <sha> \
+    --event pull_request --status completed --limit 100 \
+    --json databaseId,conclusion,createdAt --jq "[.[] |
+    select(.createdAt > \"$since\" and (.conclusion == \"success\" or
+    .conclusion == \"failure\"))][0].databaseId")
+  [ -n "$id" ] && break
+  sleep 30
+done
 gh run view "$id" --repo <owner>/<repo> --log |
   grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
 ```
@@ -449,9 +455,8 @@ gh run view "$id" --repo <owner>/<repo> --log |
 `main`'s head is `gh api repos/<owner>/<repo>/commits/main --jq .sha`.
 Where `<base>` differs from it, note the time, then close and reopen the
 pull request (*Rebase and CI*). No push is made, so the approval and
-`CLEARED` stand. Run the command again with `<since>` the noted time,
-every 30 seconds while *Rebase and CI*'s loop waits, until `id` is not
-empty: the runs from before the reopen name the old base.
+`CLEARED` stand. Read again with `<since>` the noted time: the runs from
+before the reopen name the old base.
 
 A reopen can still run on the old base well after `main` moved (ten
 minutes, on [PR 1857](https://github.com/btclib-org/.github/pull/1857)
