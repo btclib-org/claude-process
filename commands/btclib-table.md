@@ -148,10 +148,11 @@ differ.
 `ci` names each active workflow whose latest completed run on `main`
 concluded neither `success` nor `skipped`, `ok` where none did.
 `release.yml` is left out: on `main` it runs only as a rehearsal, and a
-release runs on its tag. A run still in progress or `cancelled` does
-not count: the completed one before it does. A disabled workflow, one
-with no completed run on `main`, and a run from a fork's `main` count
-for nothing.
+release runs on its tag. Only a workflow's 20 latest completed runs on
+`main` are read, so a run still in progress is not among them. A
+`cancelled` run and a run from a fork's `main` are passed over for the
+one before. A disabled workflow, and one with no run that counts among
+those 20, count for nothing.
 
 `badges` names each image of the README that does not render green or
 blue, `ok` where none. Every `![…](…)` image counts as a badge. Its
@@ -228,12 +229,12 @@ reads in the terminal:
 
 The columns are Repository, ISS, PR, BL3, 🥇%, CI, 📛, Last release and
 🚀, in that order, each heading on two lines. The first line of ISS and
-PR is the total over every row, from the measure's last line. BL3 is the
-badge project's baseline percentage. 🥇% is its gold percentage, `🥇`
-where that is 100. Both are `-` where the repository has no badge
-project. CI and 📛 are `✅` where the measure's `ci` and `badges` say
-`ok`, and `❌` otherwise. An ISS or PR cell whose value is an error
-shows `err`.
+PR is the total on the measure's last line, which leaves out a row whose
+count is an error. BL3 is the badge project's baseline percentage. 🥇%
+is its gold percentage, `🥇` where that is 100. Both are `-` where the
+repository has no badge project. CI and 📛 are `✅` where the measure's
+`ci` and `badges` say `ok`, and `❌` otherwise. An ISS or PR cell whose
+value is an error shows `err`.
 
 Last release is the latest tag without its leading `v`, `never` where
 there is none. A cell holds its value and nothing else.
