@@ -121,8 +121,8 @@ organization's open pull requests and proposes which to work.
 ```
 
 shows one table of every repository of the organization that is not
-archived: open issues, open pull requests, the last release, and whether
-a new one is due. It only reads.
+archived: open issues, open pull requests, CI and README badge status,
+the last release, and whether a new one is due. It only reads.
 
 `/btclib-iss` and `/btclib-pr` work in every repository of
 `btclib-org`; the shared *Where you work* says how the repository is
