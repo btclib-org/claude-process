@@ -41,7 +41,7 @@ call() {
   rm -f "${e}"
   printf '%s' "${o}"
 }
-r=$1
+r=${1}
 iss=$(call gh issue list -R "btclib-org/${r}" --state open --limit 1000 \
   --json number --jq length)
 prs=$(call gh pr list -R "btclib-org/${r}" --state open --limit 1000 \
