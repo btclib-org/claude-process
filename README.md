@@ -159,6 +159,7 @@ mkdir -p ~/.claude/process
 The links then point at the new text. Do not edit the clone the links
 point at: change the process through a pull request from a worktree,
 reviewed by another person, like any other btclib-org repository.
+[CONTRIBUTING.md](./CONTRIBUTING.md) says how.
 
 ## Contributing
 
