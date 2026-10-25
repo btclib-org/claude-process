@@ -163,8 +163,8 @@ since=""
     .base_commit.commit.committer.date[:10] + " | since: "
     + ([.commits[].commit.message | split("\n")[0]] | join(" || "))' \
   2>/dev/null)
-echo "${r} | iss=${iss} | pr=${prs} | ${pkg} | release.yml=${rel}" \
-  "| ci=${ci:-ok} | badges=${badges:-ok} | tag=${tag:-none} ${since}" \
+printf '%s\n' "${r} | iss=${iss} | pr=${prs} | ${pkg} | release.yml=${rel}\
+ | ci=${ci:-ok} | badges=${badges:-ok} | tag=${tag:-none} ${since}" \
   > "${d}/${r}.row"
 EOF_ROW
 export d
