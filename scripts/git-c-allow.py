@@ -58,6 +58,7 @@ BRANCH_WRITE = (
     ),
     "dDmMcCfut",
 )
+# The options that list branches even when a name follows.
 BRANCH_FILTER = {
     "--list",
     "-l",
@@ -66,8 +67,6 @@ BRANCH_FILTER = {
     "--merged",
     "--no-merged",
     "--points-at",
-    "--format",
-    "--sort",
 }
 
 
