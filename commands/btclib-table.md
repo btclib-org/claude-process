@@ -18,10 +18,17 @@ follows that file's *Write plainly*.
 Run this, which only reads:
 
 ```shell
+# each repository's row goes to "${d}/<repo>.row" and its counts to
+# "${d}/<repo>.tot" ("<iss> <prs>", or "err")
+d=$(mktemp -d)
+trap 'rm -r "${d}"' EXIT
+trap 'exit 1' INT TERM
+w="${d}/row.sh"
+cat > "${w}" <<'EOF_ROW'
 # call: a command's output, or "error: <its stderr>" and exit 1 where it
 # fails or prints anything on stderr
 call() {
-  e=$(mktemp)
+  e=$(mktemp "${d}/err.XXXXXX")
   o=$("$@" 2> "${e}")
   s=$?
   if [ "${s}" -ne 0 ] || [ -s "${e}" ]; then
@@ -32,27 +39,25 @@ call() {
   rm -f "${e}"
   printf '%s' "${o}"
 }
-ti=0 tp=0 part=""
-for r in $(gh repo list btclib-org --no-archived --limit 200 \
-    --json name --jq '.[].name' | sort); do
-  iss=$(call gh issue list -R "btclib-org/${r}" --state open --limit 1000 \
-    --json number --jq length)
-  prs=$(call gh pr list -R "btclib-org/${r}" --state open --limit 1000 \
-    --json number --jq length)
-  case ${iss}${prs} in
-    *[!0-9]*) part=" (rows with an error left out)" ;;
-    *) ti=$(( ti + iss )) tp=$(( tp + prs )) ;;
-  esac
-  badges="" readme=$(call gh api "repos/btclib-org/${r}/readme" \
-    -H 'Accept: application/vnd.github.raw') || case ${readme} in
-    *"(HTTP 404)"*) readme="" ;;
-    *) badges="${readme}" readme="" ;;
-  esac
-  bp=$(printf '%s' "${readme}" |
-    grep -oE 'bestpractices\.dev/projects/[0-9]+' | head -n 1 | sed 's|.*/||')
-  pkg=$(gh api "repos/btclib-org/${r}/contents/pyproject.toml" \
-      -H 'Accept: application/vnd.github.raw' 2>/dev/null |
-    uv run --no-project --python 3.15 python -c '
+r=$1
+iss=$(call gh issue list -R "btclib-org/${r}" --state open --limit 1000 \
+  --json number --jq length)
+prs=$(call gh pr list -R "btclib-org/${r}" --state open --limit 1000 \
+  --json number --jq length)
+case ${iss}${prs} in
+  *[!0-9]*) echo err > "${d}/${r}.tot" ;;
+  *) echo "${iss} ${prs}" > "${d}/${r}.tot" ;;
+esac
+badges="" readme=$(call gh api "repos/btclib-org/${r}/readme" \
+  -H 'Accept: application/vnd.github.raw') || case ${readme} in
+  *"(HTTP 404)"*) readme="" ;;
+  *) badges="${readme}" readme="" ;;
+esac
+bp=$(printf '%s' "${readme}" |
+  grep -oE 'bestpractices\.dev/projects/[0-9]+' | head -n 1 | sed 's|.*/||')
+pkg=$(gh api "repos/btclib-org/${r}/contents/pyproject.toml" \
+    -H 'Accept: application/vnd.github.raw' 2>/dev/null |
+  uv run --no-project --python 3.15 python -c '
 import json, sys, tomllib, urllib.request
 try:
     p = tomllib.loads(sys.stdin.read()).get("project", {})
@@ -78,40 +83,57 @@ if bp:
         bl3 = b["badge_percentage_baseline_3"]
         gold = b["badge_percentage_2"]
 print(f"{name} | pypi={pypi} | bl3={bl3} gold={gold} | deps: {deps}")' \
-    "${r}" "${bp}")
-  ci="" wfs=$(call gh api \
-    "repos/btclib-org/${r}/actions/workflows?per_page=100" \
-    --jq '.workflows[] | select(.state == "active")
-      | select(.path != ".github/workflows/release.yml") | .id') ||
-    ci="${wfs}"
-  [ -n "${ci}" ] || while read -r w; do
+  "${r}" "${bp}")
+ci="" wfs=$(call gh api \
+  "repos/btclib-org/${r}/actions/workflows?per_page=100" \
+  --jq '.workflows[] | select(.state == "active")
+    | select(.path != ".github/workflows/release.yml") | .id') ||
+  ci="${wfs}"
+if [ -z "${ci}" ] && [ -n "${wfs}" ]; then
+  ids=$(printf '%s' "${wfs}" | paste -sd, -)
+  page=$(call gh api -X GET "repos/btclib-org/${r}/actions/runs" \
+    -f branch=main -f status=completed -f per_page=100 \
+    --jq "[${ids}] as \$ids | .total_count as \$t | .workflow_runs as \$runs
+      | \$ids[] as \$w
+      | [\$runs[] | select(.workflow_id == \$w)] as \$mine
+      | [\$mine[:20][] | select(.head_repository.full_name
+          == \"btclib-org/${r}\" and .conclusion != \"cancelled\")][0] as \$c
+      | \"\(\$w)\t\" + if \$c != null then
+          (if \$c.conclusion | IN(\"success\", \"skipped\") then \"\"
+           else \"\(\$c.name)=\(\$c.conclusion)\" end)
+        elif (\$mine | length) >= 20 or \$t <= (\$runs | length) then \"\"
+        else \"?\" end") || page=""
+  while read -r w c; do
     [ -n "${w}" ] || continue
-    c=$(call gh api -X GET "repos/btclib-org/${r}/actions/workflows/${w}/runs" \
-      -f branch=main -f status=completed -f per_page=20 \
-      --jq "[.workflow_runs[] | select(.head_repository.full_name
-        == \"btclib-org/${r}\" and .conclusion != \"cancelled\")][0] // empty
-        | select(.conclusion | IN(\"success\", \"skipped\") | not)
-        | .name + \"=\" + .conclusion") || c="${w}=${c}"
+    if [ "${c}" = "?" ] || [ -z "${page}" ]; then
+      c=$(call gh api -X GET \
+        "repos/btclib-org/${r}/actions/workflows/${w}/runs" \
+        -f branch=main -f status=completed -f per_page=20 \
+        --jq "[.workflow_runs[] | select(.head_repository.full_name
+          == \"btclib-org/${r}\" and .conclusion != \"cancelled\")][0] // empty
+          | select(.conclusion | IN(\"success\", \"skipped\") | not)
+          | .name + \"=\" + .conclusion") || c="${w}=${c}"
+    fi
     [ -z "${c}" ] || ci="${ci:+${ci},}${c}"
   done <<EOF_WFS
-${wfs}
+${page:-$wfs}
 EOF_WFS
-  [ -n "${badges}" ] || badges=$(printf '%s' "${readme}" |
-    uv run --no-project --python 3.15 python -c '
+fi
+[ -n "${badges}" ] || badges=$(printf '%s' "${readme}" |
+  uv run --no-project --python 3.15 python -c '
 import colorsys, re, sys, urllib.request
-bad = []
-for url in re.findall(r"!\[[^]]*\]\(([^)\s]+)", sys.stdin.read()):
-    if "/pypi/status/" in url:
-        continue
+from concurrent.futures import ThreadPoolExecutor
+
+
+def check(url):
     req = urllib.request.Request(url, headers={"User-Agent": "btclib-table"})
     try:
         svg = urllib.request.urlopen(req, timeout=30).read().decode()
     except Exception as e:
-        bad.append(f"{url}: {e}")
-        continue
+        return f"{url}: {e}"
     title = (re.findall(r"<title>([^<]*)", svg) or [url])[0]
     if re.fullmatch(r"openssf best practices: (silver|gold)", title):
-        continue
+        return None
     hues = []
     hexes = r"(?:fill|stop-color)=.#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\W"
     for h in re.findall(hexes, svg):
@@ -121,22 +143,44 @@ for url in re.findall(r"!\[[^]]*\]\(([^)\s]+)", sys.stdin.read()):
         if sat >= 0.5:
             hues.append(hue * 360)
     if not hues or not all(70 <= hue < 260 for hue in hues):
-        bad.append(title)
+        return title
+    return None
+
+
+urls = re.findall(r"!\[[^]]*\]\(([^)\s]+)", sys.stdin.read())
+urls = [u for u in urls if "/pypi/status/" not in u]
+with ThreadPoolExecutor(8) as pool:
+    bad = [b for b in pool.map(check, urls) if b]
 print(" || ".join(bad))') || badges="error: the badge script failed"
-  rel=no
-  gh api "repos/btclib-org/${r}/contents/.github/workflows/release.yml" \
-    > /dev/null 2>&1 && rel=yes
-  tag=$(gh api "repos/btclib-org/${r}/tags?per_page=100" --jq '.[].name' \
-    2>/dev/null | sort -V | tail -n 1)
-  since=""
-  [ -n "${tag}" ] && since=$(gh api \
-    "repos/btclib-org/${r}/compare/${tag}...HEAD" --jq '
-      .base_commit.commit.committer.date[:10] + " | since: "
-      + ([.commits[].commit.message | split("\n")[0]] | join(" || "))' \
-    2>/dev/null)
-  echo "${r} | iss=${iss} | pr=${prs} | ${pkg} | release.yml=${rel}" \
-    "| ci=${ci:-ok} | badges=${badges:-ok} | tag=${tag:-none} ${since}"
-done
+rel=no
+gh api "repos/btclib-org/${r}/contents/.github/workflows/release.yml" \
+  > /dev/null 2>&1 && rel=yes
+tag=$(gh api "repos/btclib-org/${r}/tags?per_page=100" --jq '.[].name' \
+  2>/dev/null | sort -V | tail -n 1)
+since=""
+[ -n "${tag}" ] && since=$(gh api \
+  "repos/btclib-org/${r}/compare/${tag}...HEAD" --jq '
+    .base_commit.commit.committer.date[:10] + " | since: "
+    + ([.commits[].commit.message | split("\n")[0]] | join(" || "))' \
+  2>/dev/null)
+printf '%s\n' "${r} | iss=${iss} | pr=${prs} | ${pkg} | release.yml=${rel}\
+ | ci=${ci:-ok} | badges=${badges:-ok} | tag=${tag:-none} ${since}" \
+  > "${d}/${r}.row"
+EOF_ROW
+export d
+gh repo list btclib-org --no-archived --limit 200 \
+    --json name --jq '.[].name' | sort > "${d}/repos"
+xargs -n 1 -P 6 sh "${w}" < "${d}/repos"
+ti=0 tp=0 part=""
+while read -r r; do
+  cat "${d}/${r}.row"
+  i=err
+  read -r i p < "${d}/${r}.tot"
+  case ${i} in
+    err) part=" (rows with an error left out)" ;;
+    *) ti=$(( ti + i )) tp=$(( tp + p )) ;;
+  esac
+done < "${d}/repos"
 echo "total | iss=${ti} | pr=${tp}${part}"
 ```
 
@@ -152,7 +196,9 @@ release runs on its tag. Only a workflow's 20 latest completed runs on
 `main` are read, so a run still in progress is not among them. A
 `cancelled` run and a run from a fork's `main` are passed over for the
 one before. A disabled workflow, and one with no run that counts among
-those 20, count for nothing.
+those 20, count for nothing. One call reads the repository's 100 latest
+completed runs on `main`; a workflow they do not settle gets a call of
+its own, and where that call fails, every workflow does.
 
 `badges` names each image of the README that does not render green or
 blue, `ok` where none. Every `![…](…)` image counts as a badge. Its
@@ -167,12 +213,15 @@ yellow at beta and red at alpha. A bestpractices badge titled `openssf
 best practices: silver` or `…: gold` counts as green: its colour is the
 metal, grey `#c0c0c0` for silver.
 
-The calls behind `iss`, `pr` and `ci`, and the README fetch, go through
-`call`: one that fails, or prints anything on stderr, puts `error:` and
-its message in that value, or in `badges` for the README, where a 404
-means no README. A badge script that fails puts `error: the badge
+The other calls behind `iss`, `pr` and `ci`, and the README fetch, go
+through `call`: one that fails, or prints anything on stderr, puts
+`error:` and its message in that value, or in `badges` for the README,
+where a 404 means no README. A badge script that fails puts `error: the badge
 script failed` in `badges`. A row whose `iss` or `pr` holds an error is
 left out of the totals, and the last line says so.
+
+The measure reads six repositories at once, and the images of one README
+eight at a time. The rows print in repository order.
 
 A PyPI project of the same name with no tag of ours is someone else's:
 say so in one line.
