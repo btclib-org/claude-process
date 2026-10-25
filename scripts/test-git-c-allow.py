@@ -35,6 +35,8 @@ APPROVED = [
     "git -C /r branch --points-at HEAD b",
     "git -C /r branch --sort=-committerdate",
     "git -C /r branch --list --sort=refname 'iss-*'",
+    "git -C /r branch --sort=refname --list 'iss-*'",
+    "git -C /r branch --list --format %s 'iss-*'",
 ]
 
 REFUSED = [
@@ -63,6 +65,9 @@ REFUSED = [
     "git -C /r branch newbranch",
     "git -C /r branch --sort=refname newbranch",
     "git -C /r branch --format=%s newbranch",
+    "git -C /r branch --format --list newbranch",
+    "git -C /r branch --sort --list newbranch",
+    "git -C /r branch --form -l newbranch",
     "git -C /r -c core.pager=x log",
     "git -C /r worktree add /x",
     "git -C /r rebase origin/main",

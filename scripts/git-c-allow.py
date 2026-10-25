@@ -68,6 +68,19 @@ BRANCH_FILTER = {
     "--no-merged",
     "--points-at",
 }
+# The long options of git branch that take the next word as their value.
+BRANCH_VALUE = (
+    (
+        "--contains",
+        "--no-contains",
+        "--merged",
+        "--no-merged",
+        "--points-at",
+        "--sort",
+        "--format",
+    ),
+    "",
+)
 
 
 def hits(arg: str, options: tuple[tuple[str, ...], str]) -> bool:
@@ -126,7 +139,13 @@ def allowed(cmd: str) -> bool:
         if any(hits(a, BRANCH_WRITE) for a in args):
             return False
         positional = [a for a in args if not a.startswith("-")]
-        return not positional or any(a.split("=")[0] in BRANCH_FILTER for a in args)
+        listing = [
+            a
+            for prev, a in zip([""] + args, args)
+            if a.split("=")[0] in BRANCH_FILTER
+            and ("=" in prev or not hits(prev, BRANCH_VALUE))
+        ]
+        return not positional or bool(listing)
     if sub == "worktree":
         return args[:1] == ["list"]
     if sub == "fetch":
