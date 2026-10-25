@@ -36,13 +36,13 @@ session acts through their `gh` login and their signing key. *The
 author* of a pull request is the login that opened it. *The maintainer*
 is the one `btclib-org/.github`'s `GOVERNANCE.md` names, who takes the
 decisions the written rules leave open. They may be the same person.
-The maintainer's login is read from `btclib-org/.github`'s bypass actor:
+This prints the maintainer's login, read from that file's *Roles*:
 
 ```shell
-gh api repos/btclib-org/.github/rulesets --jq '.[].id' \
-  | xargs -I{} gh api repos/btclib-org/.github/rulesets/{} \
-    --jq '.bypass_actors[]? | select(.actor_type=="User") | .actor_id' \
-  | sort -u | xargs -I{} gh api user/{} --jq .login
+gh api -H 'Accept: application/vnd.github.raw' \
+  repos/btclib-org/.github/contents/GOVERNANCE.md \
+  | sed -n '/^- \*\*The maintainer\*\*/,/^- /p' \
+  | grep -o 'https://github\.com/[A-Za-z0-9-]*' | head -n 1 | sed 's|.*/||'
 ```
 
 ## How an issue and a pull request are named
