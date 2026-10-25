@@ -82,6 +82,13 @@ repos:
         entry: python scripts/agents-toml.py --check
         files: ^(agents/|scripts/agents-toml\.py$)
         pass_filenames: false
+      # the commands scripts/git-c-allow.py approves and refuses
+      - id: test-git-c-allow
+        name: git-c-allow.py answers as its test expects
+        language: python
+        entry: python scripts/test-git-c-allow.py
+        files: ^scripts/(test-)?git-c-allow\.py$
+        pass_filenames: false
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

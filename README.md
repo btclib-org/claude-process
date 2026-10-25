@@ -34,6 +34,8 @@ The process the btclib-org maintainers follow with a coding agent,
 - `scripts/test-gate-lock.sh` — `sh scripts/test-gate-lock.sh` shows
   sessions taking that lock's slots, and waiting while every slot is
   held.
+- `scripts/test-git-c-allow.py` — the commands `git-c-allow.py` must
+  approve and must refuse, run by the `test-git-c-allow` hook.
 
 `process/btclib-common.md`'s opening says how these files divide the
 process, and its *Clients* says what differs between the two agents.

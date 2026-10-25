@@ -31,36 +31,33 @@ READ = {
     "show",
     "status",
 }
-# Options that run a command or write a file.
+# Options that run a command or write a file: long ones, then the letters
+# of short ones.
 UNSAFE = (
-    "--output",
-    "--open-files-in-pager",
-    "-O",
-    "--upload-pack",
-    "--receive-pack",
-    "--exec",
-    "--ext-diff",
-    "--textconv",
+    (
+        "--output",
+        "--open-files-in-pager",
+        "--upload-pack",
+        "--receive-pack",
+        "--exec",
+        "--ext-diff",
+        "--textconv",
+    ),
+    "O",
 )
-BRANCH_WRITE = {
-    "-d",
-    "-D",
-    "--delete",
-    "-m",
-    "-M",
-    "--move",
-    "-c",
-    "-C",
-    "--copy",
-    "-f",
-    "--force",
-    "-u",
-    "--set-upstream-to",
-    "--unset-upstream",
-    "--edit-description",
-    "-t",
-    "--track",
-}
+BRANCH_WRITE = (
+    (
+        "--delete",
+        "--move",
+        "--copy",
+        "--force",
+        "--set-upstream-to",
+        "--unset-upstream",
+        "--edit-description",
+        "--track",
+    ),
+    "dDmMcCfut",
+)
 BRANCH_FILTER = {
     "--list",
     "-l",
@@ -72,6 +69,20 @@ BRANCH_FILTER = {
     "--format",
     "--sort",
 }
+
+
+def hits(arg: str, options: tuple[tuple[str, ...], str]) -> bool:
+    """Whether `arg` may be one of `options`.
+
+    git takes any unique prefix of a long option for the option, so a
+    long `arg` hits every option it is a prefix of. A short `arg` may
+    bundle letters, so it hits where it holds any of them.
+    """
+    long, short = options
+    if arg.startswith("--"):
+        name = arg.split("=")[0]
+        return name != "--" and any(o.startswith(name) for o in long)
+    return arg.startswith("-") and any(c in short for c in arg[1:])
 
 
 def allowed(cmd: str) -> bool:
@@ -89,12 +100,12 @@ def allowed(cmd: str) -> bool:
         if rest[:1] != ["merge-tree"]:
             return False
     sub, args = rest[0], rest[1:]
-    if any(a.startswith(UNSAFE) for a in args):
+    if any(hits(a, UNSAFE) for a in args):
         return False
     if sub in READ:
         return True
     if sub == "branch":
-        if any(a.split("=")[0] in BRANCH_WRITE for a in args):
+        if any(hits(a, BRANCH_WRITE) for a in args):
             return False
         positional = [a for a in args if not a.startswith("-")]
         return not positional or any(a.split("=")[0] in BRANCH_FILTER for a in args)
