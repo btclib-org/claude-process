@@ -1267,7 +1267,8 @@ Rebase, run the gates, and push.
   collateral. Resuming a worker is `SendMessage` to its id; `Agent`
   always starts a new one.
 - **Models**: the writer and the reviewer run on Opus, which their
-  agent definitions set. The orchestrator may run on Opus.
+  agent definitions set. This choice takes precedence over the general
+  model advice in `AGENTS.md`. The orchestrator may run on Opus.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
 - **Writing runs in parallel; gating runs under the gate lock** (*The
