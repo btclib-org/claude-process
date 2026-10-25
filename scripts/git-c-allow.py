@@ -84,8 +84,27 @@ def hits(arg: str, options: tuple[tuple[str, ...], str]) -> bool:
     return arg.startswith("-") and any(c in short for c in arg[1:])
 
 
+def expands(cmd: str) -> bool:
+    """Whether the shell would expand a brace or a glob in `cmd`.
+
+    shlex.split expands neither, so the words it returns would not be
+    the words git gets. Inside quotes both are literal.
+    """
+    quote = ""
+    for c in cmd:
+        if quote:
+            quote = "" if c == quote else quote
+        elif c in "'\"":
+            quote = c
+        elif c in "{}*?[":
+            return True
+    return False
+
+
 def allowed(cmd: str) -> bool:
     if not cmd.startswith("git -C ") or any(c in cmd for c in ";&|`$<>()\n\\"):
+        return False
+    if expands(cmd):
         return False
     try:
         tokens = shlex.split(cmd)

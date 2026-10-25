@@ -29,6 +29,8 @@ APPROVED = [
     "git -C /r branch",
     "git -C /r branch -vv",
     "git -C /r branch --list 'iss-*'",
+    "git -C /r rev-parse 'HEAD@{1}'",
+    'git -C /r log --oneline -- "*.py"',
     "git -C /r branch --contains HEAD",
     "git -C /r branch --points-at HEAD b",
     "git -C /r branch --sort=-committerdate",
@@ -64,6 +66,14 @@ REFUSED = [
     "git -C /r -c core.pager=x log",
     "git -C /r worktree add /x",
     "git -C /r rebase origin/main",
+    "git -C /r ls-remote {--upload-pack='touch x',.}",
+    "git -C /r fetch {--upload-pack='touch x',.}",
+    "git -C /r diff --out{put=x,} HEAD HEAD",
+    "git -C /r grep -{O..O}x y",
+    "git -C /r diff --outp* HEAD HEAD",
+    "git -C /r grep -?x y",
+    "git -C /r log [-]-output=x",
+    "git -C /r rev-parse @{u}",
 ]
 
 
