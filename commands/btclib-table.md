@@ -249,5 +249,5 @@ empty. No Markdown table.
 
 After it, at most two lines: what a reader cannot see in the table, such
 as the pull request that makes a `YES` urgent, or a repository whose
-package name differs from its own (`bip39-slip39` publishes
-`btclib-mnemonics`).
+package name differs from its own (`.github`'s is
+`btclib-alignment`).
