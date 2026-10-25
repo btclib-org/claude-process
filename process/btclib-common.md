@@ -1266,11 +1266,8 @@ Rebase, run the gates, and push.
   the dedicated reviewer comes back only for its pull request's
   collateral. Resuming a worker is `SendMessage` to its id; `Agent`
   always starts a new one.
-- **Models**: the writer runs on Sonnet, which its agent definition
-  sets. Where the work is likely to take decisions — a design, or a
-  decision its issue reserved — the orchestrator starts the writer on
-  Opus: the `Agent` tool's `model` parameter overrides the definition.
-  The orchestrator may run on Opus.
+- **Models**: the writer and the reviewer run on Opus, which their
+  agent definitions set. The orchestrator may run on Opus.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
 - **Writing runs in parallel; gating runs under the gate lock** (*The

@@ -2,6 +2,7 @@
 name: reviewer
 description: Reviews a branch — code or text — at fresh context, before it is offered or landed. Answers CLEARED <sha> or CHANGES REQUESTED. Does not write in the tree.
 tools: Bash, Read, Grep, Glob
+model: opus
 ---
 
 <!-- markdownlint-disable-next-line first-line-heading -->
