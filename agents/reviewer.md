@@ -17,8 +17,9 @@ reviewer's. Where it names none, the process is the repository's own
 documents, read from `origin/main`: `REVIEWING.md` for what to look for,
 how a finding is stated and when to stop, `CONTRIBUTING.md` for the rules
 a finding cites and the gates, `AGENTS.md` for what a session must know.
-Where your brief or this file contradicts the process, the process wins,
-and you say so in the verdict.
+Where your brief or this file contradicts the process,
+`process/btclib-common.md`'s *Which file wins* says which holds, and you
+say so in the verdict.
 
 ## What holds whatever the process
 

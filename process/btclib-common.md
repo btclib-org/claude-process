@@ -30,6 +30,20 @@ not yours; one that is cannot be skipped as somebody else's.
   judges.
 - **The orchestrator**: all of this file and all of its command.
 
+**Which file wins.** Where two texts state the same point differently,
+the more specific one wins: a repository's own `AGENTS.md`,
+`CONTRIBUTING.md` and `REVIEWING.md` over a skill, a skill over this
+file, and this file over a client's global instructions
+(`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`). A repository's own file
+that has drifted from the standard in `btclib-org/.github` is a defect,
+tracked there, and the standard wins until it is brought in line. The
+process, a repository's own files included, wins over the generic
+`writer` and `reviewer` agents, except that on the model the agent
+definition is the more specific text (*Models*), and each agent's *What
+holds whatever the process* holds as its heading says. A brief never
+overrides the process. Any other contradiction is still a defect, and
+it is fixed in the more general file.
+
 **Three roles this file names.** *The human* is whoever runs the
 session: they answer its questions and receive its reports, and the
 session acts through their `gh` login and their signing key. *The
@@ -70,7 +84,7 @@ These bind the writer, the reviewer and the orchestrator alike.
 The process runs in Claude Code and in Codex. `$PROCESS` is the path of
 this repository's clone, exported as `README.md`'s *Setup* says, and
 the process names its own files by their path under it. Claude Code's
-`~/.claude` below is `$CLAUDE_CONFIG_DIR` where that is set.
+`~/.claude` in this file is `$CLAUDE_CONFIG_DIR` where that is set.
 
 - **Skills.** Claude Code reads them from `~/.claude/skills/`, Codex
   from `~/.agents/skills/`. Claude Code runs one as `/btclib-iss`, Codex
@@ -622,8 +636,9 @@ filed there as collateral (*Collateral*).
 ### What the prose that lands may say
 
 - **No entry in `CHANGELOG.md` or `RELEASE_NOTES.md`.** The changelog
-  is written at release time (btclib-org/.github#1622), whatever a
-  tree's `CONTRIBUTING.md` still says; an entry found on a branch is
+  is written at release time (btclib-org/.github#1622). A tree's
+  `CONTRIBUTING.md` that still asks for an entry is a drifted copy, and
+  the standard wins (*Which file wins*). An entry found on a branch is
   dropped. A release's own pull request writes that release's section.
 - **Backward compatibility is not a constraint.** Choose the most
   rational design and document what it breaks in the commit message and
@@ -1203,10 +1218,10 @@ Rebase, run the gates, and push.
   collateral. *Clients* says how a worker is resumed, and that starting
   one always makes a new one.
 - **Models**: in Claude Code the writer and the reviewer run on Opus,
-  which their agent definitions set. This choice takes precedence over
-  the general model advice in `AGENTS.md`. The orchestrator may run on
-  Opus. In Codex the agent files set no model: an agent runs on the one
-  its spawn request names, else on the `[agents]` default of
+  which their agent definitions set: the exception *Which file wins*
+  makes to the general model advice in `AGENTS.md`. The orchestrator may
+  run on Opus. In Codex the agent files set no model: an agent runs on
+  the one its spawn request names, else on the `[agents]` default of
   `config.toml`, else on the orchestrator's.
 - **A worker that exceeds the time you set is interrupted**, not waited
   for.
