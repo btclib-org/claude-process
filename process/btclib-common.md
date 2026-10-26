@@ -63,19 +63,29 @@ gh api -H 'Accept: application/vnd.github.raw' \
 
 ## How an issue and a pull request are named
 
-Wherever you write — a pull request body, a comment, an issue you open,
-a report to the human — an issue is **`ISS 123`** and a pull request is
-**`PR 45`**, and the token is a link:
+An issue is **`ISS owner/repo#123`** and a pull request is
+**`PR owner/repo#45`**, wherever you write, with the repository even
+where it is the one you work in. Two trackers hold the same number, and
+GitHub numbers issues and pull requests together: the repository says
+which tracker, the prefix says which kind.
 
-```text
-[ISS 123](https://github.com/<owner>/<repo>/issues/123)
-[PR 45](https://github.com/<owner>/<repo>/pull/45)
-```
+- **Where GitHub renders the text** — an issue, a pull request, a
+  comment, a commit message — write it plain:
+  `ISS btclib-org/btclib#123`. GitHub links the qualified form and shows
+  its title and kind on hover. It does not link `btclib#123`.
+- **Where it does not** — a report to the human, a brief, a note — the
+  token is a link, and inside `btclib-org` the repository's name alone:
 
-Bare `#123` is only for where the forge or the standard fixes the form:
-the closing keyword in a pull request body, the `(closes #N)` or
-`(issue #N)` on the subject that lands (see *Citations and closing
-keywords*).
+  ```text
+  [ISS btclib#123](https://github.com/btclib-org/btclib/issues/123)
+  [PR bitcoin/bitcoin#33000](https://github.com/bitcoin/bitcoin/pull/33000)
+  ```
+
+A bare `#123` stands only where the forge or the standard fixes the
+form: the closing keyword in a pull request body, and the `(closes #N)`
+or `(issue #N)` on the subject that lands (*Citations and closing
+keywords*). A repository's own files follow the standard's *A reference
+to another repository is qualified*.
 
 ## What binds every role
 
@@ -208,7 +218,7 @@ the process names its own files by their path under it. Claude Code's
   `issue` because worktrees are keyed on their basename in the one shared
   `.git`, and a collision there is silent; `repo` because one issue
   ported to several trees shares one scratchpad; `role` for a writer and
-  its reviewer holding one at once. `btclib-org/.github` ISS 255 worked
+  its reviewer holding one at once. `ISS btclib-org/.github#255` worked
   in `btclib` by a writer is `wt-github-255-btclib-writer`. A pull request
   stands in for the issue where there is none: `wt-btclib-pr812-btclib-writer`.
 - **Never the primary checkout, never `git stash`, never a push to
@@ -1114,7 +1124,7 @@ Rebase, run the gates, and push.
   Prose is never filed, unless it leads to a wrong action. Wrong prose in
   a file the diff already touches is fixed there; elsewhere it is named
   in the report. A new rule in `README.md` lands with the gate that reads
-  it, or does not land (btclib-org/.github ISS 1075).
+  it, or does not land (btclib-org/.github#1075).
 - **Small and in the same file or subsystem — a few lines, no separate
   design decision, no separate gate risk: fix it in the branch**, and say
   so in the report and the commit.
@@ -1148,7 +1158,8 @@ Rebase, run the gates, and push.
   and figures in the closing comment.
 - **Read back the number before reporting it**:
   `gh issue view <n> --repo <owner>/<repo>`. In a report, collateral
-  appears as `ISS 123`, never as a description.
+  appears as `ISS <repo>#123`, as *How an issue and a pull request are
+  named* says, never as a description.
 - **The reviewer files with the body inline**; where it cannot file,
   the body goes verbatim in its report.
 - **Collateral is closed within the same session**, whoever filed it —
