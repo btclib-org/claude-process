@@ -8,11 +8,8 @@
 #
 # What is absent is absent for a measured reason rather than an
 # oversight. There is no project and no `uv.lock`, so `uv-lock` has
-# nothing to keep in step. There is no taplo: `git ls-files '*.toml'`
-# names only what scripts/agents-toml.py writes, and a formatter
-# rewriting those files would make the `agents-toml` hook below refuse
-# them. A hook is added here the day the tree grows a file of its own
-# that the hook reads.
+# nothing to keep in step. A hook is added here the day the tree grows a
+# file of its own that the hook reads.
 #
 # Skip a hook with SKIP=<id>.
 ci:
@@ -233,6 +230,14 @@ repos:
         # named by path rather than by type: `jsonc` is not a tag identify
         # knows, so a types_or entry for it fails the config outright
         files: ^(.*\.ya?ml|\.markdownlint\.jsonc)$
+  # the same for toml, with the choices and their reasons in .taplo.toml.
+  # scripts/agents-toml.py writes agents/*.toml in the form taplo leaves
+  # unchanged, so this hook and `agents-toml` above agree on them
+  - repo: https://github.com/ComPWA/taplo-pre-commit
+    rev: v0.9.3
+    hooks:
+      - id: taplo-format
+        name: taplo (toml, in place fixes)
   # check-only: yamllint has no fix mode, and its own README names none
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0
