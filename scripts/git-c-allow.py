@@ -98,10 +98,13 @@ def hits(arg: str, options: tuple[tuple[str, ...], str]) -> bool:
 
 
 def expands(cmd: str) -> bool:
-    """Whether the shell would expand a brace or a glob in `cmd`.
+    """Whether the shell would read `cmd` into other words than shlex.split.
 
-    shlex.split expands neither, so the words it returns would not be
-    the words git gets. Inside quotes both are literal.
+    shlex.split expands no brace and no glob, so the words it returns
+    would not be the words git gets. It also keeps a `#` in a word. The
+    shell reads a `#` that starts a word as the start of a comment, and
+    zsh with EXTENDED_GLOB reads one inside a word as a glob. Inside
+    quotes all of them are literal.
     """
     quote = ""
     for c in cmd:
@@ -109,7 +112,7 @@ def expands(cmd: str) -> bool:
             quote = "" if c == quote else quote
         elif c in "'\"":
             quote = c
-        elif c in "{}*?[":
+        elif c in "{}*?[#":
             return True
     return False
 

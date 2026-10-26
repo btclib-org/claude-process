@@ -37,6 +37,7 @@ APPROVED = [
     "git -C /r branch --list --sort=refname 'iss-*'",
     "git -C /r branch --sort=refname --list 'iss-*'",
     "git -C /r branch --list --format %s 'iss-*'",
+    "git -C /r log --grep '#1'",
 ]
 
 REFUSED = [
@@ -79,6 +80,8 @@ REFUSED = [
     "git -C /r grep -?x y",
     "git -C /r log [-]-output=x",
     "git -C /r rev-parse @{u}",
+    "git -C /r branch newbranch # --list",
+    "git -C /r log --format=x#y",
 ]
 
 
