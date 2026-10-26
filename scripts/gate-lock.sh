@@ -25,7 +25,8 @@
 # Waiters queue in arrival order. gate_take writes a ticket into
 # $GATE_LOCK_DIR/gate.queue, named by its arrival time and PID, and waits
 # until its ticket is the oldest one whose process is alive. Then it waits,
-# as gate_wait does, and takes the first free slot. While a slot is held,
+# as gate_wait does, and takes the first free slot, so that nobody holds a
+# slot while only waiting, a load generator excepted. While a slot is held,
 # it takes none within GATE_LOCK_STAGGER seconds of the last take recorded
 # in gate.last, so that the idle reading shows the gate just started. A
 # slot is held while its owner file names a live process, so that a stale
@@ -35,14 +36,16 @@
 # GATE_LOCK_POLL seconds, the 1-minute load is under GATE_LOCK_LOAD, GATE_LOCK_DISK GB or
 # more of disk is free where $GATE_LOCK_DIR sits (/tmp when it is unset),
 # and memory is admissible: pressure level 1, or level 2 with GATE_LOCK_FREE
-# percent of memory or more free, never level 4. Where a read fails, as
+# percent of memory or more free, never level 4 (macOS answers 1 normal,
+# 2 warn, 4 critical). Where a read fails, as
 # off macOS, it does not wait on that read. It prints the idle percentage,
 # the load, the level, the percentage free and the disk free. The idle
 # percentage is the gate; the load, which on macOS counts threads that use
 # no CPU, is only a ceiling that catches a runaway. These waits have no
 # bound, nor has the wait for gate.generator: holders that never finish keep
-# every waiter waiting. btclib-common.md's "The gates" (the gate lock) gives the command
-# that names them.
+# every waiter waiting, and a timeout on the call that runs the gates covers
+# the gates, not gate_take. btclib-common.md's "The gates" (the gate lock)
+# gives the command that names them.
 #
 # To check, from the repository root in a fresh sh, with a directory of
 # your own so as not to wait on a real gate:
@@ -66,9 +69,9 @@
 # moved: only if that is the dead PID it judged stale does it remove the
 # slot. Otherwise its read was out of date and it moved a live holder's
 # file, which it puts back at once. While a slot has no owner file nobody
-# reclaims it, and gate_release reads again for up to 5 seconds. A waiter
-# killed while it holds the owner file renamed to stale.<pid> leaves a slot
-# with no owner, which the human removes.
+# reclaims it, and gate_release reads again for up to 5 seconds. A slot made
+# by hand with mkdir, or left by a waiter killed while it held the owner file
+# renamed to stale.<pid>, has no owner file, and only the human removes it.
 
 # The number of cores
 _gl_ncpu() {
@@ -133,6 +136,8 @@ _gl_alive() {
     [ "$(_gl_started "$_gl_tpid")" = "$_gl_tstart" ]
 }
 
+# The 1-minute load, read under LC_ALL=C because some locales print a
+# decimal comma
 _gl_load() {
   if [ -r /proc/loadavg ]; then cut -d' ' -f1 /proc/loadavg
   else LC_ALL=C sysctl -n vm.loadavg | cut -d' ' -f2; fi
@@ -324,7 +329,7 @@ gate_release() {
 # by one would split them and wait on each other for ever, so the generator
 # first takes gate.generator, a directory holding an owner file as a slot
 # does, and removed as a stale slot is. Then it takes every slot. While it
-# waits for the rest it holds the slots it has. btclib-common.md's "The gates"
+# waits for the rest it holds the slots it has. process/load-generator.md
 # says what that costs.
 gate_take_all() {
   _gl_dir && _gl_self || return 1
