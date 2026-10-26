@@ -515,14 +515,16 @@ decision. At night it is a deferred item (the shared *Night mode*).
 ### The human's own pull request
 
 **Where the human is the maintainer (the shared *Three roles this file
-names*), on a repository that publishes no package, the session lands
-it through the maintainer's bypass, and requests no owner's review**
-(the maintainer, 2026-10-17). It lands once every item above holds but
-the first and the last four, as *Landing* qualifies them, the bot's ACK
-included or missing as the shared *Arming auto-merge* allows. *Landing*
-gives the command. Such a repository has the maintainer as a bypass
-actor of an active ruleset. This prints his id there, and nothing on a
-repository that publishes a package:
+names*), on a repository where he is a bypass actor of an active
+ruleset, the session lands it through the maintainer's bypass, and
+requests no owner's review** (the maintainer, 2026-10-17). It lands once
+every item above holds but the first and the last four, as *Landing*
+qualifies them, the bot's ACK included or missing as the shared
+*Arming auto-merge* allows. *Landing* gives the command.
+`btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision is made*,
+decides which repositories give him the bypass, and this command reads
+their rulesets. It prints his id where an active ruleset gives him the
+bypass in `pull_request` mode, and nothing otherwise:
 
 ```shell
 gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
@@ -648,9 +650,10 @@ human.
   Never land through the maintainer's bypass (`--admin`, or any other
   route to it) unless the human has instructed it for that pull request,
   or, where the human is the maintainer, it is the human's own pull
-  request on a repository that publishes no package (*The human's own
-  pull request*). It merges with no approval, even with required checks
-  red. Either lands with this, in place of the command above:
+  request on a repository where he is a bypass actor of an active
+  ruleset (*The human's own pull request*). It merges with no approval,
+  even with required checks red. Either lands with this, in place of the
+  command above:
 
   ```shell
   gh pr merge <n> --repo <owner>/<repo> --squash --admin \
