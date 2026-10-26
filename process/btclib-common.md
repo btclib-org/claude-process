@@ -1,6 +1,6 @@
-# The btclib-org process: what both commands share
+# The btclib-org process: what both skills share
 
-Two commands carry work in every repository of `btclib-org`:
+Two skills carry work in every repository of `btclib-org`:
 
 - `/btclib-iss` takes issues to open pull requests, locally reviewed,
   and follows them as their author;
@@ -10,12 +10,13 @@ Two commands carry work in every repository of `btclib-org`:
 `/btclib-pr`'s *The decision* and *Landing* say when a pull request is
 approved and when it lands.
 
-This file binds both and holds the rules they share, except those
-`/btclib-iss`'s *Following it* reads in `/btclib-pr`. Each command opens
-by having it read whole, and holds only what is its own. The
-`writer` and `reviewer` agents are generic: the brief names this file
-and the command, and they read the sections the maps give them. Change
-a rule here or in the command where it fires, not in an agent.
+This file binds both. It holds the rules they share, or names the
+file under `process/` that holds them, except those `/btclib-iss`'s
+*Following it* reads in `/btclib-pr`. Both open by having this file
+read whole, and each holds only what is its own. The `writer` and
+`reviewer` agents are generic: the brief names this file and the skill,
+and they read the sections the maps give them. Change a rule in the
+file that holds it or in the skill where it fires, not in an agent.
 
 **Which sections are yours.** A heading that is not yours is genuinely
 not yours; one that is cannot be skipped as somebody else's.
@@ -23,26 +24,27 @@ not yours; one that is cannot be skipped as somebody else's.
 - **Everybody**: *How an issue and a pull request are named*, *What binds
   every role*, *Collateral*.
 - **The writer**: *Before starting*, *Writing work*, and the sections of
-  the command its brief names.
+  the skill its brief names.
 - **The reviewer**: *Local review*, and in *Writing work* the checklist,
   *A rule stated more than once*, *What the prose that lands may say*,
   *Citations and closing keywords* and *Signed and signed off*, which it
   judges.
-- **The orchestrator**: all of this file and all of its command.
+- **The orchestrator**: all of this file and all of its skill.
 
 **Which file wins.** Where two texts state the same point differently,
 the more specific one wins: a repository's own `AGENTS.md`,
 `CONTRIBUTING.md` and `REVIEWING.md` over a skill, a skill over this
-file, and this file over a client's global instructions
-(`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`). A repository's own file
-that has drifted from the standard in `btclib-org/.github` is a defect,
-tracked there, and the standard wins until it is brought in line. The
-process, a repository's own files included, wins over the generic
-`writer` and `reviewer` agents, except that on the model the agent
-definition is the more specific text (*Models*), and each agent's *What
-holds whatever the process* holds as its heading says. A brief never
-overrides the process. Any other contradiction is still a defect, and
-it is fixed in the more general file.
+file and the files under `process/` it names, and those over a client's
+global instructions (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`). A
+repository's own file that has drifted from the standard in
+`btclib-org/.github` is a defect, tracked there, and the standard wins
+until it is brought in line. The process, a repository's own files
+included, wins over the generic `writer` and `reviewer` agents, except
+that on the model the agent definition is the more specific text
+(*Models*), and each agent's *What holds whatever the process* holds as
+its heading says. A brief never overrides the process. Any other
+contradiction is still a defect, and it is fixed in the more general
+file.
 
 **Three roles this file names.** *The human* is whoever runs the
 session: they answer its questions and receive its reports, and the
@@ -1166,7 +1168,7 @@ Rebase, run the gates, and push.
 ## Orchestration
 
 - **Dispatching a writer**: this file's path
-  (`$PROCESS/process/btclib-common.md`), the command's, and the
+  (`$PROCESS/process/btclib-common.md`), the skill's, and the
   sections of both that are its role's, the issue or pull request, the
   repository, the worktree and scratch paths, the force-push grant, and
   the claims you measured. The same for a reviewer.
@@ -1270,7 +1272,7 @@ neither file on your own:
   belongs. Nothing found is said in one line.
 - **Where the process fell short of what the session needed**: a rule
   unclear when it mattered, a case it had no answer for. Say what and
-  roughly where — this file or a command.
+  roughly where — this file or a skill.
 
 Both are proposals. Closing them is the human's call, and for the
 process files the maintainer's, since they are shared. Each one that

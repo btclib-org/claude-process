@@ -1,12 +1,12 @@
 # Night mode
 
-The orchestrator's, in either command. A section named in italics with
+The orchestrator's, in either skill. A section named in italics with
 no file is one of `btclib-common.md`'s.
 
 **Night mode has no ceiling and no duration**: it lasts until the human
 turns it off.
 
-**At activation, ask only for the repository**, where the command needs
+**At activation, ask only for the repository**, where the skill needs
 one and the session has not settled it, and, for `/btclib-iss` with no
 issue named, the issues. Where they leave before answering, the night
 does not start.
@@ -17,7 +17,7 @@ it was given while the work waited. Its deferred items are then asked
 one at a time (*When the human has to decide*).
 
 **During the night no question is asked interactively.** Every point
-where a command stops for the human — a decision, a refused permission,
+where a skill stops for the human — a decision, a refused permission,
 a dirty primary checkout that is not provably the session's, an
 approval that is not obvious, a
 session whose state is uncertain, a branch that takes a decision its
