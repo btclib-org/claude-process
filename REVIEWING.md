@@ -511,11 +511,11 @@ because that document, and not this one, is where the rule lives.
     git diff origin/main... -- agents/
     ```
 
-- **Does a rule sit where it fires?** Each command orders its sections
+- **Does a rule sit where it fires?** Each skill orders its sections
   by when the work reaches them, and the maps say which role reads
   which. A rule added under a heading the role that needs it does not
   read is a rule that role never sees.
-- **Do the commands still lean on the standard rather than copy it?**
+- **Do the skills still lean on the standard rather than copy it?**
   The organization's rules are `btclib-org/.github`'s `README.md`, and
   this tree points at a section by the words it holds. A paragraph that
   restates one is a copy, and a pointer to a heading that no longer

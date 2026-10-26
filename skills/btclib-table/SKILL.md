@@ -9,7 +9,7 @@ Show the human one table of every repository of `btclib-org` that is not
 archived, read from the API now: never from memory, and never from an
 earlier run.
 
-The command only reads. It writes nothing, comments nowhere and takes no
+The skill only reads. It writes nothing, comments nowhere and takes no
 decision, so it needs no worktree and none of the roles of
 `$PROCESS/process/btclib-common.md` (`echo "$PROCESS"` prints the
 clone's path). What it writes after the table follows that file's

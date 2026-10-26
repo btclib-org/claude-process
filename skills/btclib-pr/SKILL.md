@@ -368,7 +368,7 @@ The second prints the readme where the list holds it, and exits `0`
 only where it does not:
 
 ```shell
-uv run --no-project --python 3.13 python -c 'import sys, tomllib
+uv run --no-project --python 3.15 python -c 'import sys, tomllib
 r = tomllib.load(open(sys.argv[1], "rb"))["project"].get("readme", "")
 r = r if isinstance(r, str) else r.get("file", "")
 sys.exit(bool(r) and r in open(sys.argv[2]).read().splitlines() and r)' \

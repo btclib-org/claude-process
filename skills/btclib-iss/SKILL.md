@@ -45,7 +45,7 @@ says which a number is. A pull request among the arguments is
 - **A port asks for convergence.** Hash the copies first; ask each tree
   to take the source byte for byte rather than apply the delta you
   measured, which can come up short.
-- **Where a pull request is already open for an issue**, this command
+- **Where a pull request is already open for an issue**, this skill
   opens no competing branch: that pull request is `/btclib-pr`'s.
 
 ## What the issue still asks
