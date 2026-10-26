@@ -201,6 +201,19 @@ the process names its own files by their path under it. Claude Code's
   out. Coreutils installs its GNU versions of the commands macOS already
   ships, such as `date` and `stat`, under a `g` prefix (`gdate`,
   `gstat`); the unprefixed ones stay BSD.
+- **`grep` and `find` in the tool's shell may be functions** (`type
+  grep`). `grep` over `ugrep -G --ignore-files` skips what `.gitignore`
+  covers under the search root and reads a `$` mid-pattern as an anchor,
+  both silently: prefer `git grep`, or `-F` and `[$]`. `find` as bfs
+  (`find --version`) refuses GNU's `-newermt 'today'` on stderr: a sweep
+  uses ISO-8601 timestamps, never discards stderr, and runs a path known
+  to match as its control.
+- **In `zsh` a word beginning with `=` is a command lookup** (`echo ====`
+  fails the whole line), `path` is the `PATH` array and never a variable
+  name, and a glob after `env -C <dir>` expands in the caller's
+  directory: quote `=` words and pass absolute paths. BSD `env` takes
+  `-C` and `-u` before any `NAME=val`; after one, `-C` is read as the
+  command and exits `127`.
 
 ### Where you work
 
@@ -281,8 +294,10 @@ the process names its own files by their path under it. Claude Code's
   started.** Do not end your turn waiting for one — nothing wakes a
   stopped agent. Poll within the same turn, or hand back saying what
   is outstanding. Find your job by its worktree's absolute path, written
-  out (`pgrep -f '/abs/path/wt-….*pytest'`), never by command name, or
-  rely on its own completion notification.
+  out (`pgrep -f '/abs/path/wt-….*pytest'`), never by command name. Its
+  completion notification says the shell exited, not its children: each
+  gate writes its exit code (`EXIT_<gate>=$?`) and a terminal marker as
+  the last lines of its log, and those are read, never the wrapper's code.
 - **A denied permission is a stop.** No substitute for the refused act
   (`find -delete`, the same `rm` without the flag, `shutil.rmtree`),
   except the `-r2` fallback for a refused force-push in *Committing and
@@ -406,6 +421,9 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   `git diff -- $F` with two paths is one pathspec that matches nothing;
   pass paths and revisions as literal arguments or an array, and confirm
   a comparison answering "no difference" can see a difference at all.
+  In `zsh` an unbraced `$b:tests/x` is `${b:t}ests/x`, a history
+  modifier, and an unquoted `--include=*.py` aborts the command: write
+  `"${ref}:${file}"` and quote globs.
 - **`grep` reads lines, and prose wraps.** A wrapped phrase answers `0`.
   Use `grep -zE` with `[[:space:]]+` between words (macOS `grep` has no
   `-P`), `pcre2grep -M`, Python over the whole file, or a distinctive
@@ -413,6 +431,12 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   one-line document (notebook, JSON, bundle) answers at most `1`, and its
   base64 payloads match anything: parse structured documents. A phrase
   count never says a file is free of a restatement — read the file.
+- **`git grep -E` has no `\b` or `\s`.** A pattern using one answers
+  zero without an error: use `[[:space:]]` or `git grep -P`.
+- **A pattern piped after `git grep` also reads its `rev:path:line:`
+  prefix.** Put it in `git grep`, or strip the prefix first.
+- **macOS `awk`'s `length()` counts bytes**, so a width is measured with
+  Python's `len()`.
 - **A rehearsal's input is compared with the real file it models**,
   same shape, read from the source, before its outcome is reported: a
   stand-in that differs in shape passes or fails for a reason the real
@@ -439,6 +463,9 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   A causes B*, write the chain out, joins included, and check the joins
   first: a getter and a setter with the right callers still have to touch
   the same state. A claim just corrected is the likeliest next error.
+  Two measurements that agree confirm each other only where their
+  instruments are independent: name what they share (the stub, the
+  harness, the command, the base) first.
 - **`git checkout -- <path>` restores from the index.** Use `git restore
   --source=<ref> --worktree --staged -- <path>`, or `git show
   <ref>:<path>` to read; build a pristine control from `git archive
@@ -446,7 +473,9 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
 - **`git log -S` restricted to a path dates the rename, not the
   writing.** Search the whole tree on the branch you mean (`git log -S
   <word> main -- .`), not `--all`, which includes unlanded branches;
-  check ancestry with `git merge-base --is-ancestor`.
+  check ancestry with `git merge-base --is-ancestor`. It finds a removal
+  as readily as an introduction: the `+` or `-` of `git show <sha> --
+  <path>` gives the direction.
 - **A red gate is not yours until the baseline says so.** Run the same
   gate on `origin/main` in a separate worktree, several times, and report
   both numbers.
@@ -455,13 +484,27 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   <tmpdir>`).
 - **What a branch does is its diff against its own parent** (or
   three-dot against the merge base). Two-dot against a moved `main` shows
-  what `main` gained as a deletion.
+  what `main` gained as a deletion. A register keyed on a file's contents
+  (a names list in a test, section 14's compared-files list) is decided
+  from a grep of the file after the change, never from the diff.
+- **A timing alternates both versions in one script**, over three or
+  more rounds, taking the minimum of `timeit.repeat` per case beside a
+  control case the change cannot touch. A round where the control moves
+  is discarded.
 - **A repository's state is read from the API, or from a checkout
   brought forward** (*Shell, checkouts and prose*) — instruction files
   included. The orchestrator brings the primary checkout forward; a
   worker reads its own worktree, or, without one, at a named sha
   (`git show <sha>:<path>`). A claim that must hold is still measured
   at a sha. The sha in `git worktree list` is a checkout's `HEAD`, not the tip.
+  An issue's body and its comments are read separately: `gh issue view
+  --comments` prints the comments in place of the body.
+- **A forge write that exits non-zero is read back** (`gh pr view --json
+  state`, `git ls-remote`, the issue body) before it is reported refused
+  or retried: a timeout on the response is not a failed write.
+- **A sha, a number or a ref is copied from the tool that knows it**,
+  never typed from recollection, and every reference in a posted body is
+  read back and resolved.
 - **`refs/remotes/origin/main` is shared by every worktree and moves
   under you.** For a gate, pin the base once (`git -C <wt> rev-parse
   origin/main > <your scratch dir>/base-<branch>.sha`) and read that sha
@@ -619,6 +662,9 @@ The writer's section; the reviewer judges its result.
       carries no stray closing keyword
 - [ ] the commit message was re-read, not carried by `--no-edit`
 - [ ] every claim in prose that lands was measured
+- [ ] an edit inside a filled paragraph refilled it whole, proved
+      whitespace-only against the committed text: width gates bound the
+      longest line, not the fill
 - [ ] collateral filed, by number
 - [ ] where the change touches a rule the tree states, the search of
       *A rule stated more than once* is in the report
@@ -636,6 +682,10 @@ The report carries the patterns and the hits. The reviewer runs the same
 search, adds the patterns it would have used, and reads the files where
 the rule is stated. A sentence either search finds and the list lacks is
 a finding.
+
+**A tree-wide sweep starts from a census** of every spelling over `git
+ls-files`, and ends at the census re-run answering zero, its exceptions
+listed. It names any file class it left out.
 
 **A pointer keeps every condition of the text it replaces**: the target
 states each one, or the condition stays where it was.
@@ -659,6 +709,9 @@ filed there as collateral (*Collateral*).
   ("the only three", "every other") hold only where a command counted
   them, and then the command is written, not the total. A count that
   decided the change belongs in the report and the pull request body.
+  A list of call sites reads as the whole population and goes stale at
+  the next call: state what decides membership, and label names as
+  examples.
 - **Say what is true now.** No "was", "has always", "is now". The
   exception is the defect being corrected, and that "before" is measured
   against a snapshot.
@@ -703,6 +756,12 @@ the orchestrator in the pull request.
   #1, #2" closes `#1`. Write the closing block one keyword per line.
 - **Sweep before handing over**: grep the commit body (and later the pull
   request body) for every form of the three words next to a reference.
+  The same sweep finds bare references with `perl -ne 'print if
+  /(?<![\/A-Za-z0-9.\-])#[0-9]+/'`, whose `0-9` keeps
+  `btclib-org/btclib-secp256k1#N` from reading as bare. It lists the
+  non-ASCII codepoints of both texts (Python, `ord(c) > 127`), less the
+  organization's own typography: a CJK character mid-word is a
+  generation artefact no gate reads.
 
 ### The gates
 
@@ -719,7 +778,9 @@ the orchestrator in the pull request.
   before anything is offered. A run before the commit does not count,
   even where the content looks identical: a hook at commit time can
   change what is committed. Where a gate's fixer changes files, commit
-  the change and run that gate again.
+  the change and run that gate again. `pre-commit run --all-files` walks
+  `git ls-files`, so a file the branch adds is gated only once staged:
+  the report says the gate saw the new files.
 - **Read exit codes, not output.** `… > log 2>&1; echo $?`. A
   multi-batch hook's tail can show a clean batch after a failed one.
 - **A gate can leave the tree dirty**: in-place fixers exit having
@@ -1221,6 +1282,10 @@ Rebase, run the gates, and push.
 - **A quiet worker is asked for status, not stopped.** Where the
   human asks for a kill, say what will be lost and leave the
   worktree standing.
+- **A pull request's writer and reviewer are stopped once it lands or
+  its work passes to another worker** (`TaskStop` in Claude Code): one
+  that ended its turn with a background job registered counts as running
+  for days.
 - **A diagnosis that has failed twice gets two independent attempts at
   once**, each given the other's hypothesis as a lead to test, and asked
   for the disagreement.
