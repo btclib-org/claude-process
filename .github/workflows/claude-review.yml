@@ -97,13 +97,14 @@ jobs:
       # the gates instruction
       extra-prompt: |
         What this repository ships is the text that sessions follow:
-        commands/btclib-iss.md and commands/btclib-pr.md are two
-        commands, process/btclib-common.md is what they share, and the
-        two agents are generic readers of them. commands/btclib-table.md
-        is a third command, which only reads. A change is judged by
-        what a session does differently afterwards, so a rule stated
-        without the command that checks it, a sentence copied from the
-        standard rather than pointed at, and an agent file restating a
-        rule the process already holds are the defects here.
+        skills/btclib-iss/SKILL.md and skills/btclib-pr/SKILL.md are
+        two skills, process/btclib-common.md is what they share, and
+        the two agents are generic readers of them.
+        skills/btclib-table/SKILL.md is a third skill, which only reads.
+        A change is judged by what a session does differently
+        afterwards, so a rule stated without the command that checks
+        it, a sentence copied from the standard rather than pointed at,
+        and an agent file restating a rule the process already holds
+        are the defects here.
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
