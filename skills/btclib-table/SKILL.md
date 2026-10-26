@@ -249,7 +249,7 @@ even before its first release, with `never`. One with a tag and no
 `release.yml` is group 4. One with neither does not release, and is
 group 5.
 
-## The 🚀 column
+## The new 🚀? column
 
 Whether a release is due, judged from the commit subjects since the last
 tag:
@@ -268,8 +268,8 @@ reads in the terminal:
 
 ```text
 ┌───────────────┬─────┬────┬─────┬─────┬────┬────┬────────────┬─────┐
-│ Repository    │ 233 │ 51 │ BL3 │ 🥇% │ CI │ 📛 │ Last       │ 🚀  │
-│               │ ISS │ PR │ (%) │     │    │    │ release    │     │
+│ Repository    │ 233 │ 51 │ BL3 │ 🥇% │ CI │ 📛 │ last       │ new │
+│               │ ISS │ PR │ (%) │     │    │    │ 🚀         │ 🚀? │
 ├───────────────┼─────┼────┼─────┼─────┼────┼────┼────────────┼─────┤
 │ base58-bech32 │   1 │  0 │   0 │   0 │ ✅ │ ❌ │ never      │ ⏳  │
 │ bip39-slip39  │   3 │  0 │ 100 │  🥇 │ ❌ │ ✅ │ 2026.10.17 │ YES │
@@ -278,8 +278,8 @@ reads in the terminal:
 └───────────────┴─────┴────┴─────┴─────┴────┴────┴────────────┴─────┘
 ```
 
-The columns are Repository, ISS, PR, BL3, 🥇%, CI, 📛, Last release and
-🚀, in that order, each heading on two lines. The first line of ISS and
+The columns are Repository, ISS, PR, BL3, 🥇%, CI, 📛, last 🚀 and
+new 🚀?, in that order, each heading on two lines. The first line of ISS and
 PR is the total on the measure's last line, which leaves out a row whose
 ISS or PR count is an error. BL3 is the badge project's baseline
 percentage. 🥇% is its gold percentage, `🥇` where that is 100. Both are
@@ -287,7 +287,7 @@ percentage. 🥇% is its gold percentage, `🥇` where that is 100. Both are
 the measure's `ci` and `badges` say `ok`, and `❌` otherwise. An ISS or
 PR cell whose value is an error shows `err`.
 
-Last release is the latest tag without its leading `v`, `never` where
+last 🚀 is the latest tag without its leading `v`, `never` where
 there is none. A cell holds its value and nothing else.
 
 Each column is as wide as its longest cell, plus one space on each side.
