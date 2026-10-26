@@ -18,10 +18,18 @@ The process the btclib-org maintainers follow with a coding agent,
   to an open pull request, followed as its author;
 - `skills/btclib-pr/SKILL.md` — the `/btclib-pr` skill, from an open
   pull request to the decision to approve, and to `main`;
+- `skills/btclib-pr/review-quota.md` — what `/btclib-pr` does while the
+  review bot's quota is exhausted, read only then;
 - `skills/btclib-table/SKILL.md` — the `/btclib-table` skill, one table
   of every repository of the organization, which only reads;
+- `skills/btclib-table/measure.sh` — the script `/btclib-table` runs to
+  read that table;
 - `process/btclib-common.md` — what `/btclib-iss` and `/btclib-pr`
   share, read whole by each;
+- `process/night-mode.md` — what the orchestrator follows while night
+  mode is on, read when it is turned on;
+- `process/load-generator.md` — how a timing measurement takes every
+  slot of the gate lock, read before running one;
 - `agents/writer.md` — the agent that writes a change in its own
   worktree;
 - `agents/reviewer.md` — the agent that reviews it at fresh context;
@@ -33,7 +41,7 @@ The process the btclib-org maintainers follow with a coding agent,
   takes before its heavy gates;
 - `scripts/test-gate-lock.sh` — `sh scripts/test-gate-lock.sh` shows
   sessions taking that lock's slots, and waiting while every slot is
-  held.
+  held;
 - `scripts/test-git-c-allow.py` — the commands `git-c-allow.py` must
   approve and must refuse, run by the `test-git-c-allow` hook.
 
