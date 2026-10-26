@@ -1,17 +1,18 @@
 ---
-# the lint gate of this repository. What it ships is prose -- the
-# commands, the file two of them share, the two agents and the files
-# around them -- so the hooks below
-# are the ones with a subject here: the markdown, the yaml of the
-# workflows and of the issue forms, the shell scripts, and the text
-# every file is made of.
+# the lint gate of this repository. What it ships is mostly prose -- the
+# skills, the file two of them share, the two agents and the files
+# around them -- so the hooks below are the ones with a subject here:
+# the markdown, the yaml of the workflows and of the issue forms, the
+# json and toml the agents read, the shell and Python scripts, and the
+# text every file is made of.
 #
 # What is absent is absent for a measured reason rather than an
-# oversight. `git ls-files '*.py' '*.toml' '*.json'` names
-# nothing, so there is no ruff, mypy, taplo or json hook to read a file
-# that does not exist, and there is no project and no `uv.lock`, so
-# `uv-lock` has nothing to keep in step. A hook is added here the day the
-# tree grows a file of its own that the hook reads.
+# oversight. There is no project and no `uv.lock`, so `uv-lock` has
+# nothing to keep in step. There is no taplo: `git ls-files '*.toml'`
+# names only what scripts/agents-toml.py writes, and a formatter
+# rewriting those files would make the `agents-toml` hook below refuse
+# them. A hook is added here the day the tree grows a file of its own
+# that the hook reads.
 #
 # Skip a hook with SKIP=<id>.
 ci:
@@ -54,6 +55,40 @@ repos:
     rev: v0.11.0.1-1
     hooks:
       - id: shellcheck
+  # the Python scripts in the tree, ruff at its defaults and mypy with
+  # --strict: there is no pyproject.toml to hold a configuration, and the
+  # scripts import nothing outside the standard library, which is why
+  # mypy needs no additional_dependencies
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff-check
+        name: ruff check (in place fixes)
+        args: [--fix]
+      - id: ruff-format
+        name: ruff format (in place fixes)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.4.0
+    hooks:
+      - id: mypy
+        args: [--strict]
+  # agents/*.toml are written from agents/*.md, so one that differs from
+  # what the script writes now is stale
+  - repo: local
+    hooks:
+      - id: agents-toml
+        name: agents/*.toml match agents/*.md
+        language: python
+        entry: python scripts/agents-toml.py --check
+        files: ^(agents/|scripts/agents-toml\.py$)
+        pass_filenames: false
+      # the commands scripts/git-c-allow.py approves and refuses
+      - id: test-git-c-allow
+        name: git-c-allow.py answers as its test expects
+        language: python
+        entry: python scripts/test-git-c-allow.py
+        files: ^scripts/(test-)?git-c-allow\.py$
+        pass_filenames: false
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -68,6 +103,8 @@ repos:
       - id: check-vcs-permalinks
       - id: detect-private-key
       - id: check-yaml
+      - id: check-json
+      - id: check-toml
       - id: check-added-large-files
       # there are none, and a submodule is the one dependency that would
       # be pinned by nothing here

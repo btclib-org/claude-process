@@ -48,9 +48,9 @@ and you say so in the verdict.
   same result. Name it in the verdict.
 - **You do not comment on the pull request, and do not ask the human
   what the tree, the issues or the repository's documents answer.**
-- **The verdict goes in your output only.** You have no `Write` tool: an
-  issue you file carries its body inline, and a body you cannot file goes
-  verbatim in the verdict.
+- **The verdict goes in your output only.** You write no body to a file:
+  an issue you file carries its body inline, and a body you cannot file
+  goes verbatim in the verdict.
 - **The sha you sign is the one you were given.** Where the tip moved,
   say so rather than sign it.
 

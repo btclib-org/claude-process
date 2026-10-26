@@ -291,12 +291,13 @@ this heading.
 
 ### What this repository is
 
-The text of the process the maintainers follow with Claude Code:
-`commands/btclib-iss.md` and `commands/btclib-pr.md` are the two commands,
-`process/btclib-common.md` is what they share, and `agents/writer.md` and
-`agents/reviewer.md` are the agents a session briefs with them.
-`commands/btclib-table.md` is a third command, which only reads: one
-table of the organization's repositories.
+The text of the process the maintainers follow with a coding agent:
+`skills/btclib-iss/SKILL.md` and `skills/btclib-pr/SKILL.md` are the two
+skills, `process/btclib-common.md` is what they share, and
+`agents/writer.md` and `agents/reviewer.md` are the agents a session
+briefs with them. `skills/btclib-table/SKILL.md` is a third skill, which
+only reads: one table of the organization's repositories.
+`scripts/agents-toml.py` writes the agents' `.toml` files for Codex.
 `README.md` says how a machine is set up to use them. A change here
 changes what every session reads once its branch lands, so it is
 reviewed like code.
@@ -304,9 +305,9 @@ reviewed like code.
 ### The environment and the gates
 
 uv is the only thing that has to be installed; it fetches interpreters
-and tools itself. There is no project here — no `pyproject.toml`, no
-`uv.lock`, and no Python at all, `check-changelog` being fetched from
-`btclib-org/.github` — so nothing is synced and every command is a `uvx`:
+and tools itself. There is no project here — no `pyproject.toml` and no
+`uv.lock`, the Python being standalone scripts under `scripts/` — so
+nothing is synced and every command is a `uvx`:
 
 ```shell
 uvx pre-commit run --all-files
@@ -340,7 +341,7 @@ checkout the worktree was made from, so one session installing it
 installs it for every other. Run the gate by hand before committing.
 
 **What the gate does not reach is whether the process works.** The hooks
-read prose, yaml and the shell scripts; none of them follows the
+read prose, yaml, json, toml and the scripts; none of them follows the
 process through an issue. A rule that changes what a session does is
 verified by the command the sentence claims, which the pull request's
 body records.

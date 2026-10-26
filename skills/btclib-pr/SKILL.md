@@ -1,6 +1,7 @@
 ---
-description: btclib-pr — from an open pull request to the decision to approve, and to main; every review answered, CI green
-argument-hint: [--night] [--land] [pull request URLs or numbers]
+name: btclib-pr
+description: "btclib-pr — from an open pull request to the decision to approve, and to main; every review answered, CI green"
+argument-hint: "[--night] [--land] [pull request URLs or numbers]"
 ---
 
 # From a pull request to main
@@ -10,8 +11,9 @@ Take the open pull requests named in $ARGUMENTS, in repositories of
 was raised*, *Answering it*, *Rebase and CI*, *The decision* and
 *Landing*. With no argument, start from *The sweep*.
 
-**First read `~/.claude/process/btclib-common.md`, whole.** Its opening
-says what it holds and what this file holds. What the session writes,
+**First read `$PROCESS/process/btclib-common.md`, whole**:
+`echo "$PROCESS"` prints the clone's path. Its opening says what it
+holds and what this file holds. What the session writes,
 and this file, follow its *Write plainly*.
 
 The shared *Where you work* says how the repository is named.
@@ -413,9 +415,12 @@ grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file>
 The fourth prints the diff of `pyproject.toml` and `uv.lock`:
 
 ```shell
-awk '/^diff --git /{p = ($3 == "a/pyproject.toml" || $3 == "a/uv.lock")}
+awk '/^diff --git /{p = ($(3) == "a/pyproject.toml" || $(3) == "a/uv.lock")}
   p' <diff file>
 ```
+
+It writes the third field as `$(3)`: Claude Code replaces a `$` and a
+digit in a skill with an argument of the skill.
 
 Any other change in them fails this item, a new requirement or
 `[[package]]` included, but for one: the `revision = N` line at the top
@@ -692,10 +697,11 @@ human.
   `main` red, its repair comes first.
 
 - **A landing in `btclib-org/claude-process` brings its primary checkout
-  forward at once**, by the shared fast-forward. The files under
-  `~/.claude/` are symlinks into it, so until then every session reads
-  the old process. Then read a landed line back through the symlink of
-  the file it changed.
+  forward at once**, by the shared fast-forward. Where that checkout is
+  the clone `$PROCESS` names, every session reads the process through
+  it, and reads the old one until then. Then read a landed line back
+  where sessions read it: under `$PROCESS`, or through the link of the
+  skill or agent it changed.
 - **The collateral goes back now** (the shared *Collateral*), before
   anything new starts.
 - **Remove the worktrees** — yours, and tell the writer to remove its
