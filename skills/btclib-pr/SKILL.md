@@ -534,9 +534,12 @@ gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
       | .actor_id'
 ```
 
-Elsewhere, under `--land` (*Landing*), the same. Without `--land`,
-another owner decides; once the same items hold, except the two a 429
-fails:
+Elsewhere, under `--land` (*Landing*), the same where this command
+prints an id; where it prints nothing, as on a repository whose ruleset
+has no bypass actor (`btclib-org/.github`'s `GOVERNANCE.md`, *How a
+decision is made*), `--admin` is never attempted and `--land` changes
+nothing. Without `--land`, or where it prints nothing, another owner
+decides; once the same items hold, except the two a 429 fails:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
@@ -664,11 +667,11 @@ human.
   **`--land` is that instruction**, for the pull requests named with it,
   or opened by `/btclib-iss` for the issues named with it, and no others.
   The human's words in the session, naming the pull requests, count
-  too. The bypass then lands only the human's own pull request, once it
-  has reached the point *The human's own pull request* names. A check
-  that only reports and is red on `main` too does not hold it, and is
-  named in the report. A 429 alone does not hold it either, once local
-  review has cleared and the other checks are green.
+  too. The bypass then lands only the human's own pull request, where
+  and once *The human's own pull request* says. A check that only
+  reports and is red on `main` too does not hold it, and is named in
+  the report. A 429 alone does not hold it either, once local review
+  has cleared and the other checks are green.
 
 - **The pin is the head as last pushed**, not the sha a verdict named.
 - **A stacked pull request lands like any other**: once its base has
