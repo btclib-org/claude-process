@@ -101,6 +101,10 @@ repos:
       - id: detect-private-key
       - id: check-yaml
       - id: check-json
+      # two spaces, sorted keys, UTF-8 left as it is
+      - id: pretty-format-json
+        name: pretty-format-json (in place fixes)
+        args: [--autofix, --no-ensure-ascii]
       - id: check-toml
       - id: check-added-large-files
       # there are none, and a submodule is the one dependency that would

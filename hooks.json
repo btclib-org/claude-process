@@ -3,14 +3,14 @@
   "hooks": {
     "PermissionRequest": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
-            "type": "command",
             "command": "\"$PROCESS/scripts/git-c-allow.py\"",
-            "timeout": 5
+            "timeout": 5,
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "Bash"
       }
     ]
   }
