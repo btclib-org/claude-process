@@ -129,24 +129,14 @@ the process names its own files by their path under it. Claude Code's
       review, the problem an issue or pull request addresses, the answer
       a reply gives. A reader who stops there knows it.
     - **A verdict is given only on a pull request, and only where the
-      review supports it.** Upstream it is `ACK <sha>`, `tACK <sha>`,
-      `utACK <sha>`, `Concept ACK`, `Approach ACK`, `Concept NACK` or
-      `NACK`. In btclib-org only the deciding review gives one, as
-      `REVIEWING.md`'s *The verdict* says. The deciding review's summary
-      keeps the shape `REVIEWING.md`'s *The verdict* gives it, its
-      findings one bullet each; the limits below hold for every other
-      review.
+      review supports it.** In btclib-org only the deciding review gives
+      one, as `REVIEWING.md`'s *The verdict* says. The deciding review's
+      summary keeps the shape `REVIEWING.md`'s *The verdict* gives it,
+      its findings one bullet each; the limits below hold for every
+      other review.
     - **A review that gives no verdict states its finding on its first
       line**, with no `Comment:` prefix and no "a comment, not a
-      review". No review, comment or reply on a pull request has an
-      ACK token outside its verdict line: none of the forms above, in any
-      spelling, negated or conditional ("no ACK yet", "not an ACK", "will
-      ACK once"). A bot reads the token and not the sentence: DrahtBot
-      listed "Tested b58383aca6, no ACK yet" as a Concept ACK on
-      `bitcoin/bitcoin#35377` (the human, 2026-10-22). A reviewer checks
-      it with `grep -nwiE '(ut|re|cr|t|n)?ack' <file>`, and every hit
-      outside the verdict line blocks. `NACK` opposes the change itself,
-      so a fixable bug is stated as a bug and is not a `NACK`.
+      review".
     - **Then purpose, finding, conclusion**: what was checked and why,
       what was found, and what follows for the pull request or the next
       step. One point per text; no sha or line-number chains, no
@@ -165,16 +155,6 @@ the process names its own files by their path under it. Claude Code's
       posted once that pull request is open.
     - **A pull request or issue body is at most two short paragraphs**
       before any code block or required template section.
-    - **Upstream, AI disclosure has one form, and only where a
-      repository asks for it.** Three ask, in their `AGENTS.md`:
-      rust-bitcoin, rust-miniscript and Floresta. The form is
-      `Assisted-by: my usual tools (LLM, Internet, computer). Mistakes
-      are mine.`: a plain trailer in a commit, an italic last line in a
-      pull request body. A comment, review or reply never carries it,
-      `bitcoin/bitcoin` included. Elsewhere upstream no text names an
-      LLM: no "written with help from", no sentence on what an AI did, no
-      `Co-Authored-By:` naming a model. Our own code is never called
-      "independent": say "I maintain".
     - **A text over a limit is not posted but returned cut**, unless a
       maintainer asked for exactly that detail.
 - **Parallelize as much as you can.** Reads, remote work, writers and
