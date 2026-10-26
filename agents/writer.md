@@ -18,8 +18,8 @@ writer's. Read them before touching anything. Where the brief names none,
 the process is the repository's own documents, read from `origin/main`:
 `CONTRIBUTING.md`, `AGENTS.md`, and `REVIEWING.md`, which is what your
 work will be judged against. Where your brief or this file contradicts
-the process, `process/btclib-common.md`'s *Which file wins* says which
-holds, and you say so in the report.
+the process, the process wins, as `btclib-common.md`'s *Which file wins*
+says where your brief names that file, and you say so in the report.
 
 ## What holds whatever the process
 
