@@ -1040,15 +1040,21 @@ run and another bot run.
 
 - The fresh reviewer reads the branch's whole diff from its parent,
   briefed with *Local review* and with the bot's prompt: the `prompt:`
-  block of `reusable-claude-review.yml` at `origin/main` of
-  `btclib-org/.github`, with the tree's `extra-prompt` (its
-  `claude-review.yml`) in place of `${{ inputs.extra-prompt }}`, and
-  nothing from "Do not run the gates" on. The workflow is fetched by:
+  block of `btclib-org/.github`'s `reusable-claude-review.yml` at the ref
+  that the sha's `claude-review.yml` calls, with the tree's
+  `extra-prompt` (its `claude-review.yml`) in place of
+  `${{ inputs.extra-prompt }}`, and nothing from "Do not run the gates"
+  on. The workflow is fetched by:
 
   ```shell
+  ref=$(git -C <wt> show <sha>:.github/workflows/claude-review.yml \
+    | grep -oE 'reusable-claude-review\.yml@[^ ]+' | cut -d@ -f2)
   gh api -H 'Accept: application/vnd.github.raw' \
-    repos/btclib-org/.github/contents/.github/workflows/reusable-claude-review.yml
+    "repos/btclib-org/.github/contents/.github/workflows/reusable-claude-review.yml?ref=${ref:?}"
   ```
+
+  In `btclib-org/.github`, whose call is local, the prompt is the sha's
+  own file: `git -C <wt> show <sha>:.github/workflows/reusable-claude-review.yml`.
 
   The brief gives the branch and the sha to review, which on an open
   pull request is not pushed yet: the reviewer reads that sha, not the

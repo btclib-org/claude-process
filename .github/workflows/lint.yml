@@ -155,8 +155,8 @@ jobs:
         # pinned to a commit SHA, the tag in the comment
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
-          # the organization's one file, at main, so that a change to the
-          # threshold reaches every tree in one landing
+          # the organization's one file, at main: a tree's own job reads
+          # main, as section 10 of btclib-org/.github's README.md says
           config-file: btclib-org/.github/.github/dependency-review.yml@main
           # a remote config file is read without credentials unless this
           # carries one, and GitHub limits an unauthenticated request by
@@ -193,9 +193,8 @@ jobs:
 
       # `path:` puts it beside this tree's checkout instead of over it;
       # sparse, so what lands is .github/scripts and that repository's root
-      # files. `ref: main` is the script served from btclib-org/.github, as
-      # the config file of `Dependency review` is: one copy, which a change
-      # reaches every tree through
+      # files. `ref: main` because a tree's own job reads main, as section
+      # 10 of btclib-org/.github's README.md says
       - name: Check out the sign-off script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
