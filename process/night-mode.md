@@ -36,7 +36,8 @@ decision's alternatives.
   request, which they read, go in the report only.
 - **Never resolve a deferred item by default**, nor by taking your own
   recommendation. The recommendation goes in the report. The one
-  exception is which pull requests `/btclib-pr`'s *The sweep* works.
+  exception is `/btclib-pr`'s *The sweep*, which at night works every
+  pull request that is not a draft, as that section says.
 - **Everything that does not depend on it goes on**: other issues, other
   pull requests, review rounds, collateral, the approvals and landings
   `/btclib-pr` calls obvious, and the landings `--land` instructs, given
