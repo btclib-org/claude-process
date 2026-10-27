@@ -81,6 +81,9 @@ which tracker, the prefix says which kind.
   [PR bitcoin/bitcoin#33000](https://github.com/bitcoin/bitcoin/pull/33000)
   ```
 
+A workflow run, a job or an environment approval named to the human
+carries its URL.
+
 A bare `#123` stands only where the forge or the standard fixes the
 form: the closing keyword in a pull request body, and the `(closes #N)`
 or `(issue #N)` on the subject that lands (*Citations and closing
@@ -651,8 +654,7 @@ The writer's section; the reviewer judges its result.
 **Before handing over, every item holds:**
 
 - [ ] the tip is pushed, and `git ls-remote origin <branch>` matches
-      `HEAD`, except a fix on an open pull request (*Committing and
-      rebasing*)
+      `HEAD`, unless *Committing and rebasing* holds the push
 - [ ] `git log --format='%h %G? %GS' <base>..` shows no `N`
 - [ ] every commit of `<base>..` is signed off by its author, the
       `Sign-off` script exiting `0` (*Signed and signed off*)
@@ -884,6 +886,18 @@ the orchestrator in the pull request.
   push. On an open pull request, a fix is pushed only once the rounds of
   *Local review* have ended, and the orchestrator then has the writer
   push it.
+- **An embargoed fix is the exception: it is pushed to `origin` only
+  once its release commit is ready on top of it.** It is gated locally.
+  The standard's section 12, *A security advisory is worked in this
+  order*, says how it is written in the advisory's temporary private
+  fork and lands by a public pull request. Before the advisory is
+  published, any pull request left open in the fork is closed, because
+  an open one blocks the publication:
+
+  ```shell
+  gh api -X PATCH -f state=closed repos/<owner>/<fork>/pulls/<n>
+  ```
+
 - **Before the pull request is opened, the branch converges by amend.**
   **Once it is open, a fix is a new signed commit on top**: the reviewer
   reads what changed since their review, and the squash lands the

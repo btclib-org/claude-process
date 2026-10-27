@@ -36,7 +36,8 @@ says which a number is. A pull request among the arguments is
 ## Several issues, several pull requests
 
 - **Never as a batch; never hold one that is ready.** Open each pull
-  request as soon as it is cleared.
+  request as soon as it is cleared, except an embargoed fix (the shared
+  *Committing and rebasing*).
 - **Bundle by file or by decision.** Related issues — same file or same
   decision — make one pull request; otherwise one pull request per
   issue. Before assigning a worker, look for open issues sharing a file
