@@ -67,24 +67,33 @@ say so in one line.
 
 ## Order
 
-Top to bottom, in five groups, with no group heading (the human knows
-them):
+Top to bottom, in sections ordered by what each repository depends on,
+with no section heading (the human knows them):
 
+1. `.github`: the other repositories' workflows call its reusable
+   workflows pinned to its tags, so a `.github` tag is a release they
+   wait on;
+1. claude-process: it follows `.github`'s standard, and no other
+   repository's workflow calls it;
 1. packages whose runtime `dependencies` are empty: the standard library
    only;
 1. packages that depend on third-party packages only, none of the
    organization's;
 1. packages that depend on other packages of the organization, each
    below every one it depends on;
-1. repositories that release by tag only, not on PyPI;
-1. repositories that do not release.
+1. bbt, bitcoin-node-tests and btclib-benchmarks: they depend on the
+   organization's packages, and have no tag and no `release.yml`;
+1. portanode: it uses no package of the organization;
+1. btclib-org.github.io: it has a folder for each other repository.
 
-Within a group, alphabetical, unless the dependency order says otherwise.
+Within a section, alphabetical, unless the dependency order says
+otherwise.
 
-A repository with a `release.yml` workflow sits in its dependency group
-even before its first release, with `never`. One with a tag and no
-`release.yml` is group 4. One with neither does not release, and is
-group 5.
+A repository with a `release.yml` workflow sits in its package section
+even before its first release, with `never`. One the list does not name,
+with neither a tag nor `release.yml`, goes beside bbt where it depends
+on the organization's packages. Any other goes in its own section, one
+per repository, just above btclib-org.github.io.
 
 ## The new 🚀? column
 
@@ -96,7 +105,7 @@ tag:
   request makes the release urgent;
 - `yes`: the same, with no urgency (lowercase means not urgent);
 - `no`: only tests, CI, docs, process files or the next cycle landed;
-- `-`: the repository does not release.
+- `-`: the repository has no tag and no `release.yml`.
 
 ## Show it
 
@@ -107,6 +116,8 @@ reads in the terminal:
 ┌───────────────┬─────┬────┬─────┬─────┬────┬────┬────────────┬─────┐
 │ Repository    │ 233 │ 51 │ BL3 │ 🥇% │ CI │ 📛 │ last       │ new │
 │               │ ISS │ PR │ (%) │     │    │    │ 🚀         │ 🚀? │
+├───────────────┼─────┼────┼─────┼─────┼────┼────┼────────────┼─────┤
+│ .github       │  45 │  1 │   - │   - │ ✅ │ ✅ │ 2026.10.26 │ no  │
 ├───────────────┼─────┼────┼─────┼─────┼────┼────┼────────────┼─────┤
 │ base58-bech32 │   1 │  0 │   0 │   0 │ ✅ │ ❌ │ never      │ ⏳  │
 │ bip39-slip39  │   3 │  0 │ 100 │  🥇 │ ❌ │ ✅ │ 2026.10.17 │ YES │
@@ -130,10 +141,10 @@ there is none. A cell holds its value and nothing else.
 Each column is as wide as its longest cell, plus one space on each side.
 `✅`, `❌`, `⏳`, `🥇`, `📛` and `🚀` each take two columns of the
 terminal, and the widths and the alignment count them so. Numbers are
-right-aligned. A horizontal rule goes between two groups,
-never between two rows of one group. Where the table would pass 80
-columns, a cell too long goes on in a continuation line, its other cells
-empty. No Markdown table.
+right-aligned. A horizontal rule goes between two sections, never between
+two rows of one section. Where the table would pass 80 columns, a cell
+too long goes on in a continuation line, its other cells empty. No
+Markdown table.
 
 After it, at most two lines: what a reader cannot see in the table, such
 as the pull request that makes a `YES` urgent, or a repository whose
