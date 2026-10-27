@@ -221,6 +221,15 @@ them.
   after a push nothing has reported yet. The loop gives up after 30
   minutes; say so where it does.
 
+  Before the loop, read `gh pr view <n> --repo <owner>/<repo> --json
+  mergeable,mergeStateStatus`, and read it again where it answers
+  `UNKNOWN`, which means not computed yet. `CONFLICTING` (`DIRTY`) is a
+  merge with a conflict: no GitHub Actions run starts, and
+  pre-commit.ci's status reads `error during mergeable check`, with no
+  run to read. Bring the base in as the bullets above say, or, for a
+  stacked pull request whose base was amended, as `CONTRIBUTING.md`'s
+  *One subject, opened as soon as it is written* says.
+
   ```shell
   for i in $(seq 60); do
     [ "$(gh pr checks <n> --repo <owner>/<repo> --json bucket \
