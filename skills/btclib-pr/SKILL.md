@@ -49,13 +49,24 @@ Show the human one table, grouped:
    with its base;
 - bots';
 - outside contributors';
-- the rest, listed and not worked.
+- the rest: by day, listed and not worked.
 
 Each row is a `PR` link and what it waits on. A draft is listed and not
 worked. Then put one decision (the shared *When the human has to
 decide*): which to work, and in what order, the recommended order first
 with its reason. In a repository whose `main` is red, its repair comes
-first (*Landing*'s first bullet). At night, work the recommendation.
+first (*Landing*'s first bullet).
+
+**At night, no decision is put: every pull request that is not a draft
+is worked** up to the approval, in the recommended order, a red `main`'s
+repair first: review rounds, rebase and CI, every item of *What was
+raised* answered. Each is worked as *Whose pull request it is* says for
+its case, and goes on to *The decision*, or to *The human's own pull
+request*. One whose approval is not obvious ends as a deferred item
+(*Where it is not obvious*), never as "not worked". Where the session
+cannot push to another person's branch, its findings are posted as
+*Another person's branch* says, and the deferred item names the author
+as what it waits on.
 
 ## Whose pull request it is
 
@@ -255,8 +266,7 @@ them.
       <file> --limit 5`): not this pull request's. Find or file its
       issue; its repair comes first (*Landing*'s first bullet). A
       required check holds the pull request. Once the repair has
-      landed, note the time (`date -u +%FT%TZ`), as *The decision*
-      says, then close and reopen the pull request, with no push
+      landed, close and reopen the pull request, with no push
       (`CONTRIBUTING.md`'s *Landing it* says why):
 
       ```shell
@@ -264,8 +274,7 @@ them.
       gh pr reopen <n> --repo <owner>/<repo>
       ```
 
-      *The decision* reads the bot's review of the reopen, and names
-      the other case that calls for one. Where
+      *The decision* reads the bot's review of the reopen. Where
       `gh pr view <n> --repo <owner>/<repo> --json autoMergeRequest`
       shows the pull request disarmed, arm it again as *Landing* says.
       A check that only reports is named in the decision;
@@ -322,8 +331,6 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
       "skipping")'` answers `true`. A cancelled check (bucket
       `cancel`) fails this item until a re-run passes.
-- [ ] the checks ran on the current `main`, read as *The checks ran on
-      the current `main`* below says
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
@@ -331,7 +338,12 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       ahead, read as *Rebase and CI* says), this item and the checks
       item fail, and the human decides (*Where it is not obvious*); on
       the human's own pull request, *The human's own pull request* says
-      who does. The missing ACK does not stop the approval.
+      who does. The missing ACK does not stop the approval. On a bot's
+      pull request (*A bot's pins*) whose pins change
+      `.github/workflows/claude-review.yml`, the ACK may be missing, and
+      the bot's `Claude review` check may fail while every other check
+      passed or was skipped, as the shared *Arming auto-merge*'s second
+      case allows (the maintainer, 2026-10-27)
 - [ ] no review thread is unresolved, every page read (*What was
       raised*). It binds every approval, the human's decision
       included; the shared *Arming auto-merge* has it for arming
@@ -348,10 +360,13 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 - [ ] every other file in the list is a doc, a test, `pyproject.toml`
       or `uv.lock`: the third command below prints nothing
 - [ ] `pyproject.toml` and `uv.lock` only move dependencies they
-      already hold to a new version, read from the fourth command below;
-      a major move also needs the latest fresh reviewer's `CLEARED` to
-      name the release notes or changelog it read between the two
-      versions and to say that nothing in them breaks the tree
+      already hold to a new version, read from the fourth command below
+- [ ] on a bot's pull request (*A bot's pins*, below), its pin files
+      only move pins: the fifth command below prints nothing
+- [ ] a major move of a dependency, a hook or an action has the latest
+      fresh reviewer's `CLEARED` name the release notes or changelog it
+      read between the two versions, and say that nothing in them breaks
+      the tree
 
 The first prints each file under `.github/` or any `.claude/`, any top-level
 `RELEASING.md`, `REPOSITORY.md` or `SECURITY.md`, and any `AGENTS.md`,
@@ -398,55 +413,61 @@ awk '/^diff --git /{p = ($(3) == "a/pyproject.toml" || $(3) == "a/uv.lock")}
   p' <diff file>
 ```
 
-It writes the third field as `$(3)`: Claude Code replaces a `$` and a
-digit in a skill with an argument of the skill.
+It writes the third field as `$(3)`, and the fifth writes the line as
+`$(0)`: Claude Code replaces a `$` and a digit in a skill with an
+argument of the skill.
 
 Any other change in them fails this item, a new requirement or
 `[[package]]` included, but for one: the `revision = N` line at the top
 of `uv.lock` may change. The number depends on the uv that wrote the
 lock, and uv's documentation says it tracks backwards-compatible
-lockfile changes. A major move is one where a version's first non-zero
-number changes. Where the notes show a known problem, the item
-fails and the human decides (*Where it is not obvious*).
+lockfile changes.
 
-**The checks ran on the current `main` where the base of the merge they
-ran on is `main`'s current head.** A check runs on the pull request
-merged with the `main` of that moment, so a pull request that landed
-since leaves it stale. A run's log names the merge,
-`Merge <head> into <base>`. Every workflow a head's `pull_request` event
-started shares that merge, so any one of them serves. This waits, in
-the background, for the newest run created after `<since>` that
-succeeded or failed, which has a log, and prints the merge. `<since>`
-is empty for a first read, which returns at once, and after a reopen it
-is the time noted just before it (`date -u +%FT%TZ`). The loop gives up
-after 30 minutes, and `gh run view` then fails for want of a run id;
-say so where it does:
+**A bot's pins.** On a pull request whose `.author.login`, as `gh pr
+view` prints it, is `app/pre-commit-ci` or `app/dependabot`, the pin
+files may change too: `.pre-commit-config.yaml`, and each `*.yml`
+directly under `.github/workflows/`. The first and third commands then
+read the list without them, which this writes, in place of `<list
+file>`. Any other path under `.github/` still fails the first:
 
 ```shell
-since=<since>
-for i in $(seq 60); do
-  id=$(gh run list --repo <owner>/<repo> --commit <sha> \
-    --event pull_request --status completed --limit 100 \
-    --json databaseId,conclusion,createdAt --jq "[.[] |
-    select(.createdAt > \"$since\" and (.conclusion == \"success\" or
-    .conclusion == \"failure\"))][0].databaseId")
-  [ -n "$id" ] && break
-  sleep 30
-done
-gh run view "$id" --repo <owner>/<repo> --log |
-  grep -m1 -oE 'Merge [0-9a-f]{40} into [0-9a-f]{40}'
+grep -Ev '^(\.pre-commit-config\.yaml|\.github/workflows/[^/]+\.yml)$' \
+  <list file> > <rest file>
 ```
 
-`main`'s head is `gh api repos/<owner>/<repo>/commits/main --jq .sha`.
-Where `<base>` differs from it, note the time, then close and reopen the
-pull request (*Rebase and CI*). No push is made, so the approval and
-`CLEARED` stand. Read again with `<since>` the noted time: the runs from
-before the reopen name the old base.
+The fifth prints each line a pin file changes that is not a pin, and
+the header lines of a diff that adds, removes or renames a pin file,
+whichever of its two paths is the pin file. A pin is a `rev:` line of
+`.pre-commit-config.yaml`, with its `# frozen:` comment where it has one,
+or a workflow's `uses:` line naming its action at a 40-digit sha, with
+its `# vX.Y.Z` comment. Each pin is paired with its own: an action's by
+the line without its sha, a hook's by the `- repo:` line its hunk shows
+above it. It prints an action or a repository whose pins do not pair,
+and a `rev:` line whose hunk shows no `- repo:` line:
 
-A reopen can still run on the old base well after `main` moved (ten
-minutes, on [PR 1857](https://github.com/btclib-org/.github/pull/1857)
-of `btclib-org/.github`). Where the `<base>` read from the reopen's runs
-is not `main`'s head, note the time and reopen again.
+```shell
+awk '/^diff --git /{f = $(3); h = 1; r = ""
+    p = $(0) ~ / [ab]\/\.pre-commit-config\.yaml( |$)/ ||
+      $(0) ~ / [ab]\/\.github\/workflows\/[^\/ ]+\.yml( |$)/; next}
+  !p {next}
+  /^@@/{h = 0; r = ""; next}
+  h && !/^(index |--- |[+][+][+] )/ {print f ": " $(0); next}
+  h {next}
+  /^. *- repo: / {r = $(0); sub(/^. *- repo: */, "", r)}
+  !/^[-+]/ {next}
+  {k = substr($(0), 2); d = /^[+]/ ? 1 : -1}
+  f ~ /yaml$/ && r != "" && k ~ /^ *rev: *[^ #]+( *# frozen: [^ ]+)?$/ {
+    n[f " " r] += d; next}
+  f ~ /yml$/ && k ~ /^ *(- )?uses: *[^ @]+@[0-9a-f]{40} *# *v?[0-9][^ ]*$/ {
+    sub(/@.*/, "", k); n[f k] += d; next}
+  {print f ": " $(0)}
+  END {for (k in n) if (n[k]) print "unpaired: " k}' <diff file>
+```
+
+A major move is one where a version's first non-zero number changes: a
+dependency's, a hook's `rev:` or its `# frozen:` comment, an action's
+`# vX.Y.Z` comment. Where the notes show a known problem, the item
+fails and the human decides (*Where it is not obvious*).
 
 **Where it is obvious, approve `<sha>`, pinned.** `gh pr review` cannot
 pin a commit, so the call is the API's:
@@ -460,7 +481,8 @@ The body is a one-line summary naming the head it approves, `<sha>`,
 then one paragraph: the `CLEARED` it relies on and the rebase case; the
 bot's ACK as a link, or during a 429 the 429 run as a link; that every
 check passed or was skipped, the 429 run apart; for a major move, the
-dependency and the notes its `CLEARED` names; and what was not checked.
+dependency, hook or action and the notes its `CLEARED` names; and what
+was not checked.
 
 Then land it, pinned to the same `<sha>` (*Landing*).
 
@@ -497,13 +519,14 @@ decision. At night it is a deferred item (the shared *Night mode*).
 names*), on a repository where he is a bypass actor of an active
 ruleset, the session lands it through the maintainer's bypass, and
 requests no owner's review** (the maintainer, 2026-10-17). It lands once
-every item above holds but the first and the last four, as *Landing*
-qualifies them, the bot's ACK included or missing as the shared
-*Arming auto-merge* allows. *Landing* gives the command.
-`btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision is made*,
-decides which repositories give him the bypass, and this command reads
-their rulesets. It prints his id where an active ruleset gives him the
-bypass in `pull_request` mode, and nothing otherwise:
+every item above holds but those on the author, the repository, the
+files in the list, `pyproject.toml` and `uv.lock`, a bot's pins and a
+major move, as *Landing* qualifies them, the bot's ACK included or
+missing as the shared *Arming auto-merge* allows. *Landing* gives the
+command. `btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision
+is made*, decides which repositories give him the bypass, and this
+command reads their rulesets. It prints his id where an active ruleset
+gives him the bypass in `pull_request` mode, and nothing otherwise:
 
 ```shell
 gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
@@ -634,6 +657,18 @@ human.
   the commits it squashes. A finding that lives only in the commit
   message is fixed here, with no new round.
 
+  **Where `--auto` is refused because the pull request is already
+  mergeable**, land it by the same command without `--auto`, still
+  pinned by `--match-head-commit`, once the shared *Arming auto-merge*
+  holds, then *Check what landed*. GitHub's refusal reads
+  `Pull request is in clean status`, which gh prints as
+  `GraphQL: Pull request Pull request is in clean status
+  (enablePullRequestAutoMerge)`
+  ([a report quoting it](https://github.com/peter-evans/enable-pull-request-automerge/issues/1118)).
+  gh 2.103.2 merges at once, without arming, where the
+  `mergeStateStatus` it reads is `CLEAN`, `HAS_HOOKS` or `UNSTABLE`
+  (`isImmediatelyMergeable` in its `pkg/cmd/pr/merge/merge.go`).
+
   Never land through the maintainer's bypass (`--admin`, or any other
   route to it) unless the human has instructed it for that pull request,
   or, where the human is the maintainer, it is the human's own pull
@@ -662,15 +697,16 @@ human.
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,
   opened as soon as it is written* says, gated, decided again on the new
   head (*The decision*), and armed.
-- **Check what landed, once it has.** `--auto` returns before the
-  merge: repeat `gh pr view <n> --repo <owner>/<repo> --json
-  state,mergeCommit,autoMergeRequest --jq '.state, .mergeCommit.oid,
-  .autoMergeRequest'` until it answers `MERGED`, and `<sha>` is that
-  oid. Where it is `OPEN` with no `autoMergeRequest`, the merge was
-  cancelled: report it. Once it is `MERGED`, `gh api
-  repos/<owner>/<repo>/commits/<sha> --jq .commit.verification` is
-  `verified: true`, and each issue the pull request declared closed is
-  closed. What follows waits for this.
+- **Check what landed, once it has.** Where `--auto` armed the pull
+  request, it returned before the merge; where gh merged at once, it
+  returned after. Either way, repeat `gh pr view <n> --repo
+  <owner>/<repo> --json state,mergeCommit,autoMergeRequest --jq
+  '.state, .mergeCommit.oid, .autoMergeRequest'` until it answers
+  `MERGED`, and `<sha>` is that oid. Where it is `OPEN` with no
+  `autoMergeRequest`, the merge was cancelled: report it. Once it is
+  `MERGED`, `gh api repos/<owner>/<repo>/commits/<sha> --jq
+  .commit.verification` is `verified: true`, and each issue the pull
+  request declared closed is closed. What follows waits for this.
 
   Then wait for `main`'s workflow runs on `<sha>`, with *Rebase and
   CI*'s loop and this test in place of its own. A workflow run is

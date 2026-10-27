@@ -1151,9 +1151,10 @@ run and another bot run.
       search is complete (*A rule stated more than once*)
 - [ ] on a branch, the prose it adds was read on the merge with
       `origin/main` (*A pull request's rounds*)
-- [ ] where the diff moves a dependency to a new major version, the
-      release notes or changelog read between the two versions, and what
-      they say of the tree (`/btclib-pr`'s *The decision*)
+- [ ] where the diff moves a dependency, a hook or an action to a new
+      major version, the release notes or changelog read between the two
+      versions, and what they say of the tree (`/btclib-pr`'s *The
+      decision*)
 - [ ] what the verdict does not cover
 - [ ] `git status --porcelain` empty in the tree reviewed and in the
       primary checkout
