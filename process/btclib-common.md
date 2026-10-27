@@ -641,11 +641,18 @@ does it before briefing anybody.
   killing it is not yours (*The machine is shared*).
 - **Look at the free disk** before cloning, building or adding a
   worktree: `df -g <scratchpad>`. Under 30 GB available, the
-  orchestrator sweeps (*The orchestrator, never a writer, sweeps*) and
-  reads it again; a writer tells the orchestrator. Still under 30 GB,
-  stop and tell the human: work not yet started needs room to clone and
-  build. A gate on work already started runs down to `GATE_LOCK_DISK`,
-  20 GB.
+  orchestrator sweeps (*The orchestrator, never a writer, sweeps*), runs
+  `uv cache prune`, and reads it again; a writer tells the orchestrator.
+  Still under 30 GB, stop and tell the human: work not yet started needs
+  room to clone and build. A gate on work already started runs down to
+  `GATE_LOCK_DISK`, 20 GB. `uv cache prune` removes the cache's unused
+  entries and its cached environments, `uvx`'s among them, which the next
+  `uvx` rebuilds offline. It waits while another uv process runs, without
+  holding back one that starts meanwhile. It exits `2` once
+  `UV_LOCK_TIMEOUT` passes, 5 minutes by default
+  ([uv's *Clearing the cache*](https://docs.astral.sh/uv/concepts/cache/#clearing-the-cache)),
+  and the second read goes on without it. `--force` skips that wait and
+  is not used.
 
 ## Writing work
 
