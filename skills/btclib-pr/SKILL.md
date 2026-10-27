@@ -543,6 +543,11 @@ with the bypass, where the human is the maintainer, it lands through it
 once every other check is green, no review thread is unresolved, and
 the latest fresh reviewer's `CLEARED` names the head.
 
+A pull request whose description says it breaks the live setup, in a
+*Breaks* section as
+[PR 175](https://github.com/btclib-org/claude-process/pull/175) has, is
+put to the human before it lands through the bypass.
+
 ## Outside contributors
 
 Its issue stays theirs, and no competing branch is opened. The reviewer
