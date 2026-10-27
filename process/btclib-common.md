@@ -108,10 +108,13 @@ the process names its own files by their path under it. Claude Code's
   leaves `$ARGUMENTS` as written, and it means the same words.
 - **Agents.** Claude Code reads them from `~/.claude/agents/*.md`. It
   starts the writer or the reviewer with the `Agent` tool, naming the
-  agent, and resumes one with `SendMessage` to its id. Codex reads them
-  from `~/.codex/agents/*.toml`. It starts one when asked to spawn the
-  custom agent of that name, and resumes one by a follow-up to its agent
-  thread. Starting always makes a new agent.
+  agent, and resumes one with `SendMessage` to its id. That id is taken
+  from the notification whose summary names the agent's task, never from
+  the dispatch several turns back: a resume sent to the wrong id is a
+  brief for another task. Codex reads them from
+  `~/.codex/agents/*.toml`. It starts one when asked to spawn the custom
+  agent of that name, and resumes one by a follow-up to its agent thread.
+  Starting always makes a new agent.
 - **Hooks.** Claude Code reads them from `~/.claude/settings.json`,
   Codex from `~/.codex/hooks.json`. Both run `scripts/git-c-allow.py`.
 - **Git writes under Codex.** Its `workspace-write` sandbox keeps each
@@ -150,7 +153,9 @@ the process names its own files by their path under it. Claude Code's
   elsewhere, point to it** (the standard's section 9, *One fact in one
   place*): a summary names the section that holds a rule and does not
   restate it. A text the reader has to read twice has failed, however
-  correct.
+  correct. **English in the tree**: code comments, docstrings, documents,
+  the messages a script prints, logs and commit messages are in English,
+  whatever language the conversation that produced them was in.
 - **What is posted on a forge** — an issue, a pull request, a comment or
   a reply, in any repository — meets these limits, and every reviewer
   checks them as a blocking item:
@@ -211,6 +216,9 @@ the process names its own files by their path under it. Claude Code's
   (`find --version`) refuses GNU's `-newermt 'today'` on stderr: a sweep
   uses ISO-8601 timestamps, never discards stderr, and runs a path known
   to match as its control.
+- **macOS `sed` reads `\b` as a plain `b`.** `sed -i '' 's/\bx\b/y/g'`
+  edits `bxb`, never the word `x`, and exits `0`. Use `perl -pi -e`, and
+  read the edit in `git diff`, never in the exit code.
 - **In `zsh` a word beginning with `=` is a command lookup** (`echo ====`
   fails the whole line), `path` is the `PATH` array and never a variable
   name, and a glob after `env -C <dir>` expands in the caller's
@@ -276,6 +284,11 @@ the process names its own files by their path under it. Claude Code's
 - **A measurement that must hold is taken against shas**, `git show
   <sha>:<path>`, `git diff` and `git merge-tree` on explicit shas, not
   from a working file another session might share.
+- **A worktree for a pull request is added at its `headRefOid`**, or at
+  the sha `git ls-remote origin refs/pull/<n>/head` prints, and the
+  report names that sha. Never at `FETCH_HEAD`: the next fetch in the
+  same checkout overwrites it, another session's included. A fetch that
+  another fetch has locked out (`cannot lock ref`) is retried.
 - **Debris goes when its work ends, not at the wrap-up**, because a long
   session otherwise fills the disk (the maintainer, 2026-10-21). A
   worktree goes, with its basetemp and build directories, once the
@@ -434,9 +447,10 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   one-line document (notebook, JSON, bundle) answers at most `1`, and its
   base64 payloads match anything: parse structured documents. A phrase
   count never says a file is free of a restatement — read the file.
-- **On macOS `git grep -E` has no `\b` or `\s`.** A pattern using one
-  answers zero without an error: use a bracket class for `\s`
-  (`[[:space:]]`), or `git grep -P`.
+- **On macOS `git grep -E` reads `\b` and `\s` as a plain `b` and `s`.**
+  A pattern using one answers zero, or matches the wrong lines, without
+  an error: use a bracket class for `\s` (`[[:space:]]`), or `git grep
+  -P`.
 - **A pattern piped after `git grep` also reads its `rev:path:line:`
   prefix.** Put it in `git grep`, or strip the prefix first.
 - **macOS `awk`'s `length()` counts bytes**, so a width is measured with
@@ -495,7 +509,11 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
 - **A timing alternates both versions in one script**, over three or
   more rounds, taking the minimum of `timeit.repeat` per case beside a
   control case the change cannot touch. A round where the control moves
-  is discarded.
+  is discarded. A local timing holds every slot of the gate lock
+  (`gate_take_all`, as `process/load-generator.md` says of a generator),
+  so that no gate runs beside it. It reports the one-minute load, the
+  first number `LC_ALL=C sysctl -n vm.loadavg` prints, beside its
+  numbers.
 - **A repository's state is read from the API, or from a checkout
   brought forward** (*Shell, checkouts and prose*) — instruction files
   included. The orchestrator brings the primary checkout forward; a
@@ -976,6 +994,12 @@ the orchestrator in the pull request.
   `git commit --amend --no-edit -s`.
 - **A clean rebase is not a correct one.** Re-run the gates, and look for
   what `main` added around what you remove.
+- **A rebase continued after a conflict drops every body line beginning
+  with `#`**, such as a wrapped `#1406, …`, from that commit's message.
+  Compare each commit's `git show -s --format=%B` before and after the
+  rebase, and restore the tip's message with `git commit --amend
+  --cleanup=verbatim -F <saved message>`. Better, never wrap a body line
+  so that it begins with `#`.
 - **A failed hook can make `git commit --amend` a no-op** that looks
   successful. Put the venv on `PATH` in the same call (`env
   PATH=/abs/wt/.venv/bin:$PATH git -C /abs/wt commit …`) and read the
