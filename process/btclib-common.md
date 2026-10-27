@@ -296,8 +296,8 @@ the process names its own files by their path under it. Claude Code's
   is outstanding. Find your job by its worktree's absolute path, written
   out (`pgrep -f '/abs/path/wt-….*pytest'`), never by command name. Its
   completion notification says the shell exited, not its children: each
-  gate writes its exit code (`EXIT_<gate>=$?`) and a terminal marker as
-  the last lines of its log, and those are read, never the wrapper's code.
+  gate writes its exit code to the log (`EXIT_<gate>=$?`) and a terminal
+  marker as its last line, and those are read, never the wrapper's code.
 - **A denied permission is a stop.** No substitute for the refused act
   (`find -delete`, the same `rm` without the flag, `shutil.rmtree`),
   except the `-r2` fallback for a refused force-push in *Committing and
@@ -431,8 +431,9 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   one-line document (notebook, JSON, bundle) answers at most `1`, and its
   base64 payloads match anything: parse structured documents. A phrase
   count never says a file is free of a restatement — read the file.
-- **`git grep -E` has no `\b` or `\s`.** A pattern using one answers
-  zero without an error: use `[[:space:]]` or `git grep -P`.
+- **On macOS `git grep -E` has no `\b` or `\s`.** A pattern using one
+  answers zero without an error: use a bracket class for `\s`
+  (`[[:space:]]`), or `git grep -P`.
 - **A pattern piped after `git grep` also reads its `rev:path:line:`
   prefix.** Put it in `git grep`, or strip the prefix first.
 - **macOS `awk`'s `length()` counts bytes**, so a width is measured with
@@ -465,7 +466,8 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   the same state. A claim just corrected is the likeliest next error.
   Two measurements that agree confirm each other only where their
   instruments are independent: name what they share (the stub, the
-  harness, the command, the base) first.
+  harness, the command, the base) before calling the second a
+  confirmation.
 - **`git checkout -- <path>` restores from the index.** Use `git restore
   --source=<ref> --worktree --staged -- <path>`, or `git show
   <ref>:<path>` to read; build a pristine control from `git archive
@@ -663,8 +665,10 @@ The writer's section; the reviewer judges its result.
 - [ ] the commit message was re-read, not carried by `--no-edit`
 - [ ] every claim in prose that lands was measured
 - [ ] an edit inside a filled paragraph refilled it whole, proved
-      whitespace-only against the committed text: width gates bound the
-      longest line, not the fill
+      whitespace-only against the committed text (`git diff
+      --word-diff=porcelain <sha> -- <file> | sed '1,/^@@/d' | grep -c
+      '^[-+]'` answers `0`): width gates bound the longest line, not the
+      fill
 - [ ] collateral filed, by number
 - [ ] where the change touches a rule the tree states, the search of
       *A rule stated more than once* is in the report
@@ -759,9 +763,9 @@ the orchestrator in the pull request.
   The same sweep finds bare references with `perl -ne 'print if
   /(?<![\/A-Za-z0-9.\-])#[0-9]+/'`, whose `0-9` keeps
   `btclib-org/btclib-secp256k1#N` from reading as bare. It lists the
-  non-ASCII codepoints of both texts (Python, `ord(c) > 127`), less the
-  organization's own typography: a CJK character mid-word is a
-  generation artefact no gate reads.
+  non-ASCII codepoints of both texts (Python, `ord(c) > 127`) other than
+  the em dash and the ellipsis this file uses: a CJK character mid-word
+  is a generation artefact no gate reads.
 
 ### The gates
 
