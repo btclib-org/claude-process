@@ -362,7 +362,7 @@ bulk or by a workflow. Several may be armed at once. The bot's check is
 not a required check: a pull request armed earlier lands on an approval
 given before the bot answered, or after it asked for changes.
 
-**The ACK may be missing in two cases only**, and in both the pull
+**The ACK may be missing in three cases only**, and in each the pull
 request is armed once every required check is green, no review thread
 is unresolved, and the latest fresh reviewer's `CLEARED` names the head
 (the maintainer, 2026-10-17):
@@ -370,7 +370,11 @@ is unresolved, and the latest fresh reviewer's `CLEARED` names the head
 - the bot's run failed with a 429, its quota exhausted, matched as
   `/btclib-pr`'s *Rebase and CI* says;
 - the pull request changes `claude-review.yml`, which the bot does not
-  review.
+  review;
+- the pull request comes from a fork: `btclib-org/.github`'s
+  `reusable-claude-review.yml` skips the review where
+  `head.repo.full_name` is not the calling repository. The human's
+  approval then lands it, as `/btclib-pr`'s *Outside contributors* says.
 
 It is armed pinned to the head, with squash, the only merge method
 (`CONTRIBUTING.md`'s *Landing it*):

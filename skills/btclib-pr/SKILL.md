@@ -618,7 +618,26 @@ it:
 Where the bot's review does not run — a fork's pull request, and any
 other where `gh pr checks` shows no review — the ACK is not an item of
 *The decision*, and the approval is never obvious: it goes to the
-human.
+human. A fork's pull request is armed as the shared *Arming auto-merge*
+says.
+
+**A first-time contributor's workflow runs wait for approval**, as
+`action_required`, as on PR btclib-org/btclib#2823. Under
+`pull_request`, a fork's run uses the workflows of the pull request's
+merge commit, with a read-only `GITHUB_TOKEN` and no other secret. The
+session approves the runs once it has read the diff and the diff touches
+nothing under `.github/`: workflows, actions, and the scripts they call.
+It says so on the pull request. Otherwise the human approves them. This
+lists the runs waiting on the head, and the second command approves one:
+
+```shell
+gh run list --repo <owner>/<repo> --commit <head> \
+  --status action_required --json databaseId,name
+```
+
+```shell
+gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
+```
 
 ## Landing
 
