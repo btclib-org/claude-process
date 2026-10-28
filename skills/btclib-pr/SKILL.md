@@ -401,14 +401,14 @@ sys.exit(bool(r) and r in open(sys.argv[2]).read().splitlines() and r)' \
 ```
 
 The third prints each file that fails its item, and exits `1` where
-none does. It reads `<export file>`, which this writes empty first.
+none does. The third reads `<export file>`. This writes it empty;
 *The exported lock*, below, then fills it where it applies:
 
 ```shell
 : > <export file>
 ```
 
-Then the third:
+Once that has run, the third:
 
 ```shell
 grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file> |
