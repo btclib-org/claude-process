@@ -482,24 +482,25 @@ byte the same (the maintainer, 2026-10-28,
 They run the `uv-export` hook, which runs `uv export` with the tree's
 arguments, by the command the tree's `CONTRIBUTING.md` gives an owner
 (*A bot's*, under *Whose pull request it is*). The clone directory is a
-new one of your own, removed afterwards. Set these first:
+new one of your own. Shell state does not survive between calls
+(*Where you work*), so each fence sets the values it reads at its head:
+fill them in every fence.
 
 ```shell
 clone=<clone dir>
-exported=<export file>
-sha=<sha>
-repo=<owner>/<repo>
-```
-
-```shell
 git init --quiet "${clone:?}"
 ```
 
 ```shell
+clone=<clone dir>
+sha=<sha>
+repo=<owner>/<repo>
 git -C "${clone:?}" fetch --quiet --depth 1 "https://github.com/${repo:?}" "${sha:?}"
 ```
 
 ```shell
+clone=<clone dir>
+sha=<sha>
 git -C "${clone:?}" checkout --quiet --detach "${sha:?}"
 ```
 
@@ -507,6 +508,7 @@ The file is removed first, so that a hook that does not run leaves it
 missing, which the last command reads as a difference:
 
 ```shell
+clone=<clone dir>
 rm "${clone:?}/.clusterfuzzlite/requirements.txt"
 ```
 
@@ -514,14 +516,25 @@ The hook exits `1` when it writes the file, so its exit code is not
 read:
 
 ```shell
+clone=<clone dir>
 env -C "${clone:?}" uv run --locked --only-group lint \
   pre-commit run uv-export --all-files
 ```
 
 ```shell
+clone=<clone dir>
+sha=<sha>
+exported=<export file>
 git -C "${clone:?}" cat-file -e "${sha:?}:.clusterfuzzlite/requirements.txt" &&
   git -C "${clone:?}" diff --quiet -- .clusterfuzzlite/requirements.txt &&
   echo .clusterfuzzlite/requirements.txt > "${exported:?}"
+```
+
+Then the clone goes:
+
+```shell
+clone=<clone dir>
+rm -rf "${clone:?}"
 ```
 
 A major move is one where a version's first non-zero number changes: a
