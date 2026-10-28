@@ -618,7 +618,63 @@ it:
 Where the bot's review does not run — a fork's pull request, and any
 other where `gh pr checks` shows no review — the ACK is not an item of
 *The decision*, and the approval is never obvious: it goes to the
-human.
+human. A fork's pull request is armed as the shared *Arming auto-merge*
+says.
+
+**A first-time contributor's workflow runs wait for approval as
+`action_required`**, as on PR btclib-org/btclib#2823. Under
+`pull_request`, a fork's run uses the workflows of the pull request's
+merge commit, with a read-only `GITHUB_TOKEN` and no other secret. The
+session approves the runs once it has read the diff and the diff touches
+nothing under `.github/`, where the workflows and the actions are. It
+says so on the pull request. Otherwise the human approves them.
+
+These steps, in order, show that the diff touches nothing under
+`.github/`:
+
+1. This prints the head, `<head>`. The files endpoint takes no sha, so
+   step 5 reads it again:
+
+   ```shell
+   gh pr view <n> --repo <owner>/<repo> \
+     --json headRefOid --jq .headRefOid
+   ```
+
+1. This prints a number below 3000. The files endpoint returns at most
+   3000 files, so a larger pull request can hide a `.github/` file:
+
+   ```shell
+   gh pr view <n> --repo <owner>/<repo> \
+     --json changedFiles --jq .changedFiles
+   ```
+
+1. This exits `0` and writes a file that is not empty.
+   `previous_filename` catches a file renamed out of `.github/`:
+
+   ```shell
+   gh api --paginate repos/<owner>/<repo>/pulls/<n>/files \
+     --jq '.[] | .filename, (.previous_filename // empty)' > <files file>
+   ```
+
+1. This prints nothing:
+
+   ```shell
+   grep '^\.github/' <files file>
+   ```
+
+1. The first step's command prints `<head>` again.
+
+This lists the runs waiting on `<head>`, and the second command approves
+one:
+
+```shell
+gh run list --repo <owner>/<repo> --commit <head> -L 100 \
+  --status action_required --json databaseId,name
+```
+
+```shell
+gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
+```
 
 ## Landing
 
