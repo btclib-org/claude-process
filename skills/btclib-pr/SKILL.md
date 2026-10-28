@@ -629,25 +629,46 @@ session approves the runs once it has read the diff and the diff touches
 nothing under `.github/`, where the workflows and the actions are. It
 says so on the pull request. Otherwise the human approves them.
 
-The diff touches nothing under `.github/` where, read while the head is
-the one whose runs are listed, the first command exits `0` with a file
-that is not empty, and the second prints nothing. `previous_filename`
-catches a file renamed out of `.github/`:
+These steps, in order, show that the diff touches nothing under
+`.github/`:
 
-```shell
-gh api --paginate repos/<owner>/<repo>/pulls/<n>/files \
-  --jq '.[] | .filename, (.previous_filename // empty)' > <files file>
-```
+1. This prints the head, `<head>`. The files endpoint takes no sha, so
+   step 5 reads it again:
 
-```shell
-grep '^\.github/' <files file>
-```
+   ```shell
+   gh pr view <n> --repo <owner>/<repo> \
+     --json headRefOid --jq .headRefOid
+   ```
 
-This lists the runs waiting on the head, and the second command approves
+1. This prints a number below 3000. The files endpoint returns at most
+   3000 files, so a larger pull request can hide a `.github/` file:
+
+   ```shell
+   gh pr view <n> --repo <owner>/<repo> \
+     --json changedFiles --jq .changedFiles
+   ```
+
+1. This exits `0` and writes a file that is not empty.
+   `previous_filename` catches a file renamed out of `.github/`:
+
+   ```shell
+   gh api --paginate repos/<owner>/<repo>/pulls/<n>/files \
+     --jq '.[] | .filename, (.previous_filename // empty)' > <files file>
+   ```
+
+1. This prints nothing:
+
+   ```shell
+   grep '^\.github/' <files file>
+   ```
+
+1. The first step's command prints `<head>` again.
+
+This lists the runs waiting on `<head>`, and the second command approves
 one:
 
 ```shell
-gh run list --repo <owner>/<repo> --commit <head> \
+gh run list --repo <owner>/<repo> --commit <head> -L 100 \
   --status action_required --json databaseId,name
 ```
 
