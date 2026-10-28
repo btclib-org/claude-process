@@ -621,14 +621,30 @@ other where `gh pr checks` shows no review — the ACK is not an item of
 human. A fork's pull request is armed as the shared *Arming auto-merge*
 says.
 
-**A first-time contributor's workflow runs wait for approval**, as
-`action_required`, as on PR btclib-org/btclib#2823. Under
+**A first-time contributor's workflow runs wait for approval as
+`action_required`**, as on PR btclib-org/btclib#2823. Under
 `pull_request`, a fork's run uses the workflows of the pull request's
 merge commit, with a read-only `GITHUB_TOKEN` and no other secret. The
 session approves the runs once it has read the diff and the diff touches
-nothing under `.github/`: workflows, actions, and the scripts they call.
-It says so on the pull request. Otherwise the human approves them. This
-lists the runs waiting on the head, and the second command approves one:
+nothing under `.github/`, where the workflows and the actions are. It
+says so on the pull request. Otherwise the human approves them.
+
+The diff touches nothing under `.github/` where, read while the head is
+the one whose runs are listed, the first command exits `0` with a file
+that is not empty, and the second prints nothing. `previous_filename`
+catches a file renamed out of `.github/`:
+
+```shell
+gh api --paginate repos/<owner>/<repo>/pulls/<n>/files \
+  --jq '.[] | .filename, (.previous_filename // empty)' > <files file>
+```
+
+```shell
+grep '^\.github/' <files file>
+```
+
+This lists the runs waiting on the head, and the second command approves
+one:
 
 ```shell
 gh run list --repo <owner>/<repo> --commit <head> \
