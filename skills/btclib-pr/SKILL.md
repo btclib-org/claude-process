@@ -331,10 +331,10 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 - [ ] every check passed or was skipped, required or not:
       `gh pr checks <n> --repo <owner>/<repo> --json bucket --jq
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
-      "skipping")'` answers `true`, and the shared *Arming
-      auto-merge*'s command that reads each run since the last reopen
-      exits `0` and prints nothing. A cancelled check (bucket `cancel`)
-      fails this item until a re-run passes.
+      "skipping")'` answers `true`; the shared *Arming auto-merge*'s
+      command that writes `<red file>` exits `0`; and
+      `test ! -s <red file>` exits `0`. A cancelled check (bucket
+      `cancel`) fails this item until a re-run passes.
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
