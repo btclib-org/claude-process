@@ -408,7 +408,7 @@ none does. The third reads `<export file>`. This writes it empty;
 : > <export file>
 ```
 
-Once that has run, the third:
+Once *The exported lock*, below, has run where it applies, the third:
 
 ```shell
 grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file> |
