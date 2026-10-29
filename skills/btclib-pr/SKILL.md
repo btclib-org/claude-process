@@ -220,8 +220,9 @@ them.
   `CONTRIBUTING.md`'s *Landing it* says, or for a retarget.** An outside
   contributor's branch is never rebased: *Outside contributors* brings
   `main` in by a merge.
-- **After a rebase or a merge of `main`, run the gates and push.** Ask
-  the merge the forge will compute, locally:
+- **After a rebase or a merge of `main`, run the gates and push**; an
+  armed pull request is disarmed first (*Arming auto-merge*). Ask the
+  merge the forge will compute, locally:
   `git -C <wt> -c merge.union.driver=false merge-tree origin/main
   <branch>` exits `1` where GitHub will refuse. `gh pr view --json
   mergeable` is a cached value.

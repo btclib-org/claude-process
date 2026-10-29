@@ -823,7 +823,8 @@ the orchestrator in the pull request.
   one. Check `git ls-remote origin <branch>` against `HEAD` after every
   push. On an open pull request, a fix is pushed only once the rounds of
   *Local review* have ended, and the orchestrator then has the writer
-  push it.
+  push it. An armed pull request is disarmed before any push to it
+  (`/btclib-pr`'s *Arming auto-merge*).
 - **An embargoed fix is the exception: it is pushed to `origin` only
   once its release commit is ready on top of it.** It is gated locally.
   The standard's section 12, *A security advisory is worked in this
@@ -1147,9 +1148,12 @@ merge with the new `origin/main`, by the commands of *A pull request's
 rounds*, at the rebase or at `/btclib-pr`'s *Landing*. The `CLEARED`
 stands. A sentence the re-read finds false there is fixed in a new
 commit, or by amend before the pull request is open (*Committing and
-rebasing*). A fresh reviewer reviews that fix as a prose-only fix (*The
-rounds*), and the branch is armed or landed only after that reviewer's
-`CLEARED`.
+rebasing*). A fresh reviewer reviews that fix, whichever file it
+touches, and the branch is armed or landed only after that reviewer's
+`CLEARED`: no further fresh reviewer follows it. `main` also moves
+under a pull request already armed. After each landing it makes, the
+orchestrator re-reads the same way each pull request it armed in that
+repository that has not landed.
 
 ## Collateral
 
