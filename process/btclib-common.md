@@ -382,16 +382,62 @@ It is armed pinned to the head, with squash, the only merge method
 `gh pr merge --squash --auto --match-head-commit <head>`. `/btclib-pr`'s
 *Landing* gives the whole command.
 
-**The required checks are the branch protection's contexts.** This
-prints each one that has not passed or been skipped on the head, and
-exits `1` where none is left. `<required file>` must not be empty:
+**The required checks are the branch protection's contexts.** The
+first command writes them, and `<required file>` must not be empty. The
+second writes each check that passed or was skipped on the head:
 
 ```shell
 gh api repos/<owner>/<repo>/branches/main/protection/required_status_checks \
   --jq '.contexts[]' > <required file>
+```
+
+```shell
 gh pr checks <n> --repo <owner>/<repo> --json name,bucket --jq '.[]
   | select(.bucket == "pass" or .bucket == "skipping") | .name' > <green file>
+```
+
+**After a close and reopen, a check `gh pr checks` shows as skipped may
+have failed**
+([ISS 198](https://github.com/btclib-org/claude-process/issues/198)).
+`gh pr checks` shows one run of each check. A workflow that runs on the
+`closed` event and skips its jobs there writes a skipped run of each,
+and that run can be the one shown. This writes the name of each check
+run on the head that has not completed, and of each that started at or
+after the last reopen and concluded neither `SUCCESS`, `SKIPPED` nor
+`NEUTRAL`. On a pull request never reopened it reads every run. It must
+exit `0`:
+
+```shell
+gh api graphql --paginate -F owner=<owner> -F repo=<repo> -F n=<n> -f query='
+  query($owner: String!, $repo: String!, $n: Int!, $endCursor: String) {
+    repository(owner: $owner, name: $repo) {
+      pullRequest(number: $n) {
+        timelineItems(itemTypes: [REOPENED_EVENT], last: 1) {
+          nodes { ... on ReopenedEvent { createdAt } }
+        }
+        commits(last: 1) { nodes { commit { statusCheckRollup {
+          contexts(first: 100, after: $endCursor) {
+            pageInfo { hasNextPage endCursor }
+            nodes { ... on CheckRun { name status conclusion startedAt } }
+          }
+        } } } }
+      }
+    }
+  }' --jq '.data.repository.pullRequest
+  | (.timelineItems.nodes[0].createdAt // "") as $reopened
+  | .commits.nodes[0].commit.statusCheckRollup.contexts.nodes[]
+  | select(.name and (.status != "COMPLETED" or (.startedAt >= $reopened
+    and (.conclusion | IN("SUCCESS", "SKIPPED", "NEUTRAL") | not))))
+  | .name' > <red file>
+```
+
+The first command below prints each required check that has not passed
+or been skipped, and the second each one the last command wrote. Each
+exits `1` where it prints nothing:
+
+```shell
 grep -vxFf <green file> <required file>
+grep -xFf <red file> <required file>
 ```
 
 `gh pr checks --required` is not enough: it omits a required check that

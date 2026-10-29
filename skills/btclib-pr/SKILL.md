@@ -254,7 +254,9 @@ them.
   The last command's exit code says how the loop ended: `0` all passed,
   `1` a failure or no checks at all, `8` still pending with none failed.
   The loop gave up wherever that output still lists a pending check or
-  says `no checks reported`.
+  says `no checks reported`. After a close and reopen, a check it shows
+  as skipped may have failed: the shared *Arming auto-merge* says how
+  that is read.
 
   A `cancelled` run is not a `failure`.
 - **A red check is read before anything is done about it**:
@@ -329,7 +331,9 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 - [ ] every check passed or was skipped, required or not:
       `gh pr checks <n> --repo <owner>/<repo> --json bucket --jq
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
-      "skipping")'` answers `true`. A cancelled check (bucket
+      "skipping")'` answers `true`; the shared *Arming auto-merge*'s
+      command that writes `<red file>` exits `0`; and
+      `test ! -s <red file>` exits `0`. A cancelled check (bucket
       `cancel`) fails this item until a re-run passes.
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
