@@ -1305,6 +1305,9 @@ on.
 
 Before the wrap-up, *Collateral*'s last bullet holds.
 
+**Re-read each pull request the session armed that has not landed** (*A
+rebase and the clearance*).
+
 **Release every pull request the session claimed** (*A claim holds a
 pull request's branch*).
 
