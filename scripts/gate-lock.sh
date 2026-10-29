@@ -4,9 +4,10 @@
 # that many workers gate at once. POSIX sh, sourced in the same shell call
 # that runs the gates, by sh, bash or zsh, in the main shell or in a
 # `( ... ) &` subshell. btclib-common.md's "The gates" (the gate lock) says
-# in which shell gate_release runs. Sourcing sets
-# GATE_LOCK_WORKERS, the cores divided by the slots, for the `-n` of a
-# suite run in a slot:
+# in which shell gate_release runs. GATE_LOCK_WORKERS, the `-n` of a suite
+# run in a slot, is by default the cores divided by the slots (3 on 10
+# cores), and GATE_LOCK_LOAD, a ceiling, 3 times the cores (30 on 10).
+# Sourcing sets each of them that is not already set:
 #
 #   . "${PROCESS:?}/scripts/gate-lock.sh"
 #   gate_take [<worktree>] && { gate_wait; <a gate>; gate_wait; <a gate>; gate_release; }
@@ -44,8 +45,10 @@
 # no CPU, is only a ceiling that catches a runaway. These waits have no
 # bound, nor has the wait for gate.generator: holders that never finish keep
 # every waiter waiting, and a timeout on the call that runs the gates covers
-# the gates, not gate_take. btclib-common.md's "The gates" (the gate lock)
-# gives the command that names them.
+# the gates, not gate_take. This names them:
+#
+#   cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.lock*/owner
+#   cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.generator/owner
 #
 # To check, from the repository root in a fresh sh, with a directory of
 # your own so as not to wait on a real gate:
@@ -71,7 +74,11 @@
 # file, which it puts back at once. While a slot has no owner file nobody
 # reclaims it, and gate_release reads again for up to 5 seconds. A slot made
 # by hand with mkdir, or left by a waiter killed while it held the owner file
-# renamed to stale.<pid>, has no owner file, and only the human removes it.
+# renamed to stale.<pid>, has no owner file. Nor is a gate.generator with
+# no owner file reclaimed. The human removes either by its directory name,
+# after checking that no gate runs in it:
+#
+#   rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/<slot>
 
 # The number of cores
 _gl_ncpu() {

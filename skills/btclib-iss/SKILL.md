@@ -103,7 +103,7 @@ open:**
 - [ ] `closingIssuesReferences` counts what you meant to close
 
 - **A change to `claude-review.yml` is its own pull request**: the bot
-  does not review it (`/btclib-pr`'s *The human's own pull request*).
+  does not review it (`/btclib-pr`'s *Arming auto-merge*).
 - **The body is the paragraphs, then sections, then the closing block
   (the shared *Citations and closing keywords*).** The paragraphs keep
   the body limit of the shared *What is posted on a forge* and say what
@@ -125,16 +125,18 @@ open:**
   '.closingIssuesReferences | length'`. The field lags creation by
   seconds to minutes; ask again.
 - **Request the reviews `/btclib-pr`'s *The human's own pull request*
-  names**, unless that section or `--land` has the session land it.
+  names**, unless that section has the session land it through the
+  bypass.
 
 ## Following it
 
 Once a pull request is open, the session follows it as its author.
 `$PROCESS/skills/btclib-pr/SKILL.md` holds the rules, read there and not
 restated here: *What was raised*, *Answering it*, *Rebase and CI*,
-*The human's own pull request*, and *Landing*'s bullets from *Read
-`main`'s latest push runs* to *The pin is the head as last pushed*, and
-its *Check what landed*. Under `--land`, all of *Landing* applies.
+*The human's own pull request*, *Arming auto-merge*, and *Landing*'s
+bullets from *Read `main`'s latest push runs* to *The pin is the head
+as last pushed*, and its *Check what landed*. Under `--land`, all of
+*Landing* applies.
 
 - **The `/btclib-pr` *Landing* bullets on the collateral and on the
   worktrees hold here**, and *Debris goes when its work ends* removes

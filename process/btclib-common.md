@@ -290,15 +290,14 @@ the process names its own files by their path under it. Claude Code's
   same checkout overwrites it, another session's included. A fetch that
   another fetch has locked out (`cannot lock ref`) is retried.
 - **Debris goes when its work ends, not at the wrap-up**, because a long
-  session otherwise fills the disk (the maintainer, 2026-10-21). A
-  worktree goes, with its basetemp and build directories, once the
-  session hands the pull request over to whom it waits on, or it lands
-  or closes: a clean, pushed worktree is recreated in seconds if review
-  sends the branch back, and one with uncommitted or unpushed work stays
-  (*Before removing or discarding anything that could be work*). A
-  gate's basetemp and build directories go once that branch's gates are
-  done. A reviewer's worktree, exports, clones and reports go before it
-  hands back its verdict.
+  session otherwise fills the disk. A worktree goes, with its basetemp
+  and build directories, once the session hands the pull request over to
+  whom it waits on, or it lands or closes: a clean, pushed worktree is
+  recreated in seconds if review sends the branch back, and one with
+  uncommitted or unpushed work stays (*Before removing or discarding
+  anything that could be work*). A gate's basetemp and build directories
+  go once that branch's gates are done. A reviewer's worktree, exports,
+  clones and reports go before it hands back its verdict.
 - **The orchestrator, never a writer, sweeps what a session that no
   longer runs left**, when the disk is short (*Before starting*). It
   removes only a worktree that is clean and pushed, and that session's
@@ -339,133 +338,11 @@ the process names its own files by their path under it. Claude Code's
 
 **Amends of pushed commits, rebases of pushed branches and the lease
 pushes after them are always authorized** on the branches the session
-works (the human, 2026-10-11). Nobody asks for it. Review sends branches
-back after they are pushed, and every rebase rewrites a pushed branch.
-Every brief states the grant, because the classifier has refused those
-pushes where none was on record. A refusal is still a stop (*A denied
-permission is a stop*), with the `-r2` fallback in *Committing and
-rebasing*.
-
-### Arming auto-merge
-
-**The session arms squash auto-merge on a pull request only once all
-three hold on its head** (the maintainer, 2026-10-17):
-
-- every required check passed or was skipped;
-- the review bot's latest review starts `ACK <head>`;
-- no review thread is unresolved, read as `/btclib-pr`'s *What was
-  raised* says
-  ([ISS 152](https://github.com/btclib-org/claude-process/issues/152)).
-
-Each pull request is armed on its own measurement: never by default, in
-bulk or by a workflow. Several may be armed at once. The bot's check is
-not a required check: a pull request armed earlier lands on an approval
-given before the bot answered, or after it asked for changes.
-
-**The ACK may be missing in three cases only**, and in each the pull
-request is armed once every required check is green, no review thread
-is unresolved, and the latest fresh reviewer's `CLEARED` names the head:
-
-- the bot's run failed with a 429, its quota exhausted, matched as
-  `/btclib-pr`'s *Rebase and CI* says (the maintainer, 2026-10-17);
-- the pull request changes `claude-review.yml`, which the bot does not
-  review (the maintainer, 2026-10-17);
-- the pull request comes from a fork, `isCrossRepository` being `true`
-  in `/btclib-pr`'s *Whose pull request it is*
-  ([ISS 248](https://github.com/btclib-org/claude-process/issues/248)).
-  `btclib-org/.github`'s `reusable-claude-review.yml` skips the review
-  where `head.repo.full_name` is not the calling repository. The human's
-  approval then lands it (`/btclib-pr`'s *Outside contributors*).
-
-It is armed pinned to the head, with squash, the only merge method
-(`CONTRIBUTING.md`'s *Landing it*):
-`gh pr merge --squash --auto --match-head-commit <head>`. `/btclib-pr`'s
-*Landing* gives the whole command.
-
-**The required checks are the branch protection's contexts.** The
-first command writes them, and `<required file>` must not be empty. The
-second writes each check that passed or was skipped on the head:
-
-```shell
-gh api repos/<owner>/<repo>/branches/main/protection/required_status_checks \
-  --jq '.contexts[]' > <required file>
-```
-
-```shell
-gh pr checks <n> --repo <owner>/<repo> --json name,bucket --jq '.[]
-  | select(.bucket == "pass" or .bucket == "skipping") | .name' > <green file>
-```
-
-**After a close and reopen, a check `gh pr checks` shows as skipped may
-have failed**
-([ISS 198](https://github.com/btclib-org/claude-process/issues/198)).
-`gh pr checks` shows one run of each check. A workflow that runs on the
-`closed` event and skips its jobs there writes a skipped run of each,
-and that run can be the one shown. This writes the name of each check
-run on the head that has not completed, and of each that started at or
-after the last reopen and concluded neither `SUCCESS`, `SKIPPED` nor
-`NEUTRAL`. On a pull request never reopened it reads every run. It must
-exit `0`:
-
-```shell
-gh api graphql --paginate -F owner=<owner> -F repo=<repo> -F n=<n> -f query='
-  query($owner: String!, $repo: String!, $n: Int!, $endCursor: String) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $n) {
-        timelineItems(itemTypes: [REOPENED_EVENT], last: 1) {
-          nodes { ... on ReopenedEvent { createdAt } }
-        }
-        commits(last: 1) { nodes { commit { statusCheckRollup {
-          contexts(first: 100, after: $endCursor) {
-            pageInfo { hasNextPage endCursor }
-            nodes { ... on CheckRun { name status conclusion startedAt } }
-          }
-        } } } }
-      }
-    }
-  }' --jq '.data.repository.pullRequest
-  | (.timelineItems.nodes[0].createdAt // "") as $reopened
-  | .commits.nodes[0].commit.statusCheckRollup.contexts.nodes[]
-  | select(.name and (.status != "COMPLETED" or (.startedAt >= $reopened
-    and (.conclusion | IN("SUCCESS", "SKIPPED", "NEUTRAL") | not))))
-  | .name' > <red file>
-```
-
-The first command below prints each required check that has not passed
-or been skipped, and the second each one the last command wrote. Each
-exits `1` where it prints nothing:
-
-```shell
-grep -vxFf <green file> <required file>
-grep -xFf <red file> <required file>
-```
-
-`gh pr checks --required` is not enough: it omits a required check that
-has not reported yet.
-
-**The bot's review is read as `/btclib-pr`'s *The decision* reads it.**
-This answers `true` where it starts `ACK <head>`:
-
-```shell
-gh pr view <n> --repo <owner>/<repo> --json headRefOid,reviews \
-  --jq '.headRefOid as $h
-  | [.reviews[] | select(.author.login == "claude" and .body != "")]
-  | last | (.body // "") | startswith("ACK " + $h)'
-```
-
-**A pull request armed otherwise is disarmed.** One that is armed is
-disarmed before a push, and armed again once this section allows it on
-the new head.
-This lists the armed ones, and the second command disarms one:
-
-```shell
-gh pr list --repo <owner>/<repo> --json number,autoMergeRequest \
-  --jq '.[] | select(.autoMergeRequest) | .number'
-```
-
-```shell
-gh pr merge <n> --repo <owner>/<repo> --disable-auto
-```
+works. Nobody asks for it. Review sends branches back after they are
+pushed, and every rebase rewrites a pushed branch. Every brief states
+the grant, because the classifier has refused those pushes where none
+was on record. A refusal is still a stop (*A denied permission is a
+stop*), with the `-r2` fallback in *Committing and rebasing*.
 
 ### Issues left to newcomers
 
@@ -796,7 +673,8 @@ filed there as collateral (*Collateral*).
   examples.
 - **Say what is true now.** No "was", "has always", "is now". The
   exception is the defect being corrected, and that "before" is measured
-  against a snapshot.
+  against a snapshot. A rule carries no attribution or date: its pull
+  request records who decided it and when.
 - **Do not restate the code in a comment.**
 - **A second reason gets its own paragraph.** A clause grafted into a
   standing paragraph inherits its subject, and every later sentence
@@ -913,16 +791,11 @@ the orchestrator in the pull request.
   `.github/workflows/` on `origin/main`.
 - **The gate lock.** Up to three workers gate at once, each holding one
   of the lock's slots while it runs the suite, the hooks or the docs
-  build. `GATE_LOCK_SLOTS` sets how many, 3 by default. The defaults
-  follow the core count, so that the rule holds on another machine:
-  `GATE_LOCK_LOAD`, a ceiling, is 3 times the cores (30 on 10), and
-  `GATE_LOCK_WORKERS`, the `-n` of a suite, is the cores divided by the
-  slots (3 on 10). The slots sit in one directory shared by every
-  session, `$GATE_LOCK_DIR`, by default `/tmp/claude-<uid>/gate`. Release
-  the slot the moment the gates finish. A slot is taken and released only
-  through `$PROCESS/scripts/gate-lock.sh`, sourced in the same background
-  shell call as the gates (*Long jobs run in the background*), never by a
-  hand-written `mkdir` or `rmdir`:
+  build. Sourcing the script sets `GATE_LOCK_WORKERS`, the `-n` of a
+  suite. Release the slot the moment the gates finish. A slot is taken
+  and released only through `$PROCESS/scripts/gate-lock.sh`, sourced in
+  the same background shell call as the gates (*Long jobs run in the
+  background*), never by a hand-written `mkdir` or `rmdir`:
 
   ```shell
   . "${PROCESS:?}/scripts/gate-lock.sh"
@@ -934,25 +807,14 @@ the orchestrator in the pull request.
   ```
 
   `gate_release` runs in the same shell as `gate_take`, not after
-  `$(gate_take …)` or `gate_take | …`, whose shell has exited. No session
-  removes a slot any other way: a failed `mkdir` or an old slot says
-  nothing about whose it is. The script's header comment says how the
-  lock works: the queue, the stagger, stale slots, and what `gate_take`
-  waits for, with no bound. Holders that never finish keep everyone
-  waiting, and this names them:
-
-  ```shell
-  cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.lock*/owner
-  cat "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/gate.generator/owner
-  ```
-
-  A slot or `gate.generator` with no owner file is never reclaimed. The
-  human removes it by its directory name, after checking that no gate
-  runs in it:
-
-  ```shell
-  rm -r "${GATE_LOCK_DIR:-/tmp/claude-$(id -u)/gate}"/<slot>
-  ```
+  `$(gate_take …)` or `gate_take | …`, whose shell has exited. No
+  session removes a slot any other way: a failed `mkdir` or an old slot
+  says nothing about whose it is. The script's header comment says how
+  the lock works: the defaults of the slots, the workers, the load
+  ceiling and the directory, the queue, the stagger, stale slots, and
+  what `gate_take` waits for, with no bound. It gives the command that
+  names the holders, and says who removes a slot that is never
+  reclaimed.
 
   Before running a load generator, read
   `$PROCESS/process/load-generator.md`.
@@ -965,7 +827,8 @@ the orchestrator in the pull request.
   one. Check `git ls-remote origin <branch>` against `HEAD` after every
   push. On an open pull request, a fix is pushed only once the rounds of
   *Local review* have ended, and the orchestrator then has the writer
-  push it.
+  push it. An armed pull request is disarmed before any push to it
+  (`/btclib-pr`'s *Arming auto-merge*).
 - **An embargoed fix is the exception: it is pushed to `origin` only
   once its release commit is ready on top of it.** It is gated locally.
   The standard's section 12, *A security advisory is worked in this
@@ -1090,9 +953,10 @@ branch, or a text to be posted.
 - **Then a fresh reviewer reads the whole of it.** It is a new worker,
   started once the reviewer before it has cleared. Where its first
   verdict is `CHANGES REQUESTED`, it stays until it clears, as above.
-  Where every fix since its first verdict is a prose-only fix, its
-  `CLEARED` ends the rounds; otherwise a further fresh reviewer reads
-  the whole of it.
+  Where every fix since its first verdict is a prose-only fix, or where
+  it reviews a fix after a re-read on a moved `main` (*A rebase and the
+  clearance*), whichever file that fix touches, its `CLEARED` ends the
+  rounds; otherwise a further fresh reviewer reads the whole of it.
 - **A prose-only fix** changes nothing but the commit message, a text
   to be posted (a pull request body, a comment or reply on the forge)
   and, in files the checklist of `/btclib-pr`'s *The decision* does not
@@ -1205,7 +1069,7 @@ run and another bot run.
 - [ ] where the change touches a rule the tree states, the writer's
       search is complete (*A rule stated more than once*)
 - [ ] on a branch, the prose it adds was read on the merge with
-      `origin/main` (*A pull request's rounds*)
+      `origin/main`, whose sha it names (*A pull request's rounds*)
 - [ ] where the diff moves a dependency, a hook or an action to a new
       major version, the release notes or changelog read between the two
       versions, and what they say of the tree (`/btclib-pr`'s *The
@@ -1237,12 +1101,12 @@ run and another bot run.
 
 ### A rebase and the clearance
 
-**A rebase that applies without a conflict keeps the `CLEARED`** (the
-human, 2026-10-20). No reviewer reads it. It voids the gates: they run
-again on the new tip, and so does the check of *Signed and signed off*.
-This holds where the rebase replays the cleared commits and no others.
-Then these two commands print the same subjects in the same order,
-`<old base>` being the parent the cleared sha was reviewed on:
+**A rebase that applies without a conflict keeps the `CLEARED`.** No
+reviewer reads it. It voids the gates: they run again on the new tip,
+and so does the check of *Signed and signed off*. This holds where the
+rebase replays the cleared commits and no others. Then these two
+commands print the same subjects in the same order, `<old base>` being
+the parent the cleared sha was reviewed on:
 
 ```shell
 git -C <wt> log --reverse --format=%s '<old base>..<cleared sha>'
@@ -1282,6 +1146,23 @@ Say in the pull request which case it was.
 **"This branch has conflicts" on GitHub is real** even where a local
 rebase exits `0`: the forge does not apply a tree's `merge=union`.
 Rebase, run the gates, and push.
+
+**Where `main` has moved past the `origin/main` sha the verdict read the
+prose on**, the orchestrator re-reads the branch's added lines on the
+merge with the new `origin/main`, by the commands of *A pull request's
+rounds*, at the rebase or at `/btclib-pr`'s *Landing*. The `CLEARED`
+stands. A sentence the re-read finds false there is fixed in a new
+commit, or by amend before the pull request is open (*Committing and
+rebasing*). A fresh reviewer reviews that fix, and the branch is armed
+or landed only after its `CLEARED`, which ends the rounds (*The
+rounds*).
+
+`main` also moves under a pull request already armed. After each
+landing the orchestrator observes in a repository, its own merge or an
+auto-merge it sees complete, it re-reads the same way each pull request
+it armed there that has not landed, and again before the session ends.
+A pull request found with a false sentence is disarmed at once
+(`/btclib-pr`'s *Arming auto-merge*).
 
 ## Collateral
 
@@ -1427,6 +1308,9 @@ on.
 ## Wrap-up
 
 Before the wrap-up, *Collateral*'s last bullet holds.
+
+**Re-read each pull request the session armed that has not landed** (*A
+rebase and the clearance*).
 
 **Release every pull request the session claimed** (*A claim holds a
 pull request's branch*).
