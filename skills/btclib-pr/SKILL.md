@@ -362,7 +362,8 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       first command below prints nothing, and the second, where it
       runs, exits `0`
 - [ ] every other file in the list is a doc, a test, `pyproject.toml`
-      or `uv.lock`: the third command below prints nothing
+      or `uv.lock`, or the exported lock (*The exported lock*, below):
+      the third command below prints nothing and exits `1`
 - [ ] `pyproject.toml` and `uv.lock` only move dependencies they
       already hold to a new version, read from the fourth command below
 - [ ] on a bot's pull request (*A bot's pins*, below), its pin files
@@ -404,10 +405,18 @@ sys.exit(bool(r) and r in open(sys.argv[2]).read().splitlines() and r)' \
 ```
 
 The third prints each file that fails its item, and exits `1` where
-none does:
+none does. The third reads `<export file>`. This writes it empty;
+*The exported lock*, below, then fills it where it applies:
 
 ```shell
-grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file>
+: > <export file>
+```
+
+Once *The exported lock*, below, has run where it applies, the third:
+
+```shell
+grep -Ev '^(docs|tests)/|\.md$|^(pyproject\.toml|uv\.lock)$' <list file> |
+  grep -vxFf <export file>
 ```
 
 The fourth prints the diff of `pyproject.toml` and `uv.lock`:
@@ -466,6 +475,70 @@ awk '/^diff --git /{f = $(3); h = 1; r = ""
     sub(/@.*/, "", k); n[f k] += d; next}
   {print f ": " $(0)}
   END {for (k in n) if (n[k]) print "unpaired: " k}' <diff file>
+```
+
+**The exported lock.** On a pull request whose `.author.login` is
+`app/dependabot`, and whose list holds
+`.clusterfuzzlite/requirements.txt`, that file passes the third command
+where the commands below regenerate it on `<sha>` and find it byte for
+byte the same (the maintainer, 2026-10-28,
+[ISS 249](https://github.com/btclib-org/claude-process/issues/249)).
+They run the `uv-export` hook, which runs `uv export` with the tree's
+arguments, by the command the tree's `CONTRIBUTING.md` gives an owner
+(*A bot's*, under *Whose pull request it is*). The clone directory is a
+new one of your own. Shell state does not survive between calls
+(*Where you work*), so each fence sets the values it reads at its head:
+fill them in every fence.
+
+```shell
+clone=<clone dir>
+git init --quiet "${clone:?}"
+```
+
+```shell
+clone=<clone dir>
+sha=<sha>
+repo=<owner>/<repo>
+git -C "${clone:?}" fetch --quiet --depth 1 "https://github.com/${repo:?}" "${sha:?}"
+```
+
+```shell
+clone=<clone dir>
+sha=<sha>
+git -C "${clone:?}" checkout --quiet --detach "${sha:?}"
+```
+
+The file is removed first, so that a hook that does not run leaves it
+missing, which the last command reads as a difference:
+
+```shell
+clone=<clone dir>
+rm "${clone:?}/.clusterfuzzlite/requirements.txt"
+```
+
+The hook exits `1` when it writes the file, so its exit code is not
+read:
+
+```shell
+clone=<clone dir>
+env -C "${clone:?}" uv run --locked --only-group lint \
+  pre-commit run uv-export --all-files
+```
+
+```shell
+clone=<clone dir>
+sha=<sha>
+exported=<export file>
+git -C "${clone:?}" cat-file -e "${sha:?}:.clusterfuzzlite/requirements.txt" &&
+  git -C "${clone:?}" diff --quiet -- .clusterfuzzlite/requirements.txt &&
+  echo .clusterfuzzlite/requirements.txt > "${exported:?}"
+```
+
+Then the clone goes:
+
+```shell
+clone=<clone dir>
+rm -rf "${clone:?}"
 ```
 
 A major move is one where a version's first non-zero number changes: a
