@@ -290,15 +290,14 @@ the process names its own files by their path under it. Claude Code's
   same checkout overwrites it, another session's included. A fetch that
   another fetch has locked out (`cannot lock ref`) is retried.
 - **Debris goes when its work ends, not at the wrap-up**, because a long
-  session otherwise fills the disk (the maintainer, 2026-10-21). A
-  worktree goes, with its basetemp and build directories, once the
-  session hands the pull request over to whom it waits on, or it lands
-  or closes: a clean, pushed worktree is recreated in seconds if review
-  sends the branch back, and one with uncommitted or unpushed work stays
-  (*Before removing or discarding anything that could be work*). A
-  gate's basetemp and build directories go once that branch's gates are
-  done. A reviewer's worktree, exports, clones and reports go before it
-  hands back its verdict.
+  session otherwise fills the disk. A worktree goes, with its basetemp
+  and build directories, once the session hands the pull request over to
+  whom it waits on, or it lands or closes: a clean, pushed worktree is
+  recreated in seconds if review sends the branch back, and one with
+  uncommitted or unpushed work stays (*Before removing or discarding
+  anything that could be work*). A gate's basetemp and build directories
+  go once that branch's gates are done. A reviewer's worktree, exports,
+  clones and reports go before it hands back its verdict.
 - **The orchestrator, never a writer, sweeps what a session that no
   longer runs left**, when the disk is short (*Before starting*). It
   removes only a worktree that is clean and pushed, and that session's
@@ -339,12 +338,11 @@ the process names its own files by their path under it. Claude Code's
 
 **Amends of pushed commits, rebases of pushed branches and the lease
 pushes after them are always authorized** on the branches the session
-works (the human, 2026-10-11). Nobody asks for it. Review sends branches
-back after they are pushed, and every rebase rewrites a pushed branch.
-Every brief states the grant, because the classifier has refused those
-pushes where none was on record. A refusal is still a stop (*A denied
-permission is a stop*), with the `-r2` fallback in *Committing and
-rebasing*.
+works. Nobody asks for it. Review sends branches back after they are
+pushed, and every rebase rewrites a pushed branch. Every brief states
+the grant, because the classifier has refused those pushes where none
+was on record. A refusal is still a stop (*A denied permission is a
+stop*), with the `-r2` fallback in *Committing and rebasing*.
 
 ### Issues left to newcomers
 
@@ -675,7 +673,8 @@ filed there as collateral (*Collateral*).
   examples.
 - **Say what is true now.** No "was", "has always", "is now". The
   exception is the defect being corrected, and that "before" is measured
-  against a snapshot.
+  against a snapshot. A rule carries no attribution or date: its pull
+  request records who decided it and when.
 - **Do not restate the code in a comment.**
 - **A second reason gets its own paragraph.** A clause grafted into a
   standing paragraph inherits its subject, and every later sentence
@@ -1096,12 +1095,12 @@ run and another bot run.
 
 ### A rebase and the clearance
 
-**A rebase that applies without a conflict keeps the `CLEARED`** (the
-human, 2026-10-20). No reviewer reads it. It voids the gates: they run
-again on the new tip, and so does the check of *Signed and signed off*.
-This holds where the rebase replays the cleared commits and no others.
-Then these two commands print the same subjects in the same order,
-`<old base>` being the parent the cleared sha was reviewed on:
+**A rebase that applies without a conflict keeps the `CLEARED`.** No
+reviewer reads it. It voids the gates: they run again on the new tip,
+and so does the check of *Signed and signed off*. This holds where the
+rebase replays the cleared commits and no others. Then these two
+commands print the same subjects in the same order, `<old base>` being
+the parent the cleared sha was reviewed on:
 
 ```shell
 git -C <wt> log --reverse --format=%s '<old base>..<cleared sha>'

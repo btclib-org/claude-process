@@ -197,9 +197,9 @@ pull request, which meets the shared *What is posted on a forge*.
 ### Another person's branch
 
 **Where the session can push to the pull request's branch, it makes
-every fix the approval needs itself**, blocking findings and nits alike
-(the maintainer, 2026-10-14): every item is answered as *Answering it*
-says, with no split between minor and substantial changes.
+every fix the approval needs itself**, blocking findings and nits
+alike: every item is answered as *Answering it* says, with no split
+between minor and substantial changes.
 
 Before pushing, the session claims the branch (the shared *A claim holds
 a pull request's branch*) and pushes with the lease of the shared
@@ -380,7 +380,7 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       `.github/workflows/claude-review.yml`, the ACK may be missing, and
       the bot's `Claude review` check may fail while every other check
       passed or was skipped, as *Arming auto-merge*'s second case
-      allows (the maintainer, 2026-10-27)
+      allows
 - [ ] no review thread is unresolved, every page read (*What was
       raised*). It binds every approval, the human's decision included;
       *Arming auto-merge* has it for arming
@@ -514,8 +514,8 @@ awk '/^diff --git /{f = $(3); h = 1; r = ""
 `app/dependabot`, and whose list holds
 `.clusterfuzzlite/requirements.txt`, that file passes the third command
 where the commands below regenerate it on `<sha>` and find it byte for
-byte the same (the maintainer, 2026-10-28,
-[ISS 249](https://github.com/btclib-org/claude-process/issues/249)).
+byte the same
+([ISS 249](https://github.com/btclib-org/claude-process/issues/249)).
 They run the `uv-export` hook, which runs `uv export` with the tree's
 arguments, by the command the tree's `CONTRIBUTING.md` gives an owner
 (*A bot's*, under *Whose pull request it is*). The clone directory is a
@@ -628,15 +628,15 @@ decision. At night it is a deferred item (the shared *Night mode*).
 **Where the human is the maintainer (the shared *Three roles this file
 names*), on a repository where he is a bypass actor of an active
 ruleset, the session lands it through the maintainer's bypass, and
-requests no owner's review** (the maintainer, 2026-10-17). It lands once
-every item above holds but those on the author, the repository, the
-files in the list, `pyproject.toml` and `uv.lock`, a bot's pins and a
-major move, as *Landing* qualifies them, the bot's ACK and its check
-included or missing as *Arming auto-merge* allows. *Landing* gives the
-command. `btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision
-is made*, decides which repositories give him the bypass, and this
-command reads their rulesets. It prints his id where an active ruleset
-gives him the bypass in `pull_request` mode, and nothing otherwise:
+requests no owner's review.** It lands once every item above holds but
+those on the author, the repository, the files in the list,
+`pyproject.toml` and `uv.lock`, a bot's pins and a major move, as
+*Landing* qualifies them, the bot's ACK and its check included or
+missing as *Arming auto-merge* allows. *Landing* gives the command.
+`btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision is made*,
+decides which repositories give him the bypass, and this command reads
+their rulesets. It prints his id where an active ruleset gives him the
+bypass in `pull_request` mode, and nothing otherwise:
 
 ```shell
 gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
@@ -683,17 +683,16 @@ put to the human before it lands through the bypass.
 Its issue stays theirs, and no competing branch is opened. The reviewer
 reviews it against `REVIEWING.md`.
 
-**It is completed in place where `maintainerCanModify` is `true`**,
-with every fix the approval needs, blocking findings and nits alike
-(the maintainer, 2026-10-14), as the bullets below say. Otherwise the
-orchestrator delivers the findings on the pull request, warmly and as
-the shared *What is posted on a forge* says: the first line thanks them
-and names what holds the pull request, what is right comes before what
-is missing, and a fix of a few lines is a one-click suggestion. The
-session then waits. Where a branch of ours must land first and touches
-their lines, the maintainer decides the order, and the contributor is
-told on their pull request what moved and how to resolve it. Completing
-it:
+**It is completed in place where `maintainerCanModify` is `true`**, with
+every fix the approval needs, blocking findings and nits alike, as the
+bullets below say. Otherwise the orchestrator delivers the findings on
+the pull request, warmly and as the shared *What is posted on a forge*
+says: the first line thanks them and names what holds the pull request,
+what is right comes before what is missing, and a fix of a few lines is
+a one-click suggestion. The session then waits. Where a branch of ours
+must land first and touches their lines, the maintainer decides the
+order, and the contributor is told on their pull request what moved and
+how to resolve it. Completing it:
 
 - **Add, never rewrite.** Their commits stay byte for byte. `main` comes
   in by a signed merge, not a rebase. The fixes are a
@@ -785,7 +784,7 @@ gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
 ## Arming auto-merge
 
 **The session arms squash auto-merge on a pull request only once all
-three hold on its head** (the maintainer, 2026-10-17):
+three hold on its head**:
 
 - every required check passed or was skipped;
 - the review bot's latest review starts `ACK <head>`;
@@ -802,10 +801,10 @@ request is armed once every required check is green, no review thread
 is unresolved, and the latest fresh reviewer's `CLEARED` names the head:
 
 - the bot's run failed with a 429, its quota exhausted, matched as
-  *Rebase and CI* says (the maintainer, 2026-10-17);
+  *Rebase and CI* says;
 - the pull request changes `claude-review.yml`, which the bot does not
-  review (the maintainer, 2026-10-17): the action refuses to run where
-  its workflow differs from the default branch's, and its check fails;
+  review: the action refuses to run where its workflow differs from the
+  default branch's, and its check fails;
 - the pull request comes from a fork, `isCrossRepository` being `true`
   in *Whose pull request it is*
   ([ISS 248](https://github.com/btclib-org/claude-process/issues/248)).
@@ -879,9 +878,9 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   to work, and after each landing: `gh run list --repo <owner>/<repo>
   --branch main --event push`. `main` is red where a required check
   failed in the latest run of its workflow. A cancelled check is not a
-  failure, and a check that only reports does not count (the
-  maintainer, 2026-10-14). While `main` is red, its repair is the first
-  work, and other pull requests are still approved and armed
+  failure, and a check that only reports does not count. While `main`
+  is red, its repair is the first work, and other pull requests are
+  still approved and armed
   (`CONTRIBUTING.md`'s *Landing it*).
 - **What gates a merge on GitHub** is the repository's own
   `REPOSITORY.md`, read from `origin/main`: typically an approval from
