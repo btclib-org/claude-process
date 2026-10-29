@@ -276,9 +276,34 @@ them.
       gh pr reopen <n> --repo <owner>/<repo>
       ```
 
-      *The decision* reads the bot's review of the reopen. Where
-      `gh pr view <n> --repo <owner>/<repo> --json autoMergeRequest`
-      shows the pull request disarmed, arm it again as *Landing* says.
+      The reopen's runs can still test the merge with the old `main`:
+      GitHub refreshes `refs/pull/<n>/merge` lazily, and the event
+      carries the merge it held, as the second reopen of
+      PR btclib-org/btclib#2754 did. A run's log names the merge it
+      tested, `Merge <head> into <base>`. The first command writes the
+      log, and the second prints the line that names it:
+
+      ```shell
+      gh run view --repo <owner>/<repo> --log <run id> > <log file>
+      ```
+
+      ```shell
+      grep -m1 'HEAD is now at .* Merge .* into ' <log file>
+      ```
+
+      This answers `ahead` or `identical` where `<base>` holds the
+      repair:
+
+      ```shell
+      gh api --jq .status repos/<owner>/<repo>/compare/<repair sha>...<base>
+      ```
+
+      Where it answers anything else, the merge lacks the repair: close
+      and reopen again, and read the new runs.
+
+      *The decision* reads the bot's review of the reopen. Closing
+      disarms auto-merge (`Pull request was closed`, on
+      PR btclib-org/btclib#2754), so arm it again as *Landing* says.
       A check that only reports is named in the decision;
     - **not reproducing**: the shared *A failure that does not reproduce
       is measured*. One re-run measures it (`gh run rerun <run id>
