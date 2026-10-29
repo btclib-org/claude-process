@@ -867,11 +867,10 @@ the orchestrator in the pull request.
   multi-batch hook's tail can show a clean batch after a failed one.
 - **A gate can leave the tree dirty**: in-place fixers exit having
   modified files. Check `git status --porcelain` afterwards.
-- **An install that Aikido Device Protection refuses is a stop.** A
-  refused package fetch, a 403 among them, is read in `aikidoctl events
-  --json`. Nothing goes around it: no build from a clone or a `git
-  archive`, no other index, no wheel fetched by hand, no TLS change, no
-  `aikidoctl pause`. The gate it holds is reported as not run.
+- **An install that Aikido Device Protection refuses is a stop.**
+  Nothing goes around it: no build from a clone or a `git archive`, no
+  other index, no wheel fetched by hand, no TLS change, no `aikidoctl
+  pause`. The gate it holds is reported as not run.
 - **The whole suite, never a narrowed run**, for anything you write
   down. `-k` and single files relax the coverage floor.
 - **Coverage at 100% and defensive branches.** Move the safety where a
