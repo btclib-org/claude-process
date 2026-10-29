@@ -937,6 +937,10 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   reports and is red on `main` too does not hold it, and is named in
   the report.
 
+- **Before it is armed or lands, where `main` has moved past the sha
+  the verdict read the prose on**, the shared *A rebase and the
+  clearance* says who re-reads the prose, and what review a sentence
+  found false there needs before the branch is armed or lands.
 - **The pin is the head as last pushed**, not the sha a verdict named.
 - **A stacked pull request lands like any other**: once its base has
   landed, it is rebased onto `main` as `CONTRIBUTING.md`'s *One subject,

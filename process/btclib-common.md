@@ -1063,7 +1063,7 @@ run and another bot run.
 - [ ] where the change touches a rule the tree states, the writer's
       search is complete (*A rule stated more than once*)
 - [ ] on a branch, the prose it adds was read on the merge with
-      `origin/main` (*A pull request's rounds*)
+      `origin/main`, whose sha it names (*A pull request's rounds*)
 - [ ] where the diff moves a dependency, a hook or an action to a new
       major version, the release notes or changelog read between the two
       versions, and what they say of the tree (`/btclib-pr`'s *The
@@ -1140,6 +1140,16 @@ Say in the pull request which case it was.
 **"This branch has conflicts" on GitHub is real** even where a local
 rebase exits `0`: the forge does not apply a tree's `merge=union`.
 Rebase, run the gates, and push.
+
+**Where `main` has moved past the `origin/main` sha the verdict read the
+prose on**, the orchestrator re-reads the branch's added lines on the
+merge with the new `origin/main`, by the commands of *A pull request's
+rounds*, at the rebase or at `/btclib-pr`'s *Landing*. The `CLEARED`
+stands. A sentence the re-read finds false there is fixed in a new
+commit, or by amend before the pull request is open (*Committing and
+rebasing*). A fresh reviewer reviews that fix as a prose-only fix (*The
+rounds*), and the branch is armed or landed only after that reviewer's
+`CLEARED`.
 
 ## Collateral
 
