@@ -949,9 +949,10 @@ branch, or a text to be posted.
 - **Then a fresh reviewer reads the whole of it.** It is a new worker,
   started once the reviewer before it has cleared. Where its first
   verdict is `CHANGES REQUESTED`, it stays until it clears, as above.
-  Where every fix since its first verdict is a prose-only fix, its
-  `CLEARED` ends the rounds; otherwise a further fresh reviewer reads
-  the whole of it.
+  Where every fix since its first verdict is a prose-only fix, or where
+  it reviews a fix after a re-read on a moved `main` (*A rebase and the
+  clearance*), whichever file that fix touches, its `CLEARED` ends the
+  rounds; otherwise a further fresh reviewer reads the whole of it.
 - **A prose-only fix** changes nothing but the commit message, a text
   to be posted (a pull request body, a comment or reply on the forge)
   and, in files the checklist of `/btclib-pr`'s *The decision* does not
@@ -1148,12 +1149,16 @@ merge with the new `origin/main`, by the commands of *A pull request's
 rounds*, at the rebase or at `/btclib-pr`'s *Landing*. The `CLEARED`
 stands. A sentence the re-read finds false there is fixed in a new
 commit, or by amend before the pull request is open (*Committing and
-rebasing*). A fresh reviewer reviews that fix, whichever file it
-touches, and the branch is armed or landed only after that reviewer's
-`CLEARED`: no further fresh reviewer follows it. `main` also moves
-under a pull request already armed. After each landing it makes, the
-orchestrator re-reads the same way each pull request it armed in that
-repository that has not landed.
+rebasing*). A fresh reviewer reviews that fix, and the branch is armed
+or landed only after its `CLEARED`, which ends the rounds (*The
+rounds*).
+
+`main` also moves under a pull request already armed. After each
+landing the orchestrator observes in a repository, its own merge or an
+auto-merge it sees complete, it re-reads the same way each pull request
+it armed there that has not landed, and again before the session ends.
+A pull request found with a false sentence is disarmed at once
+(`/btclib-pr`'s *Arming auto-merge*).
 
 ## Collateral
 

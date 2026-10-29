@@ -957,6 +957,9 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   `MERGED`, `gh api repos/<owner>/<repo>/commits/<sha> --jq
   .commit.verification` is `verified: true`, and each issue the pull
   request declared closed is closed. What follows waits for this.
+  The pull requests the session armed in that repository are then
+  re-read on the new `main`, as the shared *A rebase and the
+  clearance* says.
 
   Then wait for `main`'s workflow runs on `<sha>`, with *Rebase and
   CI*'s loop and this test in place of its own. A workflow run is
