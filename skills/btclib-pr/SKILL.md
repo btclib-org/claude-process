@@ -254,9 +254,42 @@ them.
   The last command's exit code says how the loop ended: `0` all passed,
   `1` a failure or no checks at all, `8` still pending with none failed.
   The loop gave up wherever that output still lists a pending check or
-  says `no checks reported`. After a close and reopen, a check it shows
-  as skipped may have failed: the shared *Arming auto-merge* says how
-  that is read.
+  says `no checks reported`.
+
+  **After a close and reopen, a check `gh pr checks` shows as skipped may
+  have failed**
+  ([ISS 198](https://github.com/btclib-org/claude-process/issues/198)).
+  `gh pr checks` shows one run of each check. A workflow that runs on the
+  `closed` event and skips its jobs there writes a skipped run of each,
+  and that run can be the one shown. This writes the name of each check
+  run on the head that has not completed, and of each that started at or
+  after the last reopen and concluded neither `SUCCESS`, `SKIPPED` nor
+  `NEUTRAL`. On a pull request never reopened it reads every run. It must
+  exit `0`:
+
+  ```shell
+  gh api graphql --paginate -F owner=<owner> -F repo=<repo> -F n=<n> -f query='
+    query($owner: String!, $repo: String!, $n: Int!, $endCursor: String) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $n) {
+          timelineItems(itemTypes: [REOPENED_EVENT], last: 1) {
+            nodes { ... on ReopenedEvent { createdAt } }
+          }
+          commits(last: 1) { nodes { commit { statusCheckRollup {
+            contexts(first: 100, after: $endCursor) {
+              pageInfo { hasNextPage endCursor }
+              nodes { ... on CheckRun { name status conclusion startedAt } }
+            }
+          } } } }
+        }
+      }
+    }' --jq '.data.repository.pullRequest
+    | (.timelineItems.nodes[0].createdAt // "") as $reopened
+    | .commits.nodes[0].commit.statusCheckRollup.contexts.nodes[]
+    | select(.name and (.status != "COMPLETED" or (.startedAt >= $reopened
+      and (.conclusion | IN("SUCCESS", "SKIPPED", "NEUTRAL") | not))))
+    | .name' > <red file>
+  ```
 
   A `cancelled` run is not a `failure`.
 - **A red check is read before anything is done about it**:
@@ -331,10 +364,10 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
 - [ ] every check passed or was skipped, required or not:
       `gh pr checks <n> --repo <owner>/<repo> --json bucket --jq
       'length > 0 and all(.[]; .bucket == "pass" or .bucket ==
-      "skipping")'` answers `true`; the shared *Arming auto-merge*'s
-      command that writes `<red file>` exits `0`; and
-      `test ! -s <red file>` exits `0`. A cancelled check (bucket
-      `cancel`) fails this item until a re-run passes.
+      "skipping")'` answers `true`; *Rebase and CI*'s command that
+      writes `<red file>` exits `0`; and `test ! -s <red file>` exits
+      `0`. A cancelled check (bucket `cancel`) fails this item until a
+      re-run passes.
 - [ ] the bot's latest review starts `ACK <sha>`: `gh pr view <n>
       --repo <owner>/<repo> --json reviews --jq '[.reviews[] |
       select(.author.login == "claude" and .body != "")] | last |
@@ -346,11 +379,11 @@ grep '^rename from ' <diff file> | cut -d' ' -f3- >> <list file>
       pull request (*A bot's pins*) whose pins change
       `.github/workflows/claude-review.yml`, the ACK may be missing, and
       the bot's `Claude review` check may fail while every other check
-      passed or was skipped, as the shared *Arming auto-merge*'s second
-      case allows (the maintainer, 2026-10-27)
+      passed or was skipped, as *Arming auto-merge*'s second case
+      allows (the maintainer, 2026-10-27)
 - [ ] no review thread is unresolved, every page read (*What was
-      raised*). It binds every approval, the human's decision
-      included; the shared *Arming auto-merge* has it for arming
+      raised*). It binds every approval, the human's decision included;
+      *Arming auto-merge* has it for arming
 - [ ] every item of *What was raised* is answered
 - [ ] no other reviewer's changes requested stand: `latestReviews`
       holds no `CHANGES_REQUESTED`
@@ -598,8 +631,8 @@ ruleset, the session lands it through the maintainer's bypass, and
 requests no owner's review** (the maintainer, 2026-10-17). It lands once
 every item above holds but those on the author, the repository, the
 files in the list, `pyproject.toml` and `uv.lock`, a bot's pins and a
-major move, as *Landing* qualifies them, the bot's ACK included or
-missing as the shared *Arming auto-merge* allows. *Landing* gives the
+major move, as *Landing* qualifies them, the bot's ACK and its check
+included or missing as *Arming auto-merge* allows. *Landing* gives the
 command. `btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision
 is made*, decides which repositories give him the bypass, and this
 command reads their rulesets. It prints his id where an active ruleset
@@ -629,19 +662,16 @@ decides; once the same items hold, except the two a 429 fails:
   gh pr edit <n> --repo <owner>/<repo> --add-reviewer <login>
   ```
 
-- arm the landing once the shared *Arming auto-merge* allows it, so
-  that their approval lands it (*Landing*);
+- arm the landing once *Arming auto-merge* allows it, so that their
+  approval lands it (*Landing*);
 - report whom it waits on.
 
 After a push, request the review again on the new head (*Landing*).
 
-A pull request that changes `claude-review.yml` gets no review from the
-bot. The action refuses to run where its workflow differs from the
-default branch's, and its check fails. There `--land` does not apply,
-and it is armed as the shared *Arming auto-merge* says. On a repository
-with the bypass, where the human is the maintainer, it lands through it
-once every other check is green, no review thread is unresolved, and
-the latest fresh reviewer's `CLEARED` names the head.
+On a pull request that changes `claude-review.yml`, which the bot does
+not review (*Arming auto-merge*), `--land` does not apply. It lands
+through the bypass only where the human is the maintainer, as above,
+and is otherwise armed.
 
 A pull request whose description says it breaks the live setup, in a
 *Breaks* section as
@@ -695,8 +725,7 @@ it:
 Where the bot's review does not run — a fork's pull request, and any
 other where `gh pr checks` shows no review — the ACK is not an item of
 *The decision*, and the approval is never obvious: it goes to the
-human. A fork's pull request is armed as the shared *Arming auto-merge*
-says.
+human. A fork's pull request is armed as *Arming auto-merge* says.
 
 **A first-time contributor's workflow runs wait for approval as
 `action_required`**, as on PR btclib-org/btclib#2823. Under
@@ -753,6 +782,97 @@ gh run list --repo <owner>/<repo> --commit <head> -L 100 \
 gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
 ```
 
+## Arming auto-merge
+
+**The session arms squash auto-merge on a pull request only once all
+three hold on its head** (the maintainer, 2026-10-17):
+
+- every required check passed or was skipped;
+- the review bot's latest review starts `ACK <head>`;
+- no review thread is unresolved, read as *What was raised* says
+  ([ISS 152](https://github.com/btclib-org/claude-process/issues/152)).
+
+Each pull request is armed on its own measurement: never by default, in
+bulk or by a workflow. Several may be armed at once. The bot's check is
+not a required check: a pull request armed earlier lands on an approval
+given before the bot answered, or after it asked for changes.
+
+**The ACK may be missing only in these cases**, and in each the pull
+request is armed once every required check is green, no review thread
+is unresolved, and the latest fresh reviewer's `CLEARED` names the head:
+
+- the bot's run failed with a 429, its quota exhausted, matched as
+  *Rebase and CI* says (the maintainer, 2026-10-17);
+- the pull request changes `claude-review.yml`, which the bot does not
+  review (the maintainer, 2026-10-17): the action refuses to run where
+  its workflow differs from the default branch's, and its check fails;
+- the pull request comes from a fork, `isCrossRepository` being `true`
+  in *Whose pull request it is*
+  ([ISS 248](https://github.com/btclib-org/claude-process/issues/248)).
+  `btclib-org/.github`'s `reusable-claude-review.yml` skips the review
+  where `head.repo.full_name` is not the calling repository. The human's
+  approval then lands it (*Outside contributors*).
+
+Where such a pull request lands through the bypass (*The human's own
+pull request*), every check but the bot's `Claude review` is green as
+well.
+
+It is armed pinned to the head, with squash, the only merge method
+(`CONTRIBUTING.md`'s *Landing it*):
+`gh pr merge --squash --auto --match-head-commit <head>`. *Landing*
+gives the whole command.
+
+**The required checks are the branch protection's contexts.** The
+first command writes them, and `<required file>` must not be empty. The
+second writes each check that passed or was skipped on the head:
+
+```shell
+gh api repos/<owner>/<repo>/branches/main/protection/required_status_checks \
+  --jq '.contexts[]' > <required file>
+```
+
+```shell
+gh pr checks <n> --repo <owner>/<repo> --json name,bucket --jq '.[]
+  | select(.bucket == "pass" or .bucket == "skipping") | .name' > <green file>
+```
+
+*Rebase and CI*'s command that writes `<red file>` exits `0`. The first
+command below prints each required check that has not passed or been
+skipped, and the second each one written to `<red file>`. Each exits `1`
+where it prints nothing:
+
+```shell
+grep -vxFf <green file> <required file>
+grep -xFf <red file> <required file>
+```
+
+`gh pr checks --required` is not enough: it omits a required check that
+has not reported yet.
+
+**The bot's review is read as *The decision* reads it.**
+This answers `true` where it starts `ACK <head>`:
+
+```shell
+gh pr view <n> --repo <owner>/<repo> --json headRefOid,reviews \
+  --jq '.headRefOid as $h
+  | [.reviews[] | select(.author.login == "claude" and .body != "")]
+  | last | (.body // "") | startswith("ACK " + $h)'
+```
+
+**A pull request armed otherwise is disarmed.** One that is armed is
+disarmed before a push, and armed again once this section allows it on
+the new head.
+This lists the armed ones, and the second command disarms one:
+
+```shell
+gh pr list --repo <owner>/<repo> --json number,autoMergeRequest \
+  --jq '.[] | select(.autoMergeRequest) | .number'
+```
+
+```shell
+gh pr merge <n> --repo <owner>/<repo> --disable-auto
+```
+
 ## Landing
 
 - **Read `main`'s latest push runs** when choosing which pull requests
@@ -773,9 +893,9 @@ gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
   mergeStateStatus`), read its threads first, with *What was raised*'s
   query, then its checks. Do not explain a block by a ruleset option you
   have not read.
-- **Squash, by auto-merge, armed as the shared *Arming auto-merge*
-  says.** The branch carries several commits once review has added any,
-  so the subject and the message are written, not inherited:
+- **Squash, by auto-merge, armed as *Arming auto-merge* says.** The
+  branch carries several commits once review has added any, so the
+  subject and the message are written, not inherited:
 
   ```shell
   gh pr merge <n> --repo <owner>/<repo> --squash --auto \
@@ -792,8 +912,8 @@ gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
 
   **Where `--auto` is refused because the pull request is already
   mergeable**, land it by the same command without `--auto`, still
-  pinned by `--match-head-commit`, once the shared *Arming auto-merge*
-  holds, then *Check what landed*. GitHub's refusal reads
+  pinned by `--match-head-commit`, once *Arming auto-merge* holds,
+  then *Check what landed*. GitHub's refusal reads
   `Pull request is in clean status`, which gh prints as
   `GraphQL: Pull request Pull request is in clean status
   (enablePullRequestAutoMerge)`
@@ -822,8 +942,7 @@ gh api -X POST repos/<owner>/<repo>/actions/runs/<databaseId>/approve
   too. The bypass then lands only the human's own pull request, where
   and once *The human's own pull request* says. A check that only
   reports and is red on `main` too does not hold it, and is named in
-  the report. A 429 alone does not hold it either, once local review
-  has cleared and the other checks are green.
+  the report.
 
 - **The pin is the head as last pushed**, not the sha a verdict named.
 - **A stacked pull request lands like any other**: once its base has
