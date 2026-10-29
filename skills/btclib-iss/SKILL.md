@@ -125,7 +125,8 @@ open:**
   '.closingIssuesReferences | length'`. The field lags creation by
   seconds to minutes; ask again.
 - **Request the reviews `/btclib-pr`'s *The human's own pull request*
-  names**, unless that section or `--land` has the session land it.
+  names**, unless that section has the session land it through the
+  bypass.
 
 ## Following it
 

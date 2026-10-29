@@ -625,18 +625,19 @@ decision. At night it is a deferred item (the shared *Night mode*).
 
 ### The human's own pull request
 
-**Where the human is the maintainer (the shared *Three roles this file
-names*), on a repository where he is a bypass actor of an active
-ruleset, the session lands it through the maintainer's bypass, and
-requests no owner's review.** It lands once every item above holds but
-those on the author, the repository, the files in the list,
-`pyproject.toml` and `uv.lock`, a bot's pins and a major move, as
-*Landing* qualifies them, the bot's ACK and its check included or
-missing as *Arming auto-merge* allows. *Landing* gives the command.
-`btclib-org/.github`'s `GOVERNANCE.md`, under *How a decision is made*,
-decides which repositories give him the bypass, and this command reads
-their rulesets. It prints his id where an active ruleset gives him the
-bypass in `pull_request` mode, and nothing otherwise:
+**Where the human is a bypass actor of an active ruleset, and is the
+maintainer (the shared *Three roles this file names*) or runs `--land`
+(*Landing*), the session lands it through the bypass, and requests no
+owner's review.** It lands once every item above holds but those on the
+author, the repository, the files in the list, `pyproject.toml` and
+`uv.lock`, a bot's pins and a major move, as *Landing* qualifies them,
+the bot's ACK and its check included or missing as *Arming auto-merge*
+allows. *Landing* gives the command. `btclib-org/.github`'s
+`GOVERNANCE.md`, under *How a decision is made*, decides which
+repositories give the maintainer the bypass. This command prints the id
+of each user an active ruleset gives the bypass in `pull_request` mode.
+The human is a bypass actor where it prints the id
+`gh api user --jq .id` prints:
 
 ```shell
 gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
@@ -646,12 +647,8 @@ gh api repos/<owner>/<repo>/rulesets --jq '.[].id' \
       | .actor_id'
 ```
 
-Elsewhere, under `--land` (*Landing*), the same where this command
-prints an id; where it prints nothing, as on a repository whose ruleset
-has no bypass actor (`btclib-org/.github`'s `GOVERNANCE.md`, *How a
-decision is made*), `--admin` is never attempted and `--land` changes
-nothing. Without `--land`, or where it prints nothing, another owner
-decides; once the same items hold, except the two a 429 fails:
+Otherwise, `--land` included, another owner decides and `--admin` is
+never attempted. Once the same items hold, except the two a 429 fails:
 
 - request the review of every owner but the human who has not approved
   `<sha>`. `btclib-org/.github`'s `GOVERNANCE.md` names the owners, and
@@ -670,8 +667,8 @@ After a push, request the review again on the new head (*Landing*).
 
 On a pull request that changes `claude-review.yml`, which the bot does
 not review (*Arming auto-merge*), `--land` does not apply. It lands
-through the bypass only where the human is the maintainer, as above,
-and is otherwise armed.
+through the bypass only where the human is the maintainer and a bypass
+actor, as above, and is otherwise armed.
 
 A pull request whose description says it breaks the live setup, in a
 *Breaks* section as
@@ -921,13 +918,10 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
   `mergeStateStatus` it reads is `CLEAN`, `HAS_HOOKS` or `UNSTABLE`
   (`isImmediatelyMergeable` in its `pkg/cmd/pr/merge/merge.go`).
 
-  Never land through the maintainer's bypass (`--admin`, or any other
-  route to it) unless the human has instructed it for that pull request,
-  or, where the human is the maintainer, it is the human's own pull
-  request on a repository where he is a bypass actor of an active
-  ruleset (*The human's own pull request*). It merges with no approval,
-  even with required checks red. Either lands with this, in place of the
-  command above:
+  Never land through the bypass (`--admin`, or any other route to it)
+  except where *The human's own pull request* says. It merges with no
+  approval, even with required checks red. It lands with this, in place
+  of the command above:
 
   ```shell
   gh pr merge <n> --repo <owner>/<repo> --squash --admin \
@@ -935,8 +929,8 @@ gh pr merge <n> --repo <owner>/<repo> --disable-auto
     --subject "<title> (closes #<issue>) (#<n>)" --body-file <message>
   ```
 
-  **`--land` is that instruction**, for the pull requests named with it,
-  or opened by `/btclib-iss` for the issues named with it, and no others.
+  **`--land` instructs it**, for the pull requests named with it, or
+  opened by `/btclib-iss` for the issues named with it, and no others.
   The human's words in the session, naming the pull requests, count
   too. The bypass then lands only the human's own pull request, where
   and once *The human's own pull request* says. A check that only
