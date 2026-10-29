@@ -869,8 +869,7 @@ the orchestrator in the pull request.
   modified files. Check `git status --porcelain` afterwards.
 - **An install that Aikido Device Protection refuses is a stop.** A
   refused package fetch, a 403 among them, is read in `aikidoctl events
-  --json`, which holds only what the daemon recorded since it last
-  started. Nothing goes around it: no build from a clone or a `git
+  --json`. Nothing goes around it: no build from a clone or a `git
   archive`, no other index, no wheel fetched by hand, no TLS change, no
   `aikidoctl pause`. The gate it holds is reported as not run.
 - **The whole suite, never a narrowed run**, for anything you write

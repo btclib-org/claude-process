@@ -291,9 +291,15 @@ them.
       grep -m1 'HEAD is now at .* Merge .* into ' <log file>
       ```
 
-      Where `gh api repos/<owner>/<repo>/compare/<repair sha>...<base>
-      --jq .status` answers neither `ahead` nor `identical`, the merge
-      lacks the repair: close and reopen again, and read the new runs.
+      This answers `ahead` or `identical` where `<base>` holds the
+      repair:
+
+      ```shell
+      gh api --jq .status repos/<owner>/<repo>/compare/<repair sha>...<base>
+      ```
+
+      Where it answers anything else, the merge lacks the repair: close
+      and reopen again, and read the new runs.
 
       *The decision* reads the bot's review of the reopen. Closing
       disarms auto-merge (`Pull request was closed`, on
