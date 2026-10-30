@@ -483,11 +483,23 @@ stop*), with the `-r2` fallback in *Committing and rebasing*.
 
 ### When the human has to decide
 
-**One decision at a time.** Put one decision to the human per message,
-and wait for the answer before putting the next. Never a batch, and
-never a list of numbered questions. A report may list what waits on the
-human, one line each; it asks none of it. Where several decisions wait,
-put first the one that blocks the most work.
+**One decision per message, and the next as soon as it is answered.** The
+message that takes an answer also puts the next decision, in the same
+turn, so the human never waits on the session to be asked. Never a batch
+or a numbered list, even where the human asks for "the open questions":
+those are put the same way, starting now. Put first the one that blocks
+the most work. A report may list what waits on the human, one line each;
+it asks none of it, and its last line puts the first one.
+
+**No decision is held back.** One that can be asked is asked now, not at
+the end of a task. One whose shape is missing a measurement gets that
+measurement started at once, and is asked when it returns.
+
+**The work does not wait for the answer.** While a decision is open,
+everything that does not depend on it goes on in parallel.
+
+**A question the rules already answer is not a decision:** apply the
+rule, and report the outcome in one line.
 
 **Each decision comes in one shape**, and is not asked until it has it:
 
@@ -495,7 +507,7 @@ put first the one that blocks the most work.
 - the recommendation first, with its reason;
 - the other alternatives, each with what it costs.
 
-Letter the alternatives, so that one letter answers.
+Number the alternatives, so that one number answers.
 
 **This holds wherever work stops for the human.** The repository
 question is the exception: it lists the candidates without recommending
