@@ -483,13 +483,14 @@ stop*), with the `-r2` fallback in *Committing and rebasing*.
 
 ### When the human has to decide
 
-**One decision per message, and the next as soon as it is answered.** The
-message that takes an answer also puts the next decision, in the same
-turn, so the human never waits on the session to be asked. Never a batch
-or a numbered list, even where the human asks for "the open questions":
-those are put the same way, starting now. Put first the one that blocks
-the most work. A report may list what waits on the human, one line each;
-it asks none of it, and its last line puts the first one.
+**One decision per message, and the next as soon as it is answered.**
+The message that takes an answer also puts the next decision, in the
+same turn, so the human never waits on the session to be asked. Never a
+batch or a numbered list of decisions, even where the human asks for
+"the open questions": those are put the same way, starting now. Put
+first the one that blocks the most work. A report may list what waits on
+the human, one line each; it asks none of it, and it closes by putting
+the first one.
 
 **No decision is held back.** One that can be asked is asked now, not at
 the end of a task. One whose shape is missing a measurement gets that
