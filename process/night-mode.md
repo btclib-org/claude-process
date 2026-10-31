@@ -13,8 +13,8 @@ does not start.
 
 **Turning it off** ends the night at once. The work in flight goes on
 under the ordinary rules. The morning report is the next message, unless
-it was given while the work waited. Its deferred items are then asked
-one at a time (*When the human has to decide*).
+it was given while the work waited. Its deferred items are then asked as
+*When the human has to decide* says.
 
 **During the night no question is asked interactively.** Every point
 where a skill stops for the human — a decision, a refused permission,
